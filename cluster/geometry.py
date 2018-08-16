@@ -26,59 +26,6 @@ def tol_le(a, b):
 def tol_zero(a):
     return tol_eq(a, np.zeros_like(a))
 
-
-
-
-
-class Scalar(object):
-    """Scalar value functions"""
-
-    """Relative tolerance"""
-    rel_tol = 1e-05
-
-    """Absolute tolerance"""
-    abs_tol = 1e-08
-
-    @staticmethod
-    def sign(x):
-        if x > 0:
-            return 1
-
-        return -1
-
-    @classmethod
-    def tol_eq(cls, a, b, rel_tol=None, abs_tol=None):
-        if rel_tol is None:
-            rel_tol = cls.rel_tol
-
-        if abs_tol is None:
-            abs_tol = cls.abs_tol
-
-        a = float(a)
-        b = float(b)
-
-        return abs(a - b) <= (abs_tol + rel_tol * abs(b))
-
-    @classmethod
-    def tol_zero(cls, a, *args, **kwargs):
-        return cls.tol_eq(a, 0, *args, **kwargs)
-
-    @classmethod
-    def tol_gt(cls, a, b, *args, **kwargs):
-        return a > b and not cls.tol_eq(a, b, *args, **kwargs)
-
-    @classmethod
-    def tol_lt(cls, a, b, *args, **kwargs):
-        return a < b and not cls.tol_eq(a, b, *args, **kwargs)
-
-    @classmethod
-    def tol_ge(cls, a, b, *args, **kwargs):
-        return a > b or cls.tol_eq(a, b, *args, **kwargs)
-
-    @classmethod
-    def tol_le(cls, a, b, *args, **kwargs):
-        return a < b or cls.tol_eq(a, b, *args, **kwargs)
-
 class Matrix(object):
     """Matrix and associated methods"""
 
