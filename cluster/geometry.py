@@ -164,11 +164,11 @@ class Matrix(object):
         :type other: :class:`.Matrix`
         """
 
-        if self.num_cols is not other.num_rows:
-            raise Exception('Matrix dimensions mismatch')
+        #if self.num_cols is not other.num_rows:
+        #    raise Exception('Matrix dimensions mismatch')
 
-        return Matrix([[sum(a * b for a, b in zip(row_a, col_b)) \
-        for col_b in zip(*other.elements)] for row_a in self.elements])
+        return Matrix([[sum(a * b for a, b in zip(row_a, col_b))
+                        for col_b in zip(*other.elements)] for row_a in self.elements])
 
     def solve(self, B, *args, **kwargs):
         """Solve Ax = B for x, where A is this matrix and B is another matrix \
@@ -211,7 +211,14 @@ class Matrix(object):
 class Vector(Matrix):
     """Two-dimensional column vector in Cartesian coordinates"""
 
-    def __init__(self, x, y=None):
+    def __init__(self, data):
+        x = data[0]
+
+        if len(data) > 1:
+            y = data[1]
+        else:
+            y = None
+
         if y is None:
             # check if x is a Matrix
             if isinstance(x, Matrix):
@@ -290,7 +297,7 @@ class Vector(Matrix):
     def origin(cls):
         """The coordinates of the origin"""
 
-        return cls(0, 0)
+        return cls([0, 0])
 
     def rotate(self, azimuth):
         """Rotation of coordinates about the origin using a left-handed \
@@ -377,7 +384,7 @@ class Vector(Matrix):
             other_x = other
             other_y = other
 
-        return self.__class__(self.x + other_x, self.y + other_y)
+        return self.__class__([self.x + other_x, self.y + other_y])
 
     def __sub__(self, other):
         try:
@@ -387,7 +394,7 @@ class Vector(Matrix):
             other_x = other
             other_y = other
 
-        return self.__class__(self.x - other_x, self.y - other_y)
+        return self.__class__([self.x - other_x, self.y - other_y])
 
     def __mul__(self, other):
         try:
@@ -397,7 +404,7 @@ class Vector(Matrix):
             other_x = other
             other_y = other
 
-        return self.__class__(self.x * other_x, self.y * other_y)
+        return self.__class__([self.x * other_x, self.y * other_y])
 
     def __truediv__(self, other):
         try:
@@ -407,12 +414,12 @@ class Vector(Matrix):
             other_x = other
             other_y = other
 
-        return self.__class__(self.x / other_x, self.y / other_y)
+        return self.__class__([self.x / other_x, self.y / other_y])
 
     def __neg__(self):
         """Negate operator"""
 
-        return self.__class__(-self.x, -self.y)
+        return self.__class__([-self.x, -self.y])
 
 def cc_int(p1, r1, p2, r2):
     """Intersect circle (p1, r1) with circle (p2, r2)
@@ -456,21 +463,21 @@ def cc_int(p1, r1, p2, r2):
     s = (p2 - p1) * u / d
 
     if tol_zero(s.length):
-        p3a = p1 + Vector(p2.y - p1.y, p1.x - p2.x) * r1/d
+        p3a = p1 + Vector([p2.y - p1.y, p1.x - p2.x]) * r1 / d
 
         if tol_zero(r1 / d):
             return [p3a]
         else:
-            p3b = p1 + Vector(p1.y - p2.y, p2.x - p1.x) * r1/d
+            p3b = p1 + Vector([p1.y - p2.y, p2.x - p1.x]) * r1/d
 
             return [p3a, p3b]
     else:
-        p3a = p1 + s + Vector(s.y, -s.x) * v / s.length
+        p3a = p1 + s + Vector([s.y, -s.x]) * v / s.length
 
         if tol_zero(v / s.length):
             return [p3a]
         else:
-            p3b = p1 + s + Vector(-s.y, s.x) * v / s.length
+            p3b = p1 + s + Vector([-s.y, s.x]) * v / s.length
 
             return [p3a, p3b]
 
@@ -509,12 +516,12 @@ def cl_int(p1, r, p2, v):
         y1 = p1.y + (-D * v.x + np.abs(v.y) * sE) / d2
         y2 = p1.y + (-D * v.x - np.abs(v.y) * sE) / d2
 
-        return [Vector(x1, y1), Vector(x2, y2)]
+        return [Vector([x1, y1]), Vector([x2, y2])]
     elif tol_zero(E):
         x1 = p1.x + D * v.y / d2
         y1 = p1.y + -D * v.x / d2
 
-        return [Vector(x1, y1)]
+        return [Vector([x1, y1])]
     else:
         return []
 
@@ -713,8 +720,8 @@ def is_clockwise(p1, p2, p3):
     """
 
     u = p2 - p1
-    v = p3 - p2;
-    perp_u = Vector(-u.y, u.x)
+    v = p3 - p2
+    perp_u = Vector([-u.y, u.x])
 
     # check a < 0 within tolerance
     return tol_lt(perp_u.dot(v), 0)
@@ -734,8 +741,8 @@ def is_counterclockwise(p1, p2, p3):
     """
 
     u = p2 - p1
-    v = p3 - p2;
-    perp_u = Vector(-u.y, u.x)
+    v = p3 - p2
+    perp_u = Vector([-u.y, u.x])
 
     # check that a > 0 within tolerance
     return tol_gt(perp_u.dot(v), 0)
@@ -755,8 +762,8 @@ def is_flat(p1, p2, p3):
     """
 
     u = p2 - p1
-    v = p3 - p2;
-    perp_u = Vector(-u.y, u.x)
+    v = p3 - p2
+    perp_u = Vector([-u.y, u.x])
 
     return tol_zero(perp_u.dot(v))
 
@@ -827,7 +834,7 @@ def make_hcs(a, b, scale=False):
         u /= u.length
 
     # mirror of u
-    v = Vector(-u.y, u.x)
+    v = Vector([-u.y, u.x])
 
     # return new coordinate system
     return Matrix([

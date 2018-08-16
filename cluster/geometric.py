@@ -553,9 +553,9 @@ class GeometricSolver(Listener):
             angle = con.get_parameter()
 
             # create points representing the constraint
-            p0 = Vector(1.0, 0.0)
-            p1 = Vector(0.0, 0.0)
-            p2 = Vector(np.cos(angle), np.sin(angle))
+            p0 = Vector([1.0, 0.0])
+            p1 = Vector.origin()
+            p2 = Vector([np.cos(angle), np.sin(angle)])
 
             # create configuration
             conf = Configuration({v0: p0, v1: p1, v2: p2})
@@ -576,7 +576,7 @@ class GeometricSolver(Listener):
             dist = con.get_parameter()
 
             p0 = Vector.origin()
-            p1 = Vector(dist, 0.0)
+            p1 = Vector([dist, 0.0])
 
             conf = Configuration({v0: p0, v1: p1})
 

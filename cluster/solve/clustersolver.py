@@ -1741,8 +1741,8 @@ and r3")
         LOGGER.debug("Solving ddd: %s %s %s %f %f \
 %f", v1, v2, v3, d12, d23, d31)
 
-        p1 = Vector(0.0, 0.0)
-        p2 = Vector(d12, 0.0)
+        p1 = Vector.origin()
+        p2 = Vector([d12, 0.0])
         p3s = cc_int(p1, d31, p2, d23)
 
         solutions = []
@@ -1869,9 +1869,9 @@ hog")
         LOGGER.debug("Solving dad: %s %s %s %f %f \
 %f", v1, v2, v3, d12, a123, d23)
 
-        p2 = Vector(0.0, 0.0)
-        p1 = Vector(d12, 0.0)
-        p3s = [Vector(d23 * np.cos(a123), d23 * np.sin(a123))]
+        p2 = Vector.origin()
+        p1 = Vector([d12, 0.0])
+        p3s = [Vector([d23 * np.cos(a123), d23 * np.sin(a123)])]
 
         solutions = []
 
@@ -2022,10 +2022,10 @@ hedgehog")
         LOGGER.debug("Solving add: %s %s %s %f %f \
 %f", a, b, c, a_cab, d_ab, d_bc)
 
-        p_a = Vector(0.0, 0.0)
-        p_b = Vector(d_ab, 0.0)
+        p_a = Vector.origin()
+        p_b = Vector([d_ab, 0.0])
 
-        direction = Vector(np.cos(-a_cab), np.sin(-a_cab))
+        direction = Vector([np.cos(-a_cab), np.sin(-a_cab)])
 
         solutions = cr_int(p_b, d_bc, p_a, direction)
 
@@ -2135,16 +2135,16 @@ class BalloonFromHogs(Merge):
         LOGGER.debug("Solve ada: %s %s %s %f %f \
 %f", a, b, c, a_cab, d_ab, a_abc)
 
-        p_a = Vector(0.0, 0.0)
-        p_b = Vector(d_ab, 0.0)
+        p_a = Vector.origin()
+        p_b = Vector([d_ab, 0.0])
 
-        dir_ac = Vector(np.cos(-a_cab), np.sin(-a_cab))
-        dir_bc = Vector(-np.cos(-a_abc), np.sin(-a_abc))
+        dir_ac = Vector([np.cos(-a_cab), np.sin(-a_cab)])
+        dir_bc = Vector([-np.cos(-a_abc), np.sin(-a_abc)])
 
         if tol_zero(np.sin(a_cab)) and tol_zero(np.sin(a_abc)):
             m = d_ab / 2 + np.cos(-a_cab) * d_ab - np.cos(-a_abc) * d_ab
 
-            p_c = Vector(m, 0.0)
+            p_c = Vector([m, 0.0])
 
             mapping = {a: p_a, b: p_b, c: p_c}
 

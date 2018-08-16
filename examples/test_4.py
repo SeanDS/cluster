@@ -102,7 +102,7 @@ problem.add_constraint(AngleConstraint('bsfr', 'itmy', 'etmy', np.radians(180)))
 
 # fix the x arm coordinates
 problem.add_constraint(FixConstraint('bsbk', Vector.origin()))
-problem.add_constraint(FixConstraint('itmx', Vector(75, 0)))
+problem.add_constraint(FixConstraint('itmx', Vector([75, 0])))
 #problem.add_constraint(DistanceConstraint('bsbk', 'itmx', 75))
 problem.add_constraint(AngleConstraint('bsfr', 'bsbk', 'itmx', np.radians(-bs_aoi)))
 problem.add_constraint(DistanceConstraint('itmx', 'etmx', l_arm))
