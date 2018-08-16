@@ -18,7 +18,7 @@ from ..multimethod import MultiVariable, MultiMethod
 from ..cluster import *
 from ..configuration import Configuration
 from ..selconstr import NotCounterClockwiseConstraint, NotClockwiseConstraint, NotAcuteConstraint, NotObtuseConstraint
-from ..geometry import Scalar, Vector, distance_2p, angle_3p, rr_int, cr_int, cc_int
+from ..geometry import Vector, distance_2p, angle_3p, rr_int, cr_int, cc_int, tol_zero
 
 LOGGER = logging.getLogger(__name__)
 
@@ -2141,7 +2141,7 @@ class BalloonFromHogs(Merge):
         dir_ac = Vector(math.cos(-a_cab), math.sin(-a_cab))
         dir_bc = Vector(-math.cos(-a_abc), math.sin(-a_abc))
 
-        if Scalar.tol_zero(math.sin(a_cab)) and Scalar.tol_zero(math.sin(a_abc)):
+        if tol_zero(math.sin(a_cab)) and tol_zero(math.sin(a_abc)):
             m = d_ab / 2 + math.cos(-a_cab) * d_ab - math.cos(-a_abc) * d_ab
 
             p_c = Vector(m, 0.0)

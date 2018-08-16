@@ -9,6 +9,28 @@ import copy
 
 LOGGER = logging.getLogger(__name__)
 
+def tol_eq(a, b):
+    return np.allclose(a, b)
+
+def tol_gt(a, b):
+    return a > b and not tol_eq(a, b)
+
+def tol_lt(a, b):
+    return a < b and not tol_eq(a, b)
+
+def tol_ge(a, b):
+    return a > b or tol_eq(a, b)
+
+def tol_le(a, b):
+    return a < b or tol_eq(a, b)
+
+def tol_zero(a):
+    return tol_eq(a, np.zeros_like(a))
+
+
+
+
+
 class Scalar(object):
     """Scalar value functions"""
 
@@ -318,21 +340,20 @@ class Vector(Matrix):
 
         return not self.is_positive()
 
-    def tol_eq(self, other, *args, **kwargs):
-        return Scalar.tol_eq(self.x, other.x, *args, **kwargs) \
-        and Scalar.tol_eq(self.y, other.y, *args, **kwargs)
+    def tol_eq(self, other):
+        return tol_eq(self.x, other.x) and tol_eq(self.y, other.y)
 
-    def tol_gt(self, other, *args, **kwargs):
-        return self > other and not self.tol_eq(other, *args, **kwargs)
+    def tol_gt(self, other):
+        return self > other and not self.tol_eq(other)
 
-    def tol_lt(self, other, *args, **kwargs):
-        return self < other and not self.tol_eq(other, *args, **kwargs)
+    def tol_lt(self, other):
+        return self < other and not self.tol_eq(other)
 
-    def tol_ge(self, other, *args, **kwargs):
-        return self > other or self.tol_eq(other, *args, **kwargs)
+    def tol_ge(self, other):
+        return self > other or self.tol_eq(other)
 
-    def tol_le(self, other, *args, **kwargs):
-        return self < other or self.tol_eq(other, *args, **kwargs)
+    def tol_le(self, other):
+        return self < other or self.tol_eq(other)
 
     def __eq__(self, other):
         return self.x == other.x and self.y == other.y
@@ -415,7 +436,7 @@ def cc_int(p1, r1, p2, r2):
     d = (p2-p1).length
 
     # check if d <= 0 within tolerance
-    if Scalar.tol_le(d, 0):
+    if tol_le(d, 0):
         # no solutions
         return []
 
@@ -426,7 +447,7 @@ def cc_int(p1, r1, p2, r2):
 
     # check that a < b within tolerance
     # FIXME: what's going on here?  elif block seems to repeat earlier check
-    if Scalar.tol_lt(a, b):
+    if tol_lt(a, b):
         return []
     elif a < b:
         v = 0.0
@@ -435,10 +456,10 @@ def cc_int(p1, r1, p2, r2):
 
     s = (p2 - p1) * u / d
 
-    if Scalar.tol_zero(s.length):
+    if tol_zero(s.length):
         p3a = p1 + Vector(p2.y - p1.y, p1.x - p2.x) * r1/d
 
-        if Scalar.tol_zero(r1 / d):
+        if tol_zero(r1 / d):
             return [p3a]
         else:
             p3b = p1 + Vector(p1.y - p2.y, p2.x - p1.x) * r1/d
@@ -447,7 +468,7 @@ def cc_int(p1, r1, p2, r2):
     else:
         p3a = p1 + s + Vector(s.y, -s.x) * v / s.length
 
-        if Scalar.tol_zero(v / s.length):
+        if tol_zero(v / s.length):
             return [p3a]
         else:
             p3b = p1 + s + Vector(-s.y, s.x) * v / s.length
@@ -482,15 +503,15 @@ def cl_int(p1, r, p2, v):
     E = r * r * d2 - D * D
 
     # check that d2 and E are both > 0 within tolerance
-    if Scalar.tol_gt(d2, 0) and Scalar.tol_gt(E, 0):
+    if tol_gt(d2, 0) and tol_gt(E, 0):
         sE = math.sqrt(E)
-        x1 = p1.x + (D * v.y + Scalar.sign(v.y) * v.x * sE) / d2
-        x2 = p1.x + (D * v.y - Scalar.sign(v.y) * v.x * sE) / d2
-        y1 = p1.y + (-D * v.x + math.abs(v.y) * sE) / d2
-        y2 = p1.y + (-D * v.x - math.abs(v.y) * sE) / d2
+        x1 = p1.x + (D * v.y + np.sign(v.y) * v.x * sE) / d2
+        x2 = p1.x + (D * v.y - np.sign(v.y) * v.x * sE) / d2
+        y1 = p1.y + (-D * v.x + np.abs(v.y) * sE) / d2
+        y2 = p1.y + (-D * v.x - np.abs(v.y) * sE) / d2
 
         return [Vector(x1, y1), Vector(x2, y2)]
-    elif Scalar.tol_zero(E):
+    elif tol_zero(E):
         x1 = p1.x + D * v.y / d2
         y1 = p1.y + -D * v.x / d2
 
@@ -521,7 +542,7 @@ def cr_int(p1, r, p2, v):
     # loop over solutions of the circle and line intercept
     for s in cl_int(p1, r, p2, v):
         # check if a is >= 0 within tolerance
-        if Scalar.tol_ge((s - p2).dot(v), 0):
+        if tol_ge((s - p2).dot(v), 0):
             solutions.append(s)
 
     return solutions
@@ -544,10 +565,10 @@ def ll_int(p1, v1, p2, v2):
     LOGGER.debug("ll_int %s %s %s %s", p1, v1, p2, \
     v2)
 
-    if Scalar.tol_zero(v1.x * v2.y - v1.y * v2.x):
+    if tol_zero(v1.x * v2.y - v1.y * v2.x):
         # lines don't intersect
         return []
-    elif not Scalar.tol_zero(v2.y):
+    elif not tol_zero(v2.y):
         d = p2 - p1
         r2 = -v2.x / v2.y
         f = v1.x + v1.y * r2
@@ -580,7 +601,7 @@ def lr_int(p1, v1, p2, v2):
     s = ll_int(p1, v1, p2, v2)
 
     # check if s > 0 and a >= 0 within tolerance
-    if len(s) > 0 and Scalar.tol_ge((s[0] - p2).dot(v2), 0):
+    if len(s) > 0 and tol_ge((s[0] - p2).dot(v2), 0):
         return s
     else:
         # lines intersect behind ray
@@ -611,8 +632,7 @@ def rr_int(p1, v1, p2, v2):
     a2 = (s[0] - p2).dot(v2)
 
     # check len(s) > 0 and a1 >= 0 and a2 >= 0 within tolerance
-    if len(s) > 0 and Scalar.tol_ge((s[0] - p1).dot(v1), 0) \
-    and Scalar.tol_ge((s[0] - p1).dot(v1), 0):
+    if len(s) > 0 and tol_ge((s[0] - p1).dot(v1), 0) and tol_ge((s[0] - p1).dot(v1), 0):
         return s
     else:
         # lines intersect behind rays
@@ -641,7 +661,7 @@ def angle_3p(p1, p2, p3):
     d21 = (p2 - p1).length
     d23 = (p3 - p2).length
 
-    if Scalar.tol_zero(d21) or Scalar.tol_zero(d23):
+    if tol_zero(d21) or tol_zero(d23):
         # degenerate angle
         return None
 
@@ -698,7 +718,7 @@ def is_clockwise(p1, p2, p3):
     perp_u = Vector(-u.y, u.x)
 
     # check a < 0 within tolerance
-    return Scalar.tol_lt(perp_u.dot(v), 0)
+    return tol_lt(perp_u.dot(v), 0)
 
 def is_counterclockwise(p1, p2, p3):
     """Calculates whether or not triangle p1, p2, p3 is orientated \
@@ -719,7 +739,7 @@ def is_counterclockwise(p1, p2, p3):
     perp_u = Vector(-u.y, u.x)
 
     # check that a > 0 within tolerance
-    return Scalar.tol_gt(perp_u.dot(v), 0)
+    return tol_gt(perp_u.dot(v), 0)
 
 def is_flat(p1, p2, p3):
     """Calculates wheter or not triangle p1, p2, p3 is flat (neither \
@@ -739,7 +759,7 @@ def is_flat(p1, p2, p3):
     v = p3 - p2;
     perp_u = Vector(-u.y, u.x)
 
-    return Scalar.tol_zero(perp_u.dot(v), 0)
+    return tol_zero(perp_u.dot(v))
 
 def is_acute(p1, p2, p3):
     """Calculates whether or not angle p1, p2, p3 is acute, i.e. less than \
@@ -761,7 +781,7 @@ def is_acute(p1, p2, p3):
     if angle is None:
         return False
 
-    return Scalar.tol_lt(abs(angle), math.pi / 2)
+    return tol_lt(abs(angle), math.pi / 2)
 
 def is_obtuse(p1,p2,p3):
     """Calculates whether or not angle p1, p2, p3 is obtuse, i.e. greater than \
@@ -783,7 +803,7 @@ def is_obtuse(p1,p2,p3):
     if angle is None:
         return False
 
-    return Scalar.tol_gt(abs(angle), math.pi / 2)
+    return tol_gt(abs(angle), math.pi / 2)
 
 def make_hcs(a, b, scale=False):
     """Build a homogeneous coordiate system from two vectors, normalised
@@ -799,7 +819,7 @@ def make_hcs(a, b, scale=False):
     # resultant vector
     u = b - a
 
-    if Scalar.tol_zero(u.length):
+    if tol_zero(u.length):
         # vectors are on top of each other (within tolerance)
         return None
 

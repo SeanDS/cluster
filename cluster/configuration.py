@@ -3,8 +3,7 @@ coordinates"""
 
 import logging
 
-from .geometry import Scalar, Vector, Matrix, distance_2p, make_hcs, \
-make_hcs_scaled, cs_transform_matrix
+from .geometry import Vector, Matrix, distance_2p, make_hcs, make_hcs_scaled, cs_transform_matrix, tol_zero
 
 LOGGER = logging.getLogger(__name__)
 
@@ -101,14 +100,14 @@ class Configuration(object):
             v2 = list(shared)[1]
             p11 = self.mapping[v1]
             p12 = self.mapping[v2]
-            if Scalar.tol_zero((p12 - p11).length):
+            if tol_zero((p12 - p11).length):
                 underconstrained = True
                 cs1 = make_hcs(p11, p11 + Vector(1.0, 0.0))
             else:
                 cs1 = make_hcs(p11, p12)
             p21 = other.mapping[v1]
             p22 = other.mapping[v2]
-            if Scalar.tol_zero((p22 - p21).length):
+            if tol_zero((p22 - p21).length):
                 underconstrained = True
                 cs2 = make_hcs(p21, p21 + Vector(1.0, 0.0))
             else:
@@ -131,14 +130,14 @@ class Configuration(object):
         v2 = list(shared)[1]
         p11 = self.mapping[v1]
         p12 = self.mapping[v2]
-        if Scalar.tol_zero((p12 - p11).length):
+        if tol_zero((p12 - p11).length):
             underconstrained = True
             cs1 = make_hcs_scaled(p11, p11 + Vector(1.0, 0.0))
         else:
             cs1 = make_hcs_scaled(p11, p12)
         p21 = other.mapping[v1]
         p22 = other.mapping[v2]
-        if Scalar.tol_zero((p22 - p21).length):
+        if tol_zero((p22 - p21).length):
             underconstrained = True
             cs2 = make_hcs_scaled(p21, p21 + Vector(1.0, 0.0))
         else:

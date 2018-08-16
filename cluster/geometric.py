@@ -11,7 +11,7 @@ from .configuration import Configuration
 from .constraint import Constraint, ConstraintGraph
 from .notify import Notifier, Listener
 from .selconstr import SelectionConstraint
-from .geometry import Scalar, Vector, angle_3p, distance_2p
+from .geometry import Vector, angle_3p, distance_2p, tol_eq
 
 LOGGER = logging.getLogger(__name__)
 
@@ -730,7 +730,7 @@ class FixConstraint(ParametricConstraint):
 
         a = mapping[self._variables[0]]
 
-        result = Scalar.tol_eq(a.x, self._value.x) and Scalar.tol_eq(a.y, self._value.y)
+        result = tol_eq(a.x, self._value.x) and tol_eq(a.y, self._value.y)
 
         return result
 
@@ -759,7 +759,7 @@ class DistanceConstraint(ParametricConstraint):
         a = mapping[self._variables[0]]
         b = mapping[self._variables[1]]
 
-        result = Scalar.tol_eq(distance_2p(a, b), self._value)
+        result = tol_eq(distance_2p(a, b), self._value)
 
         return result
 
@@ -799,7 +799,7 @@ class AngleConstraint(ParametricConstraint):
         if ang is None:
             result = False
         else:
-            result = Scalar.tol_eq(ang, cmp)
+            result = tol_eq(ang, cmp)
 
         if not result:
             logging.getLogger("geometric").debug("measured angle = %s, parameter value = %s, geometric", ang, cmp)
