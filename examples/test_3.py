@@ -1,0 +1,59 @@
+import math
+import logging
+
+handler = logging.StreamHandler()
+handler.setFormatter(logging.Formatter("%(name)-25s - %(levelname)-8s - %(message)s"))
+logger = logging.getLogger("cluster")
+logger.addHandler(handler)
+logger.setLevel(logging.DEBUG)
+
+from cluster.geometric import *
+from cluster.geometry import Vector
+from cluster.view import solution_viewer
+
+problem = GeometricProblem()
+
+# Fig 1
+problem.add_point('a', Vector.origin())
+problem.add_point('b', Vector.origin())
+problem.add_point('c', Vector.origin())
+problem.add_point('d', Vector.origin())
+problem.add_point('e', Vector.origin())
+problem.add_point('f', Vector.origin())
+
+problem.add_constraint(AngleConstraint('a', 'b', 'c', math.radians(70)))
+problem.add_constraint(AngleConstraint('a', 'd', 'c', math.radians(-70)))
+problem.add_constraint(AngleConstraint('a', 'd', 'e', math.radians(70)))
+problem.add_constraint(AngleConstraint('a', 'f', 'e', math.radians(-70)))
+
+problem.add_constraint(AngleConstraint('b', 'a', 'c', math.radians(-30)))
+problem.add_constraint(AngleConstraint('c', 'a', 'd', math.radians(-30)))
+problem.add_constraint(AngleConstraint('d', 'a', 'e', math.radians(-30)))
+problem.add_constraint(AngleConstraint('e', 'a', 'f', math.radians(-30)))
+
+problem.add_constraint(DistanceConstraint('b', 'f', 300))
+
+print("problem:")
+print(problem)
+solver = GeometricSolver(problem)
+# print(diagnostic messages for drplan
+print("drplan:")
+# at this point, the solver has already solved it, if a solution exists
+print(solver.solver)
+print("number of top-level rigids:",len(solver.solver.top_level()))
+result = solver.decomposition()
+print("result:")
+print(result)
+print("result is",result.flag, "with", len(result.solutions),"solutions")
+check = True
+if len(result.solutions) == 0:
+    check = False
+for sol in result.solutions:
+    print("solution:",sol)
+    check = check and problem.verify(sol)
+if check:
+    print("all solutions valid")
+else:
+    print("INVALID")
+
+solution_viewer(problem, result.solutions[0])
