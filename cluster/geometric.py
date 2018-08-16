@@ -1,9 +1,9 @@
 """Geometric constraint problem and solver. Uses ClusterSolver for solving
 problems incrementally."""
 
-import math
 import logging
 import abc
+import numpy as np
 
 from .solve import PrototypeMethod, ClusterSolver, is_information_increasing
 from .cluster import Rigid, Hedgehog
@@ -555,7 +555,7 @@ class GeometricSolver(Listener):
             # create points representing the constraint
             p0 = Vector(1.0, 0.0)
             p1 = Vector(0.0, 0.0)
-            p2 = Vector(math.cos(angle), math.sin(angle))
+            p2 = Vector(np.cos(angle), np.sin(angle))
 
             # create configuration
             conf = Configuration({v0: p0, v1: p1, v2: p2})
@@ -807,7 +807,7 @@ class AngleConstraint(ParametricConstraint):
         return result
 
     def angle_degrees(self):
-        return math.degrees(self._value)
+        return np.degrees(self._value)
 
     def __str__(self):
         return "AngleConstraint({0}, {1}, {2}, {3})".format(\

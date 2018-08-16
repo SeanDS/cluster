@@ -5,11 +5,11 @@ generic solution is a directed acyclic graph of Clusters and Methods. Particular
 problems and solutions are represented by a Configuration for each cluster.
 """
 
-import math
 import abc
 import logging
-import numpy.linalg as linalg
 from functools import reduce
+import numpy as np
+import numpy.linalg as linalg
 
 from ..graph import Graph, MethodGraph
 from ..method import Method
@@ -1871,7 +1871,7 @@ hog")
 
         p2 = Vector(0.0, 0.0)
         p1 = Vector(d12, 0.0)
-        p3s = [Vector(d23 * math.cos(a123), d23 * math.sin(a123))]
+        p3s = [Vector(d23 * np.cos(a123), d23 * np.sin(a123))]
 
         solutions = []
 
@@ -2025,7 +2025,7 @@ hedgehog")
         p_a = Vector(0.0, 0.0)
         p_b = Vector(d_ab, 0.0)
 
-        direction = Vector(math.cos(-a_cab), math.sin(-a_cab))
+        direction = Vector(np.cos(-a_cab), np.sin(-a_cab))
 
         solutions = cr_int(p_b, d_bc, p_a, direction)
 
@@ -2138,11 +2138,11 @@ class BalloonFromHogs(Merge):
         p_a = Vector(0.0, 0.0)
         p_b = Vector(d_ab, 0.0)
 
-        dir_ac = Vector(math.cos(-a_cab), math.sin(-a_cab))
-        dir_bc = Vector(-math.cos(-a_abc), math.sin(-a_abc))
+        dir_ac = Vector(np.cos(-a_cab), np.sin(-a_cab))
+        dir_bc = Vector(-np.cos(-a_abc), np.sin(-a_abc))
 
-        if tol_zero(math.sin(a_cab)) and tol_zero(math.sin(a_abc)):
-            m = d_ab / 2 + math.cos(-a_cab) * d_ab - math.cos(-a_abc) * d_ab
+        if tol_zero(np.sin(a_cab)) and tol_zero(np.sin(a_abc)):
+            m = d_ab / 2 + np.cos(-a_cab) * d_ab - np.cos(-a_abc) * d_ab
 
             p_c = Vector(m, 0.0)
 

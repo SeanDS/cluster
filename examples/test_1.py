@@ -1,5 +1,5 @@
-import math
 import logging
+import numpy as np
 
 handler = logging.StreamHandler()
 handler.setFormatter(logging.Formatter("%(name)-25s - %(levelname)-8s - %(message)s"))
@@ -27,11 +27,11 @@ problem.add_constraint(DistanceConstraint('bs1', 'm2', 50))
 problem.add_constraint(DistanceConstraint('bs1', 'm3', 150))
 problem.add_constraint(DistanceConstraint('bs1', 'm4', 100))
 problem.add_constraint(DistanceConstraint('m2', 'm5', 100))
-problem.add_constraint(AngleConstraint('l1', 'm1', 'bs1', math.radians(-90)))
-problem.add_constraint(AngleConstraint('m1', 'bs1', 'm2', math.radians(-90)))
-problem.add_constraint(AngleConstraint('m4', 'bs1', 'm1', math.radians(-90)))
-problem.add_constraint(AngleConstraint('bs1', 'm2', 'm5', math.radians(90)))
-problem.add_constraint(AngleConstraint('m3', 'bs1', 'm4', math.radians(-90)))
+problem.add_constraint(AngleConstraint('l1', 'm1', 'bs1', np.radians(-90)))
+problem.add_constraint(AngleConstraint('m1', 'bs1', 'm2', np.radians(-90)))
+problem.add_constraint(AngleConstraint('m4', 'bs1', 'm1', np.radians(-90)))
+problem.add_constraint(AngleConstraint('bs1', 'm2', 'm5', np.radians(90)))
+problem.add_constraint(AngleConstraint('m3', 'bs1', 'm4', np.radians(-90)))
 
 print("problem:")
 print(problem)

@@ -1,5 +1,5 @@
-import math
 import logging
+import numpy as np
 
 handler = logging.StreamHandler()
 handler.setFormatter(logging.Formatter("%(name)-25s - %(levelname)-8s - %(message)s"))
@@ -33,19 +33,19 @@ problem.add_constraint(DistanceConstraint('bs1', 'm2', 30))
 problem.add_constraint(DistanceConstraint('bs1', 'm4', 100))
 problem.add_constraint(DistanceConstraint('m4', 'm5', 50))
 
-problem.add_constraint(AngleConstraint('l1', 'm1', 'bs1', math.radians(-90)))
-problem.add_constraint(AngleConstraint('bs1', 'm4', 'm5', math.radians(-90)))
+problem.add_constraint(AngleConstraint('l1', 'm1', 'bs1', np.radians(-90)))
+problem.add_constraint(AngleConstraint('bs1', 'm4', 'm5', np.radians(-90)))
 
 # triangular cavity
-problem.add_constraint(AngleConstraint('bs1', 'm2', 'm3', math.radians(60)))
-problem.add_constraint(AngleConstraint('m2', 'm3', 'bs1', math.radians(60)))
+problem.add_constraint(AngleConstraint('bs1', 'm2', 'm3', np.radians(60)))
+problem.add_constraint(AngleConstraint('m2', 'm3', 'bs1', np.radians(60)))
 
 # set global orientation of triangular cavity
-problem.add_constraint(AngleConstraint('m1', 'bs1', 'm2', math.radians(120)))
-problem.add_constraint(AngleConstraint('m1', 'bs1', 'm4', math.radians(180)))
+problem.add_constraint(AngleConstraint('m1', 'bs1', 'm2', np.radians(120)))
+problem.add_constraint(AngleConstraint('m1', 'bs1', 'm4', np.radians(180)))
 
 # add an overconstraint
-problem.add_constraint(AngleConstraint('m4', 'bs1', 'm3', math.radians(-120)))
+problem.add_constraint(AngleConstraint('m4', 'bs1', 'm3', np.radians(-120)))
 
 print("problem:")
 print(problem)

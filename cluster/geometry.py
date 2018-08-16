@@ -3,7 +3,6 @@ transformations on sets of vectors"""
 
 import numpy as np
 import numpy.linalg as la
-import math
 import logging
 import copy
 
@@ -304,10 +303,10 @@ class Vector(Matrix):
         azimuth = float(azimuth)
 
         # apply rotation matrix to x and y
-        x = self.x * math.cos(math.radians(azimuth)) \
-        - self.y * math.sin(math.radians(azimuth))
-        y = self.x * math.sin(math.radians(azimuth)) \
-        + self.y * math.cos(math.radians(azimuth))
+        x = self.x * np.cos(np.radians(azimuth)) \
+        - self.y * np.sin(np.radians(azimuth))
+        y = self.x * np.sin(np.radians(azimuth)) \
+        + self.y * np.cos(np.radians(azimuth))
 
         # return new coordinates
         return self.__class__(x, y)
@@ -316,13 +315,13 @@ class Vector(Matrix):
     def azimuth(self):
         """Azimuth defined by the coordinate with respect to the origin"""
 
-        return math.degrees(math.atan2(self.y, self.x))
+        return np.degrees(np.arctan2(self.y, self.x))
 
     @property
     def length(self):
         """Length between point defined by coordinates and the origin"""
 
-        return math.sqrt(self.x * self.x + self.y * self.y)
+        return np.sqrt(self.x * self.x + self.y * self.y)
 
     def is_positive(self):
         """Checks if the coordinates are all positive
@@ -452,7 +451,7 @@ def cc_int(p1, r1, p2, r2):
     elif a < b:
         v = 0.0
     else:
-        v = math.sqrt(a-b)
+        v = np.sqrt(a-b)
 
     s = (p2 - p1) * u / d
 
@@ -504,7 +503,7 @@ def cl_int(p1, r, p2, v):
 
     # check that d2 and E are both > 0 within tolerance
     if tol_gt(d2, 0) and tol_gt(E, 0):
-        sE = math.sqrt(E)
+        sE = np.sqrt(E)
         x1 = p1.x + (D * v.y + np.sign(v.y) * v.x * sE) / d2
         x2 = p1.x + (D * v.y - np.sign(v.y) * v.x * sE) / d2
         y1 = p1.y + (-D * v.x + np.abs(v.y) * sE) / d2
@@ -679,7 +678,7 @@ def angle_3p(p1, p2, p3):
         t = -1.0
 
     # calculate angle from rotation vector
-    angle = math.acos(t)
+    angle = np.arccos(t)
 
     if is_counterclockwise(p1, p2, p3):
         # flip angle
@@ -781,7 +780,7 @@ def is_acute(p1, p2, p3):
     if angle is None:
         return False
 
-    return tol_lt(abs(angle), math.pi / 2)
+    return tol_lt(np.abs(angle), np.pi / 2)
 
 def is_obtuse(p1,p2,p3):
     """Calculates whether or not angle p1, p2, p3 is obtuse, i.e. greater than \
@@ -803,7 +802,7 @@ def is_obtuse(p1,p2,p3):
     if angle is None:
         return False
 
-    return tol_gt(abs(angle), math.pi / 2)
+    return tol_gt(np.abs(angle), np.pi / 2)
 
 def make_hcs(a, b, scale=False):
     """Build a homogeneous coordiate system from two vectors, normalised

@@ -1,5 +1,5 @@
-import math
 import logging
+import numpy as np
 
 handler = logging.StreamHandler()
 handler.setFormatter(logging.Formatter("%(name)-25s - %(levelname)-8s - %(message)s"))
@@ -21,15 +21,15 @@ problem.add_point('d', Vector.origin())
 problem.add_point('e', Vector.origin())
 problem.add_point('f', Vector.origin())
 
-problem.add_constraint(AngleConstraint('a', 'b', 'c', math.radians(70)))
-problem.add_constraint(AngleConstraint('a', 'd', 'c', math.radians(-70)))
-problem.add_constraint(AngleConstraint('a', 'd', 'e', math.radians(70)))
-problem.add_constraint(AngleConstraint('a', 'f', 'e', math.radians(-70)))
+problem.add_constraint(AngleConstraint('a', 'b', 'c', np.radians(70)))
+problem.add_constraint(AngleConstraint('a', 'd', 'c', np.radians(-70)))
+problem.add_constraint(AngleConstraint('a', 'd', 'e', np.radians(70)))
+problem.add_constraint(AngleConstraint('a', 'f', 'e', np.radians(-70)))
 
-problem.add_constraint(AngleConstraint('b', 'a', 'c', math.radians(-30)))
-problem.add_constraint(AngleConstraint('c', 'a', 'd', math.radians(-30)))
-problem.add_constraint(AngleConstraint('d', 'a', 'e', math.radians(-30)))
-problem.add_constraint(AngleConstraint('e', 'a', 'f', math.radians(-30)))
+problem.add_constraint(AngleConstraint('b', 'a', 'c', np.radians(-30)))
+problem.add_constraint(AngleConstraint('c', 'a', 'd', np.radians(-30)))
+problem.add_constraint(AngleConstraint('d', 'a', 'e', np.radians(-30)))
+problem.add_constraint(AngleConstraint('e', 'a', 'f', np.radians(-30)))
 
 problem.add_constraint(DistanceConstraint('b', 'f', 300))
 
