@@ -100,13 +100,6 @@ class Matrix(object):
         # TODO: check if dimensions > 2, but has to be quick
         self._elements = elements
 
-    @classmethod
-    def identity(cls, size):
-        if size == 2:
-            return cls([[1.0, 0.0], [0.0, 1.0]])
-
-        raise NotImplementedError("Size != 2 not available")
-
     @property
     def num_rows(self):
         return len(self.elements)
@@ -114,21 +107,6 @@ class Matrix(object):
     @property
     def num_cols(self):
         return len(self.elements[0])
-
-    @property
-    def num_elements(self):
-        return self.num_rows * self.num_cols
-
-    @property
-    def num_dim(self):
-        """Number of dimensions"""
-
-        dimensions = 1
-
-        if (self.num_rows > 1) and (self.num_cols > 1):
-            dimensions += 1
-
-        return dimensions
 
     def inverse(self):
         if self.num_rows is not self.num_cols:
@@ -150,12 +128,6 @@ class Matrix(object):
             t_matrix.append(t_row)
 
         return(self.__class__(t_matrix))
-
-    def round(self, precision=4):
-        for row in range(self.num_rows):
-            for col in range(self.num_cols):
-                self.elements[row][col] = round(self.elements[row][col], \
-                precision)
 
     def __mul__(self, other):
         """Matrix multiplication
@@ -212,30 +184,7 @@ class Vector(Matrix):
     """Two-dimensional column vector in Cartesian coordinates"""
 
     def __init__(self, data):
-        x = data[0]
-
-        if len(data) > 1:
-            y = data[1]
-        else:
-            y = None
-
-        if y is None:
-            # check if x is a Matrix
-            if isinstance(x, Matrix):
-                # check if the matrix is a column matrix
-                if x.num_cols > 1:
-                    raise Exception('Matrix must be a single column')
-
-                # check that the matrix has 2 elements
-                if x.num_rows is not 2:
-                    raise Exception('Matrix must have two rows')
-
-                y = x.elements[1][0]
-                x = x.elements[0][0]
-            else:
-                # copy constructor
-                y = x.y
-                x = x.x
+        x, y = data[0], data[1]
 
         # create column matrix
         super(Vector, self).__init__([[float(x)], [float(y)]])
@@ -268,12 +217,6 @@ class Vector(Matrix):
     def y(self, y):
         self.elements[1][0] = float(y)
 
-    def append_row(self, row):
-        raise NotImplementedError('Append operations not available in vectors')
-
-    def append_col(self, col):
-        raise NotImplementedError('Append operations not available in vectors')
-
     def __str__(self):
         """String representation of the vector's coordinates"""
 
@@ -299,52 +242,10 @@ class Vector(Matrix):
 
         return cls([0, 0])
 
-    def rotate(self, azimuth):
-        """Rotation of coordinates about the origin using a left-handed \
-        coordinate system
-
-        :param azimuth: the angle in degrees to rotate in a clockwise direction
-        """
-
-        # validate azimuth
-        azimuth = float(azimuth)
-
-        # apply rotation matrix to x and y
-        x = self.x * np.cos(np.radians(azimuth)) \
-        - self.y * np.sin(np.radians(azimuth))
-        y = self.x * np.sin(np.radians(azimuth)) \
-        + self.y * np.cos(np.radians(azimuth))
-
-        # return new coordinates
-        return self.__class__(x, y)
-
-    @property
-    def azimuth(self):
-        """Azimuth defined by the coordinate with respect to the origin"""
-
-        return np.degrees(np.arctan2(self.y, self.x))
-
     @property
     def length(self):
         """Length between point defined by coordinates and the origin"""
-
         return np.sqrt(self.x * self.x + self.y * self.y)
-
-    def is_positive(self):
-        """Checks if the coordinates are all positive
-
-        Assumes 0 is positive.
-        """
-
-        return self.x >= 0 and self.y >= 0
-
-    def is_negative(self):
-        """Checks if the coordinates are all negative
-
-        Assumes 0 is positive
-        """
-
-        return not self.is_positive()
 
     def tol_eq(self, other):
         return tol_eq(self.x, other.x) and tol_eq(self.y, other.y)
@@ -405,6 +306,9 @@ class Vector(Matrix):
             other_y = other
 
         return self.__class__([self.x * other_x, self.y * other_y])
+
+    def __div__(self, other):
+        return self.__truediv__(other)
 
     def __truediv__(self, other):
         try:
