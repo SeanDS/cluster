@@ -4,7 +4,6 @@ transformations on sets of vectors"""
 import numpy as np
 import numpy.linalg as la
 import logging
-import copy
 
 LOGGER = logging.getLogger(__name__)
 
