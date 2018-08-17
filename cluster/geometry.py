@@ -93,7 +93,7 @@ class Vector(np.ndarray):
         vcb = cb.unit()
 
         # calculate vector rotating vab to vcb
-        rotation = vab.dot(vcb)
+        rotation = np.dot(vab, vcb)
 
         # clip to +/-1.0 to fix floating point errors
         if rotation > 1.0:
@@ -291,7 +291,7 @@ def cr_int(p1, r, p2, v):
     # loop over solutions of the circle and line intercept
     for s in cl_int(p1, r, p2, v):
         # check if a is >= 0 within tolerance
-        if tol_ge((s - p2).dot(v), 0):
+        if tol_ge(np.dot(s - p2, v), 0):
             solutions.append(s)
 
     return solutions
@@ -350,7 +350,7 @@ def lr_int(p1, v1, p2, v2):
     s = ll_int(p1, v1, p2, v2)
 
     # check if s > 0 and a >= 0 within tolerance
-    if len(s) > 0 and tol_ge((s[0] - p2).dot(v2), 0):
+    if len(s) > 0 and tol_ge(np.dot(s[0] - p2, v2), 0):
         return s
     else:
         # lines intersect behind ray
@@ -371,17 +371,16 @@ def rr_int(p1, v1, p2, v2):
     :rtype: list
     """
 
-    LOGGER.debug("rr_int %s %s %s %s", p1, v1, p2, \
-    v2)
+    LOGGER.debug("rr_int %s %s %s %s", p1, v1, p2, v2)
 
     # assume rays are lines and get intersection
     s = ll_int(p1, v1, p2, v2)
 
-    a1 = (s[0] - p1).dot(v1)
-    a2 = (s[0] - p2).dot(v2)
+    a1 = np.dot(s[0] - p1, v1)
+    a2 = np.dot(s[0] - p2, v2)
 
     # check len(s) > 0 and a1 >= 0 and a2 >= 0 within tolerance
-    if len(s) > 0 and tol_ge((s[0] - p1).dot(v1), 0) and tol_ge((s[0] - p1).dot(v1), 0):
+    if len(s) > 0 and tol_ge(np.dot(s[0] - p1, v1), 0) and tol_ge(np.dot(s[0] - p1, v1), 0):
         return s
     else:
         # lines intersect behind rays
@@ -405,7 +404,7 @@ def is_clockwise(p1, p2, p3):
     perp_u = Vector([-u.y, u.x])
 
     # check a < 0 within tolerance
-    return tol_lt(perp_u.dot(v), 0)
+    return tol_lt(np.dot(perp_u, v), 0)
 
 def is_counterclockwise(p1, p2, p3):
     """Calculates whether or not triangle p1, p2, p3 is orientated \
@@ -426,7 +425,7 @@ def is_counterclockwise(p1, p2, p3):
     perp_u = Vector([-u.y, u.x])
 
     # check that a > 0 within tolerance
-    return tol_gt(perp_u.dot(v), 0)
+    return tol_gt(np.dot(perp_u, v), 0)
 
 def is_flat(p1, p2, p3):
     """Calculates wheter or not triangle p1, p2, p3 is flat (neither \
@@ -446,7 +445,7 @@ def is_flat(p1, p2, p3):
     v = p3 - p2
     perp_u = Vector([-u.y, u.x])
 
-    return tol_zero(perp_u.dot(v))
+    return tol_zero(np.dot(perp_u, v))
 
 def is_acute(p1, p2, p3):
     """Calculates whether or not angle p1, p2, p3 is acute, i.e. less than \

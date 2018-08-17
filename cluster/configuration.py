@@ -4,7 +4,7 @@ coordinates"""
 import logging
 import numpy as np
 
-from .geometry import Vector, make_hcs, make_hcs_scaled, cs_transform_matrix, tol_zero
+from .geometry import Vector, tol_gt, tol_zero, make_hcs, make_hcs_scaled, cs_transform_matrix
 
 LOGGER = logging.getLogger(__name__)
 
@@ -169,8 +169,7 @@ class Configuration(object):
             for var in self.mapping:
                 d = othertransformed.get(var).distance_to(self.get(var))
                 # check that d is greater than 0 within tolerance
-                # FIXME: use tol_gt here
-                if not np.allclose(d, 0.0) and np.greater(d, 0.0):
+                if not tol_gt(d, 0):
                     return False
             return True
 

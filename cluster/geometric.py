@@ -730,7 +730,7 @@ class FixConstraint(ParametricConstraint):
 
         a = mapping[self._variables[0]]
 
-        result = tol_eq(a.x, self._value.x) and tol_eq(a.y, self._value.y)
+        result = a.tol_eq(self._value)
 
         return result
 
@@ -794,15 +794,13 @@ class AngleConstraint(ParametricConstraint):
 
         ang = b.angle_between(a, c)
 
-        cmp = self._value
-
         if ang is None:
             result = False
         else:
-            result = tol_eq(ang, cmp)
+            result = tol_eq(ang, self._value)
 
         if not result:
-            logging.getLogger("geometric").debug("measured angle = %s, parameter value = %s, geometric", ang, cmp)
+            logging.getLogger("geometric").debug("measured angle = %s, parameter value = %s, geometric", ang, self._value)
 
         return result
 
