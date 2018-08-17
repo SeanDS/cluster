@@ -209,8 +209,9 @@ class ClusterSolver(Notifier):
             self.send_notify(("remove", item))
 
         # restore top level (also added to _new)
-        list(map(lambda x: self._add_top_level(x), [cluster for cluster \
-        in to_restore if self._graph.has_node(cluster)]))
+        for cluster in to_restore:
+            if self._graph.has_node(cluster):
+                self._add_top_level(cluster)
 
         # re-solve
         self._process_new()
@@ -363,7 +364,8 @@ class ClusterSolver(Notifier):
         self._add_method(merge)
 
         # remove inputs from toplevel
-        list(map(lambda x: self._rem_top_level(x), merge.inputs))
+        for merge_input in merge.inputs:
+            self._rem_top_level(merge_input)
 
         # add prototype selection method
         self._add_prototype_selector(merge)
@@ -377,7 +379,8 @@ class ClusterSolver(Notifier):
 
         variables = set()
 
-        list(map(lambda x: variables.update(x.variables), constraints))
+        for constraint in constraints:
+            variables.update(constraint.variables)
 
         selclusters = []
 
@@ -1271,8 +1274,7 @@ consistent pair", object1, object2)
 
         oc = over_constraints(object1, object2)
 
-        LOGGER.debug("Overconstraints of \
-consistent pair: %s", list(map(str, oc)))
+        LOGGER.debug("Overconstraints of consistent pair: %s", [str(c) for c in oc])
 
         # calculate consistency (True if no overconstraints)
         consistent = reduce(lambda x, y: x and y, \

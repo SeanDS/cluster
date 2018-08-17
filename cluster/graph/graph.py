@@ -25,14 +25,6 @@ class Graph:
         self._forward = {}
         self._reverse = {}
 
-        # copy input graph
-        if graph:
-            # copy vertices
-            list(map(self.add_node, graph.nodes()))
-
-            # set up edges between vertices
-            list(map(self.set, [(v, w, graph.get(v, w)) for v, w in graph.edges()]))
-
     def nodes(self):
         """Get a list of vertices in this graph"""
 
@@ -52,22 +44,25 @@ class Graph:
         self._forward[vertex] = {}
         self._reverse[vertex] = {}
 
-    def remove_node(self, vertex):
-        """Remove vertex and incident edges
+    def remove_node(self, node):
+        """Remove node and incident edges
 
-        :param vertex: vertex to remove
+        :param node: node to remove
         """
 
-        if vertex not in self._forward:
-            raise Exception("Vertex not in graph")
+        if node not in self._forward:
+            raise Exception("node not in graph")
 
         # remove edges going to and from vertex
-        list(map(lambda u: self.remove_edge(u, vertex), self.predecessors(vertex)))
-        list(map(lambda w: self.remove_edge(vertex, w), self.successors(vertex)))
+        for predecessor in self.predecessors(node):
+            self.remove_edge(predecessor, node)
+
+        for successor in self.successors(node):
+            self.remove_edge(node, successor)
 
         # remove vertex in dicts
-        del self._forward[vertex]
-        del self._reverse[vertex]
+        del self._forward[node]
+        del self._reverse[node]
 
     def has_node(self, vertex):
         """Check if this graph contains the specified vertex

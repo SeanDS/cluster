@@ -133,7 +133,8 @@ that isn't in graph")
             return
 
         # remove variable's constraints
-        list(map(lambda x: self.rem_constraint(x), self.get_constraints_on(var_name)))
+        for constraint in self.get_constraints_on(var_name):
+            self.rem_constraint(constraint)
 
         # remove variable from dict
         del(self._variables[var_name])
@@ -252,8 +253,9 @@ constraint that isn't in graph")
         # empty set of constraints
         constraints = set([])
 
-        list(map(lambda x: constraints.update(x), \
-        [set(self.get_constraints_on(variable)) for variable in variables]))
+        for variable in variables:
+            constraint = set(self.get_constraints_on(variable))
+            constraints.update(constraint)
 
         # return constraints set as a list
         return list(constraints)

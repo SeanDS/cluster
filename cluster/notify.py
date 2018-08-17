@@ -59,7 +59,8 @@ class Notifier(object, metaclass=abc.ABCMeta):
         :param message: message to send"""
 
         # call notifier method on all listeners
-        list(map(lambda x: x.receive_notify(self, message), self.listeners))
+        for listener in self.listeners:
+            listener.receive_notify(self, message)
 
 class Listener(object, metaclass=abc.ABCMeta):
     """Listens for notifications from :class:`~.Notifier` objects"""

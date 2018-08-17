@@ -62,8 +62,11 @@ class MethodGraph:
             del(self._changed[varname])
 
         # delete all methods on it
-        list(map(self.rem_method, self._graph.predecessors(varname)))
-        list(map(self.rem_method, self._graph.successors(varname)))
+        for method in self._graph.predecessors(varname):
+            self.rem_method(method)
+
+        for method in self._graph.successors(varname):
+            self.rem_method(method)
 
         # remove it from graph
         self._graph.remove_node(varname)
@@ -145,9 +148,9 @@ by multiple methods".format(var))
 
         while len(self._changed) != 0:
             pick = list(self._changed.keys())[0]
-            methods = self._graph.successors(pick)
 
-            list(map(lambda method: self._do_execute(method), methods))
+            for method in self._graph.successors(pick):
+                self._do_execute(method)
 
             if pick in self._changed:
                 del(self._changed[pick])

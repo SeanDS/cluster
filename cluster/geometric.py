@@ -284,18 +284,20 @@ class GeometricSolver(Listener):
         constraints = self.constraint_graph.constraints()
 
         # add fixed constraints first (avoids problems with invalid solutions)
-        list(map(self._add_constraint, [x for x in constraints \
-        if isinstance(x, FixConstraint)]))
+        for constraint in constraints:
+            if isinstance(constraint, FixConstraint):
+                self._add_constraint(constraint)
 
         # add distances next (doing this before angles results in nicer
         # decompositions)
-        list(map(self._add_constraint, [x for x in constraints \
-        if isinstance(x, DistanceConstraint)]))
+        for constraint in constraints:
+            if isinstance(constraint, DistanceConstraint):
+                self._add_constraint(constraint)
 
         # add everything else
-        list(map(self._add_constraint, [x for x in constraints \
-        if not isinstance(x, FixConstraint) \
-        and not isinstance(x, DistanceConstraint)]))
+        for constraint in constraints:
+            if not isinstance(constraint, FixConstraint) and not isinstance(constraint, DistanceConstraint):
+                self._add_constraint(constraint)
 
     def get_constrainedness(self):
         # get cluster solver's top level solution(s)
