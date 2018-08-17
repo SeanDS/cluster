@@ -356,7 +356,7 @@ class ClusterSolver(Notifier):
         # merge is overconstrained if all of the inputs are overconstrained
         overconstrained = not consistent
         for cluster in merge.inputs:
-            overconstrained = overconstrained or cluster.overconstrained
+            overconstrained = overconstrained and cluster.overconstrained
         output.overconstrained = overconstrained
 
         # add to graph
