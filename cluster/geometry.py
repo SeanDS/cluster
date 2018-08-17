@@ -127,61 +127,30 @@ class Matrix(object):
 
         return cls([[ij_elem(i, j) for i in range(n)] for j in range(n)])
 
-class Vector(Matrix):
+class Vector(np.ndarray):
     """Two-dimensional column vector in Cartesian coordinates"""
 
-    def __init__(self, data):
-        x, y = data[0], data[1]
+    def __new__(cls, *args, **kwargs):
+        obj = np.array(*args, **kwargs)
 
-        # create column matrix
-        super(Vector, self).__init__([[float(x)], [float(y)]])
-
-    def __getitem__(self, i):
-        """List-style access
-
-        :param i: ith element to retrieve, or slice
-        :type i: int or :class:`slice`
-        """
-
-        if isinstance(i, slice):
-            return [self.elements[j][0] for j in range(*i.indices(len(self.elements)))]
-
-        return self.elements[int(i)][0]
+        # return view as Vector
+        return obj.view(cls)
 
     @property
     def x(self):
-        return self.elements[0][0]
+        return self[0]
 
     @x.setter
     def x(self, x):
-        self.elements[0][0] = float(x)
+        self[0] = float(x)
 
     @property
     def y(self):
-        return self.elements[1][0]
+        return self[1]
 
     @y.setter
     def y(self, y):
-        self.elements[1][0] = float(y)
-
-    def __str__(self):
-        """String representation of the vector's coordinates"""
-
-        return "({0:.3f}, {1:.3f})".format(self.x, self.y)
-
-    def __repr__(self):
-        """Representation of the coordinates"""
-
-        return str(self)
-
-    def dot(self, other):
-        """Dot product
-
-        :param other: other vector
-        :type other: :class:`Vector`
-        """
-
-        return self.x * other.x + self.y * other.y
+        self[1] = float(y)
 
     @classmethod
     def origin(cls):
@@ -208,69 +177,6 @@ class Vector(Matrix):
 
     def tol_le(self, other):
         return self < other or self.tol_eq(other)
-
-    def __eq__(self, other):
-        return self.x == other.x and self.y == other.y
-
-    def __lt__(self, other):
-        return self.x < other.x and self.y < other.y
-
-    def __gt__(self, other):
-        return self.x > other.x and self.y > other.y
-
-    def __le__(self, other):
-        return self.x <= other.x and self.y <= other.y
-
-    def __ge__(self, other):
-        return self.x >= other.x and self.y >= other.y
-
-    def __add__(self, other):
-        try:
-            other_x = other.x
-            other_y = other.y
-        except AttributeError:
-            other_x = other
-            other_y = other
-
-        return self.__class__([self.x + other_x, self.y + other_y])
-
-    def __sub__(self, other):
-        try:
-            other_x = other.x
-            other_y = other.y
-        except AttributeError:
-            other_x = other
-            other_y = other
-
-        return self.__class__([self.x - other_x, self.y - other_y])
-
-    def __mul__(self, other):
-        try:
-            other_x = other.x
-            other_y = other.y
-        except AttributeError:
-            other_x = other
-            other_y = other
-
-        return self.__class__([self.x * other_x, self.y * other_y])
-
-    def __div__(self, other):
-        return self.__truediv__(other)
-
-    def __truediv__(self, other):
-        try:
-            other_x = other.x
-            other_y = other.y
-        except AttributeError:
-            other_x = other
-            other_y = other
-
-        return self.__class__([self.x / other_x, self.y / other_y])
-
-    def __neg__(self):
-        """Negate operator"""
-
-        return self.__class__([-self.x, -self.y])
 
 def cc_int(p1, r1, p2, r2):
     """Intersect circle (p1, r1) with circle (p2, r2)
@@ -682,7 +588,7 @@ def make_hcs(a, b, scale=False):
 
     if not scale:
         # normalise resultant
-        u /= u.length
+        u = u / u.length
 
     # mirror of u
     v = Vector([-u.y, u.x])
