@@ -4,7 +4,7 @@ coordinates"""
 import logging
 import numpy as np
 
-from .geometry import Vector, Matrix, distance_2p, make_hcs, make_hcs_scaled, cs_transform_matrix, tol_zero
+from .geometry import Vector, distance_2p, make_hcs, make_hcs_scaled, cs_transform_matrix, tol_zero
 
 LOGGER = logging.getLogger(__name__)
 
@@ -48,9 +48,10 @@ class Configuration(object):
         """returns a new configuration, which is this one transformed by matrix t"""
         newmap = {}
         for v in self.mapping:
-            ph = (t * Matrix([[self.mapping[v].x, self.mapping[v].y, 1.0]]).transpose()).elements
+            ph = np.dot(t, np.array([self.mapping[v].x, self.mapping[v].y, 1.0]))
 
-            newmap[v] = Vector([ph[0][0] / ph[2][0], ph[1][0] / ph[2][0]])
+            # FIXME: make method in Vector to convert from homogeneous coordinates to regular
+            newmap[v] = Vector([ph[0] / ph[2], ph[1] / ph[2]])
         return Configuration(newmap)
 
     def add(self, c):

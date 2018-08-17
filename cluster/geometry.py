@@ -26,107 +26,6 @@ def tol_le(a, b):
 def tol_zero(a):
     return tol_eq(a, np.zeros_like(a))
 
-class Matrix(object):
-    """Matrix and associated methods"""
-
-    def __init__(self, elements):
-        self.elements = elements
-
-    def __repr__(self):
-        rep = ""
-
-        return "\n".join([" ".join([str(element) for element in row]) \
-        for row in self.elements])
-
-    @property
-    def elements(self):
-        return self._elements
-
-    @elements.setter
-    def elements(self, elements):
-        # TODO: check if dimensions > 2, but has to be quick
-        self._elements = elements
-
-    @property
-    def num_rows(self):
-        return len(self.elements)
-
-    @property
-    def num_cols(self):
-        return len(self.elements[0])
-
-    def inverse(self):
-        if self.num_rows is not self.num_cols:
-            raise Exception('Inverse only defined for square matrices')
-
-        return self.solve(self.identity(self.num_rows))
-
-    def transpose(self):
-        """Transpose of matrix"""
-
-        t_matrix = []
-
-        for row in range(self.num_cols):
-            t_row = []
-
-            for col in range(self.num_rows):
-                t_row.append(self.elements[col][row])
-
-            t_matrix.append(t_row)
-
-        return(self.__class__(t_matrix))
-
-    def __mul__(self, other):
-        """Matrix multiplication
-
-        :param other: other matrix
-        :type other: :class:`.Matrix`
-        """
-
-        #if self.num_cols is not other.num_rows:
-        #    raise Exception('Matrix dimensions mismatch')
-
-        return Matrix([[sum(a * b for a, b in zip(row_a, col_b))
-                        for col_b in zip(*other.elements)] for row_a in self.elements])
-
-    def solve(self, B, *args, **kwargs):
-        """Solve Ax = B for x, where A is this matrix and B is another matrix \
-        or vector
-
-        :param B: right hand side matrix or vector
-        :type B: :class:`Matrix`
-        :returns: solution x of Ax = B, where x has the same shape as B
-        :rtype: :class:`Matrix`
-        """
-
-        # use Numpy for now
-        A = np.array(self.elements)
-        B = np.array(B.elements)
-
-        # solve
-        x = la.solve(A, B)
-
-        return Matrix(x.tolist())
-
-    @classmethod
-    def identity(cls, n):
-        """Generate n-by-n identity matrix
-
-        :param n: number of rows/columns
-        :type n: int
-        """
-
-        n = int(n)
-
-        # function to generate 1 or 0 for diagonals
-        def ij_elem(i, j):
-            if i == j:
-                return 1.0
-
-            return 0.0
-
-        return cls([[ij_elem(i, j) for i in range(n)] for j in range(n)])
-
 class Vector(np.ndarray):
     """Two-dimensional column vector in Cartesian coordinates"""
 
@@ -594,11 +493,9 @@ def make_hcs(a, b, scale=False):
     v = Vector([-u.y, u.x])
 
     # return new coordinate system
-    return Matrix([
-        [u.x, v.x, a.x],
-        [u.y, v.y, a.y],
-        [0.0, 0.0, 1.0]
-    ])
+    return np.array([[u.x, v.x, a.x],
+                     [u.y, v.y, a.y],
+                     [0.0, 0.0, 1.0]])
 
 def make_hcs_scaled(*args, **kwargs):
     """Build a homogeneous coordiate system from two vectors
@@ -624,7 +521,7 @@ def cs_transform_matrix(from_cs, to_cs):
     :rtype: :class:`Vector`
     """
 
-    return to_cs * from_cs.inverse()
+    return np.dot(to_cs, la.inv(from_cs))
 
 # -------------------------test code -----------------
 
