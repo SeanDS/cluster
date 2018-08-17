@@ -14,17 +14,13 @@ The reverse of the graph is also stored and kept up to date, for fast
 determination of incoming edges and other algorithms."""
 
 import logging
-from ..notify import Notifier
 
 LOGGER = logging.getLogger(__name__)
 
-class Graph(Notifier):
+class Graph:
     """A weighted directed graph"""
 
     def __init__(self, graph=None):
-        # initialise parent
-        Notifier.__init__(self)
-
         # forward and reverse edges are stored in a dictionary of dictionaries
         self._forward = {}
         self._reverse = {}
@@ -51,9 +47,6 @@ class Graph(Notifier):
         self._forward[vertex] = {}
         self._reverse[vertex] = {}
 
-        # notify listeners
-        self.send_notify(("add_vertex", vertex))
-
     def remove_vertex(self, vertex):
         """Remove vertex and incident edges
 
@@ -70,9 +63,6 @@ class Graph(Notifier):
         # remove vertex in dicts
         del self._forward[vertex]
         del self._reverse[vertex]
-
-        # notify listeners
-        self.send_notify(("remove_vertex", vertex))
 
     def add_edge(self, v1, v2, value=1):
         """Add edge with optional value
@@ -97,9 +87,6 @@ class Graph(Notifier):
         if v1 not in self._reverse[v2]:
             self._reverse[v2][v1] = value
 
-        # notify listeners
-        self.send_notify(("add_edge", (v1, v2, value)))
-
     def remove_edge(self, v1, v2):
         """Remove edge
 
@@ -113,32 +100,6 @@ class Graph(Notifier):
         # remove edges from dicts
         del self._forward[v1][v2]
         del self._reverse[v2][v1]
-
-        # notify listeners
-        self.send_notify(("remove_edge", (v1, v2)))
-
-    def add_bi_edge(self, v1, v2, *args, **kwargs):
-        """Add bidirectional edge with optional value
-
-        Supports the optional parameters of :meth:`add_edge`.
-
-        :param v1: first vertex
-        :param v2: second vertex
-        """
-
-        # add edges in each direction
-        self.add_edge(v1, v2, *args, **kwargs)
-        self.add_edge(v2, v1, *args, **kwargs)
-
-    def remove_bi_edge(self, v1, v2):
-        """Remove bidirectional edge
-
-        :param v1: first vertex
-        :param v2: second vertex
-        """
-
-        self.remove_edge(v1, v2)
-        self.remove_edge(v2, v1)
 
     def has_vertex(self, vertex):
         """Check if this graph contains the specified vertex
@@ -163,29 +124,6 @@ class Graph(Notifier):
             return False
 
         return v2 in self._forward[v1]
-
-    def has_bi_edge(self, v1, v2):
-        """Check if the specified vertices are connected in both directions
-
-        :param v1: first vertex
-        :param v2: second vertex
-        :returns: True if the graph contains the bidirectional edge, False \
-        otherwise
-        :rtype: boolean
-        """
-
-        return self.has_edge(v1, v2) and self.has_edge(v2, v1)
-
-    def has_any_edge(self, v1, v2):
-        """Check if the specified vertices are connected in either direction
-
-        :param v1: first vertex
-        :param v2: second vertex
-        :returns: True if the graph contains an edge, False otherwise
-        :rtype: boolean
-        """
-
-        return self.has_edge(v1, v2) or self.has_edge(v2, v1)
 
     def get(self, v1, v2):
         """Get value of edge
@@ -213,9 +151,6 @@ class Graph(Notifier):
             # set edge value
             self._forward[v1][v2] = value
             self._reverse[v2][v1] = value
-
-            # notify listeners
-            self.send_notify(("set", (v1, v2, value)))
 
     def set_bi_edge(self, v1, v2, value):
         """Set value of bidirectional edge, adding them if they doesn't yet \
@@ -245,34 +180,6 @@ class Graph(Notifier):
                 l.append((i, j))
 
         return l
-
-    def subgraph(self, vertices):
-        """Derive subgraph containing specified vertices and enclosed edges
-
-        :param vertices: list of vertices to include
-        :returns: new subgraph
-        :rtype: :class:`Graph`
-        """
-
-        # new empty graph
-        g = Graph()
-
-        for v in filter(self.has_vertex, vertices):
-            # vertex is in the list, so add to new graph
-            g.add_vertex(v)
-
-            # copy associated edges
-            for w in self._forward[v]:
-                if w in vertices:
-                    # copy over the edge's value
-                    g.set(v, w, self.get(v, w))
-
-        return g
-
-    def copy(self):
-        """Return a copy of this graph as a new object"""
-
-        return self.subgraph(self.vertices())
 
     def outgoing_vertices(self, vertex):
         """Get a list of vertices connected from the specified vertex via an \
@@ -319,36 +226,6 @@ class Graph(Notifier):
 
         return [(v, vertex) for v in self.outgoing_vertices(vertex)]
 
-    def outgoing_edge(self, v1, v2):
-        """Get edge connecting v1 to v2
-
-        :param v1: first vertex
-        :param v2: second vertex
-        """
-
-        if v1 not in list(self._forward.keys()):
-            raise Exception('Specified vertex is not in graph')
-
-        if v2 not in list(self._forward[v1].keys()):
-            raise Exception('v1 is not connected to v2 by an outgoing edge')
-
-        return self._forward[v1][v2]
-
-    def ingoing_edge(self, v1, v2):
-        """Get edge connecting v1 to v2
-
-        :param v1: first vertex
-        :param v2: second vertex
-        """
-
-        if v1 not in list(self._reverse.keys()):
-            raise Exception('Specified vertex is not in graph')
-
-        if v2 not in list(self._reverse[v1].keys()):
-            raise Exception('v1 is not connected to v2 by an ingoing edge')
-
-        return self._reverse[v1][v2]
-
     def adjacent_edges(self, vertex):
         """Get a list of ingoing and outgoing edges
 
@@ -356,18 +233,6 @@ class Graph(Notifier):
         """
 
         return self.ingoing_edges(vertex) + self.outgoing_edges(vertex)
-
-    def reverse(self):
-        """Get a copy of this graph with the edges reversed"""
-
-        # new empty graph
-        g = Graph()
-
-        # add swapped edges
-        for v1, v2 in self.edges():
-            g.add_edge(v2, v1)
-
-        return g
 
     def path(self, start, end):
         """Gets an arbitrary path (list of vertices) from start to end
@@ -462,53 +327,6 @@ class Graph(Notifier):
 
         # convert result to a list
         return list(connected)
-
-    def connected_via_outgoing(self, *args, **kwargs):
-        """Gets vertices x connected from specified vertex by following only \
-        outgoing edges from specified vertex or x
-
-        :param vertex: vertex to start at
-        """
-
-        # return only outgoing connected edges
-        return connected(ingoing=False, outgoing=True, *args, **kwargs)
-
-    def connected_via_ingoing(self, *args, **kwargs):
-        """Gets vertices x connected from specified vertex by following only \
-        ingoing edges from specified vertex or x
-
-        :param vertex: vertex to start at
-        """
-
-        # return only outgoing connected edges
-        return connected(ingoing=True, outgoing=False, *args, **kwargs)
-
-    def connected_subsets(self):
-        """Gets a set of (unidirectionally) connected subsets of vertices"""
-
-        # set of vertices to get subsets for
-        to_check = set(self.vertices())
-
-        # empty set of subsets
-        subsets = set()
-
-        while len(to_check) > 0:
-            # get next vertex
-            vertex = to_check.pop()
-
-            # set of vertices connected to this one
-            connected = set(self.connected(vertex))
-
-            # remove vertices connected to this one from check list
-            list(map(to_check.remove, connected))
-
-            # add this vertex to the list of connected vertices
-            connected.add(vertex)
-
-            # add this subset to the set
-            subsets.add(frozenset(connected))
-
-        return subsets
 
     def __str__(self):
         s = ""
