@@ -152,18 +152,6 @@ class Graph:
             self._forward[v1][v2] = value
             self._reverse[v2][v1] = value
 
-    def set_bi_edge(self, v1, v2, value):
-        """Set value of bidirectional edge, adding them if they doesn't yet \
-        exist
-
-        :param v1: first vertex
-        :param v2: second vertex
-        :param value: vertex value
-        """
-
-        self.set(v1, v2, value)
-        self.set(v2, v1, value)
-
     def vertices(self):
         """Get a list of vertices in this graph"""
 
@@ -281,59 +269,12 @@ class Graph:
         # no path found
         return []
 
-    def connected(self, vertex, ingoing=True, outgoing=True):
-        """Gets vertices x connected to the specified vertex by following \
-        edges connected to specified vertex or x
-
-        The edges can be unidirectional or bidirectional as specified by the
-        optional ingoing and outgoing flags.
-
-        Specified vertex is not included in the result.
-
-        :param vertex: vertex to start at
-        :param ingoing: include ingoing edges
-        :param outgoing: include outgoing edges
-        """
-
-        # work out which edge function to use
-        if ingoing and outgoing:
-            vertex_edge_func = self.adjacent_vertices
-        elif ingoing:
-            vertex_edge_func = self.ingoing_vertices
-        else:
-            vertex_edge_func = self.outgoing_vertices
-
-        # vertices being searched
-        front = [vertex]
-
-        # connected vertices
-        connected = {}
-
-        # loop until there are no more connected vertices to follow
-        while len(front) > 0:
-            # get next connected vertex
-            x = front.pop()
-
-            # add vertex to dict
-            if x not in connected:
-                # add vertex
-                connected[x] = 1
-
-                # add connected vertices to search list
-                front += vertex_edge_func(x)
-
-        # delete the supplied vertex
-        del connected[vertex]
-
-        # convert result to a list
-        return list(connected)
-
     def __str__(self):
         s = ""
 
         for i in self._forward:
             v = ", ".join(["{0}: {1}".format(str(j), str(self.get(i, j))) for j in self._forward[i]])
 
-            s += "{0}: {{1}}".format(str(i), v)
+            s += "%s: {%s}" % (str(i), v)
 
-        return "{{0}}".format(s)
+        return "{%s}" % s
