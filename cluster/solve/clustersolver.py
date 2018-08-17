@@ -18,7 +18,7 @@ from ..multimethod import MultiVariable, MultiMethod
 from ..cluster import *
 from ..configuration import Configuration
 from ..selconstr import NotCounterClockwiseConstraint, NotClockwiseConstraint, NotAcuteConstraint, NotObtuseConstraint
-from ..geometry import Vector, distance_2p, rr_int, cr_int, cc_int, tol_zero
+from ..geometry import Vector, rr_int, cr_int, cc_int, tol_zero
 
 LOGGER = logging.getLogger(__name__)
 
@@ -1847,12 +1847,12 @@ hog")
         # d1c
         p11 = conf1.get(v1)
         p21 = conf1.get(v2)
-        d12 = distance_2p(p11,p21)
+        d12 = p11.distance_to(p21)
 
         # d2c
         p32 = conf2.get(v3)
         p22 = conf2.get(v2)
-        d23 = distance_2p(p32,p22)
+        d23 = p32.distance_to(p22)
 
         # solve
         dads = MergeRHR.solve_dad(v1, v2, v3, d12, a123, d23)
@@ -1997,12 +1997,12 @@ hedgehog")
         # get distance d12
         p11 = conf1.get(v1)
         p21 = conf1.get(v2)
-        d12 = distance_2p(p11, p21)
+        d12 = p11.distance_to(p21)
 
         # get distance d23
         p22 = conf2.get(v2)
         p32 = conf2.get(v3)
-        d23 = distance_2p(p22, p32)
+        d23 = p22.distance_to(p32)
         adds = MergeRRH.solve_add(v1, v2, v3, a312, d12, d23)
 
         solutions = []

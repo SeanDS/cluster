@@ -11,7 +11,7 @@ from .configuration import Configuration
 from .constraint import Constraint, ConstraintGraph
 from .notify import Notifier, Listener
 from .selconstr import SelectionConstraint
-from .geometry import Vector, distance_2p, tol_eq
+from .geometry import Vector, tol_eq
 
 LOGGER = logging.getLogger(__name__)
 
@@ -759,7 +759,7 @@ class DistanceConstraint(ParametricConstraint):
         a = mapping[self._variables[0]]
         b = mapping[self._variables[1]]
 
-        result = tol_eq(distance_2p(a, b), self._value)
+        result = tol_eq(a.distance_to(b), self._value)
 
         return result
 

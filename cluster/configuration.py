@@ -4,7 +4,7 @@ coordinates"""
 import logging
 import numpy as np
 
-from .geometry import Vector, distance_2p, make_hcs, make_hcs_scaled, cs_transform_matrix, tol_zero
+from .geometry import Vector, make_hcs, make_hcs_scaled, cs_transform_matrix, tol_zero
 
 LOGGER = logging.getLogger(__name__)
 
@@ -167,7 +167,7 @@ class Configuration(object):
             othertransformed = other.transform(t)
             # test if point map onto eachother (distance metric tolerance)
             for var in self.mapping:
-                d = distance_2p(othertransformed.get(var), self.get(var))
+                d = othertransformed.get(var).distance_to(self.get(var))
                 # check that d is greater than 0 within tolerance
                 # FIXME: use tol_gt here
                 if not np.allclose(d, 0.0) and np.greater(d, 0.0):

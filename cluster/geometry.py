@@ -66,6 +66,9 @@ class Vector(np.ndarray):
         """Length between point defined by coordinates and the origin"""
         return np.sqrt(self.x * self.x + self.y * self.y)
 
+    def distance_to(self, other):
+        return (other - self).length
+
     def angle_between(self, a, c):
         """Angle of the triangle formed by ABC where B is this vector
 
@@ -383,19 +386,6 @@ def rr_int(p1, v1, p2, v2):
     else:
         # lines intersect behind rays
         return []
-
-def distance_2p(p1, p2):
-    """Calculates the Euclidean distance between two points
-
-    :param p1: first point
-    :type p1: :class:`Vector`
-    :param p2: second point
-    :type p2: :class:`Vector`
-    :returns: distance between the points
-    :rtype: float
-    """
-
-    return (p2 - p1).length
 
 def is_clockwise(p1, p2, p3):
     """Calculates whether or not triangle p1, p2, p3 is orientated clockwise
