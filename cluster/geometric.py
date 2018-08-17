@@ -11,7 +11,7 @@ from .configuration import Configuration
 from .constraint import Constraint, ConstraintGraph
 from .notify import Notifier, Listener
 from .selconstr import SelectionConstraint
-from .geometry import Vector, angle_3p, distance_2p, tol_eq
+from .geometry import Vector, distance_2p, tol_eq
 
 LOGGER = logging.getLogger(__name__)
 
@@ -792,7 +792,7 @@ class AngleConstraint(ParametricConstraint):
         b = mapping[self._variables[1]]
         c = mapping[self._variables[2]]
 
-        ang = angle_3p(a,b,c)
+        ang = b.angle_between(a, c)
 
         cmp = self._value
 

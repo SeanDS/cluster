@@ -57,10 +57,91 @@ class Vector(np.ndarray):
 
         return cls([0, 0])
 
+    def unit(self):
+        """Unit vector"""
+        return self / self.length
+
     @property
     def length(self):
         """Length between point defined by coordinates and the origin"""
         return np.sqrt(self.x * self.x + self.y * self.y)
+
+    def angle_between(self, a, c):
+        """Angle of the triangle formed by ABC where B is this vector
+
+        The angle is signed and in the range [-pi, pi] corresponding to a clockwise rotation.
+        If a - b - c is clockwise, then angle > 0.
+
+        Raises
+        ------
+        DegenerateError
+            If the angle is degenerate, i.e. the triangle has zero area.
+        """
+        # distances between points
+        ab = self - a
+        cb = self - c
+
+        if ab.tol_zero() or cb.tol_zero():
+            # degenerate angle
+            raise DegenerateError("triangle is degenerate")
+
+        # vectors between points
+        vab = ab.unit()
+        vcb = cb.unit()
+
+        # calculate vector rotating vab to vcb
+        rotation = vab.dot(vcb)
+
+        # clip to +/-1.0 to fix floating point errors
+        if rotation > 1.0:
+            rotation = 1.0
+        elif rotation < -1.0:
+            rotation = -1.0
+
+        # calculate angle from rotation vector
+        angle = np.arccos(rotation)
+
+        if self.is_counterclockwise(a, self, c):
+            # flip angle
+            angle = -angle
+
+        return angle
+
+    @classmethod
+    def is_clockwise(cls, a, b, c):
+        """Calculates whether or not triangle ABC is orientated clockwise
+
+        Returns
+        -------
+        :class:`bool`
+            True if clockwise, False otherwise
+        """
+        u = b - a
+        v = c - b
+
+        # vector perpendicular to u
+        perp_u = cls([-u.y, u.x])
+
+        # check that a < 0 within tolerance
+        return tol_lt(np.dot(perp_u, v), 0)
+
+    @classmethod
+    def is_counterclockwise(cls, a, b, c):
+        """Calculates whether or not triangle ABC is orientated counter-clockwise
+
+        Returns
+        -------
+        :class:`bool`
+            True if counter-clockwise, False otherwise
+        """
+        u = b - a
+        v = c - b
+
+        # vector perpendicular to u
+        perp_u = cls([-u.y, u.x])
+
+        # check that a > 0 within tolerance
+        return tol_gt(np.dot(perp_u, v), 0)
 
     def tol_eq(self, other):
         return tol_eq(self.x, other.x) and tol_eq(self.y, other.y)
@@ -76,6 +157,9 @@ class Vector(np.ndarray):
 
     def tol_le(self, other):
         return self < other or self.tol_eq(other)
+
+    def tol_zero(self):
+        return tol_zero(self)
 
 def cc_int(p1, r1, p2, r2):
     """Intersect circle (p1, r1) with circle (p2, r2)
@@ -300,55 +384,6 @@ def rr_int(p1, v1, p2, v2):
         # lines intersect behind rays
         return []
 
-def angle_3p(p1, p2, p3):
-    """Calculates the angle rotating vector p2p1 to vector p2p3
-
-    The angle is signed and in the range [-pi, pi] corresponding to a clockwise
-    rotation. If p1-p2-p3 is clockwise, then angle > 0.
-
-    If the angle is degenerate (i.e. the triangle has zero area), None is
-    returned.
-
-    :param p1: first point
-    :type p1: :class:`Vector`
-    :param p2: second point
-    :type p2: :class:`Vector`
-    :param p3: third point
-    :type p3: :class:`Vector`
-    :returns: angle in radians, or None
-    :rtype: float
-    """
-
-    # distances between points
-    d21 = (p2 - p1).length
-    d23 = (p3 - p2).length
-
-    if tol_zero(d21) or tol_zero(d23):
-        # degenerate angle
-        return None
-
-    # vectors between points
-    v21 = (p1 - p2) / d21
-    v23 = (p3 - p2) / d23
-
-    # calculate vector rotating v21 to v23
-    t = v21.dot(v23)
-
-    # clip to +/-1.0 to fix floating point errors
-    if t > 1.0:
-        t = 1.0
-    elif t < -1.0:
-        t = -1.0
-
-    # calculate angle from rotation vector
-    angle = np.arccos(t)
-
-    if is_counterclockwise(p1, p2, p3):
-        # flip angle
-        angle = -angle
-
-    return angle
-
 def distance_2p(p1, p2):
     """Calculates the Euclidean distance between two points
 
@@ -438,7 +473,7 @@ def is_acute(p1, p2, p3):
     """
 
     # calculate angle between points
-    angle = angle_3p(p1, p2, p3)
+    angle = p2.angle_between(p1, p3)
 
     if angle is None:
         return False
@@ -460,7 +495,7 @@ def is_obtuse(p1,p2,p3):
     """
 
     # calculate angle between points
-    angle = angle_3p(p1, p2, p3)
+    angle = p2.angle_between(p1, p3)
 
     if angle is None:
         return False
@@ -522,6 +557,13 @@ def cs_transform_matrix(from_cs, to_cs):
     """
 
     return np.dot(to_cs, la.inv(from_cs))
+
+
+class DegenerateError(ValueError):
+    pass
+
+
+
 
 # -------------------------test code -----------------
 

@@ -18,7 +18,7 @@ from ..multimethod import MultiVariable, MultiMethod
 from ..cluster import *
 from ..configuration import Configuration
 from ..selconstr import NotCounterClockwiseConstraint, NotClockwiseConstraint, NotAcuteConstraint, NotObtuseConstraint
-from ..geometry import Vector, distance_2p, angle_3p, rr_int, cr_int, cc_int, tol_zero
+from ..geometry import Vector, distance_2p, rr_int, cr_int, cc_int, tol_zero
 
 LOGGER = logging.getLogger(__name__)
 
@@ -1842,7 +1842,7 @@ hog")
         p1h = confh.get(v1)
         p2h = confh.get(v2)
         p3h = confh.get(v3)
-        a123 = angle_3p(p1h, p2h, p3h)
+        a123 = p2h.angle_between(p1h, p3h)
 
         # d1c
         p11 = conf1.get(v1)
@@ -1992,7 +1992,7 @@ hedgehog")
         p1h = confh.get(v1)
         p2h = confh.get(v2)
         p3h = confh.get(v3)
-        a312 = angle_3p(p3h, p1h, p2h)
+        a312 = p1h.angle_between(p3h, p2h)
 
         # get distance d12
         p11 = conf1.get(v1)
@@ -2115,7 +2115,7 @@ class BalloonFromHogs(Merge):
         p31 = conf1.get(v3)
         p11 = conf1.get(v1)
         p21 = conf1.get(v2)
-        a312 = angle_3p(p31,p11,p21)
+        a312 = p11.angle_between(p31, p21)
 
         # determine distance d12
         d12 = 1.0
@@ -2125,7 +2125,7 @@ class BalloonFromHogs(Merge):
         p12 = conf2.get(v1)
         p22 = conf2.get(v2)
         p32 = conf2.get(v3)
-        a123 = angle_3p(p12,p22,p32)
+        a123 = p22.angle_between(p12, p32)
 
         # solve
         return BalloonFromHogs.solve_ada(v1, v2, v3, a312, d12, a123)
