@@ -7,7 +7,6 @@ problems and solutions are represented by a Configuration for each cluster.
 
 import abc
 import logging
-from functools import reduce
 import numpy as np
 import numpy.linalg as linalg
 
@@ -354,10 +353,11 @@ class ClusterSolver(Notifier):
         # set merge consistency
         merge.consistent = consistent
 
-        # merge is overconstrained if all of the inputs are overconstrained and
-        # the merge is not consistent
-        output.overconstrained = reduce(lambda x, y: x and y, merge.inputs) \
-        and not consistent
+        # merge is overconstrained if all of the inputs are overconstrained
+        overconstrained = not consistent
+        for cluster in merge.inputs:
+            overconstrained = overconstrained or cluster.overconstrained
+        output.overconstrained = overconstrained
 
         # add to graph
         self._add_cluster(output)
@@ -1277,12 +1277,11 @@ consistent pair", object1, object2)
         LOGGER.debug("Overconstraints of consistent pair: %s", [str(c) for c in oc])
 
         # calculate consistency (True if no overconstraints)
-        consistent = reduce(lambda x, y: x and y, \
-        [self._consistent_overconstraint_in_pair(con, object1, object2) \
-        for con in oc], True)
+        consistent = True
+        for constraint in oc:
+            consistent = consistent and self._consistent_overconstraint_in_pair(constraint, object1, object2)
 
-        LOGGER.debug("Global consistent? %s", \
-        consistent)
+        LOGGER.debug("Global consistent? %s", consistent)
 
         return consistent
 
