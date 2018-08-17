@@ -154,6 +154,6 @@ if check:
 else:
     print("INVALID")
 
-print("Root = " + str(solver.solver._graph.outgoing_vertices('_root')))
+print("Root = " + str(solver.solver._graph.successors('_root')))
 
 solution_viewer(problem, result.solutions[0])

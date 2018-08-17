@@ -48,7 +48,7 @@ class MethodGraph:
 
         if varname not in self._map:
             self._map[varname] = value
-            self._graph.add_vertex(varname)
+            self._graph.add_node(varname)
 
     def rem_variable(self, varname):
         """Remove a variable and all methods on that variable"""
@@ -62,11 +62,11 @@ class MethodGraph:
             del(self._changed[varname])
 
         # delete all methods on it
-        list(map(self.rem_method, self._graph.ingoing_vertices(varname)))
-        list(map(self.rem_method, self._graph.outgoing_vertices(varname)))
+        list(map(self.rem_method, self._graph.predecessors(varname)))
+        list(map(self.rem_method, self._graph.successors(varname)))
 
         # remove it from graph
-        self._graph.remove_vertex(varname)
+        self._graph.remove_node(varname)
 
     def get(self, variable):
         """Gets the value of a variable"""
@@ -107,7 +107,7 @@ class MethodGraph:
 
         # check validity of graph
         for var in met.outputs:
-            if len(self._graph.ingoing_vertices(var)) > 1:
+            if len(self._graph.predecessors(var)) > 1:
                 self.rem_method(met)
 
                 raise MethodGraphDetermineException("Variable {0} determined \
@@ -129,7 +129,7 @@ by multiple methods".format(var))
             raise Exception("Method not in graph")
 
         del(self._methods[met])
-        self._graph.remove_vertex(met)
+        self._graph.remove_node(met)
 
     def propagate(self):
         """Propagates any pending changes
@@ -145,7 +145,7 @@ by multiple methods".format(var))
 
         while len(self._changed) != 0:
             pick = list(self._changed.keys())[0]
-            methods = self._graph.outgoing_vertices(pick)
+            methods = self._graph.successors(pick)
 
             list(map(lambda method: self._do_execute(method), methods))
 

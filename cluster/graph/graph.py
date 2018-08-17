@@ -28,12 +28,17 @@ class Graph:
         # copy input graph
         if graph:
             # copy vertices
-            list(map(self.add_vertex, graph.vertices()))
+            list(map(self.add_node, graph.nodes()))
 
             # set up edges between vertices
             list(map(self.set, [(v, w, graph.get(v, w)) for v, w in graph.edges()]))
 
-    def add_vertex(self, vertex):
+    def nodes(self):
+        """Get a list of vertices in this graph"""
+
+        return list(self._forward.keys())
+
+    def add_node(self, vertex):
         """Add vertex to graph
 
         :param vertex: vertex to add
@@ -47,7 +52,7 @@ class Graph:
         self._forward[vertex] = {}
         self._reverse[vertex] = {}
 
-    def remove_vertex(self, vertex):
+    def remove_node(self, vertex):
         """Remove vertex and incident edges
 
         :param vertex: vertex to remove
@@ -57,12 +62,54 @@ class Graph:
             raise Exception("Vertex not in graph")
 
         # remove edges going to and from vertex
-        list(map(lambda u: self.remove_edge(u, vertex), self.ingoing_vertices(vertex)))
-        list(map(lambda w: self.remove_edge(vertex, w), self.outgoing_vertices(vertex)))
+        list(map(lambda u: self.remove_edge(u, vertex), self.predecessors(vertex)))
+        list(map(lambda w: self.remove_edge(vertex, w), self.successors(vertex)))
 
         # remove vertex in dicts
         del self._forward[vertex]
         del self._reverse[vertex]
+
+    def has_node(self, vertex):
+        """Check if this graph contains the specified vertex
+
+        :param vertex: vertex to check
+        :returns: True if the graph contains the vertex, False otherwise
+        :rtype: boolean
+        """
+
+        return vertex in self._forward
+
+    def successors(self, vertex):
+        """Get a list of vertices connected from the specified vertex via an \
+        edge
+
+        :param vertex: vertex to use as a reference
+        """
+
+        # look up forward graph
+        return list(self._forward[vertex].keys())
+
+    def predecessors(self, vertex):
+        """Get a list of vertices connected to the specified vertex via an \
+        edge
+
+        :param vertex: vertex to use as a reference
+        """
+
+        # look up the reverse graph
+        return list(self._reverse[vertex].keys())
+
+    def edges(self):
+        """Get a list of the edges in this graph"""
+
+        # empty list
+        l = []
+
+        for i in self._forward:
+            for j in self._forward[i]:
+                l.append((i, j))
+
+        return l
 
     def add_edge(self, v1, v2, value=1):
         """Add edge with optional value
@@ -74,10 +121,10 @@ class Graph:
 
         # add vertices
         if v1 not in self._forward:
-            self.add_vertex(v1)
+            self.add_node(v1)
 
         if v2 not in self._forward:
-            self.add_vertex(v2)
+            self.add_node(v2)
 
         # add edge
         if v2 not in self._forward[v1]:
@@ -101,16 +148,6 @@ class Graph:
         del self._forward[v1][v2]
         del self._reverse[v2][v1]
 
-    def has_vertex(self, vertex):
-        """Check if this graph contains the specified vertex
-
-        :param vertex: vertex to check
-        :returns: True if the graph contains the vertex, False otherwise
-        :rtype: boolean
-        """
-
-        return vertex in self._forward
-
     def has_edge(self, v1, v2):
         """Check if this graph contains the edge specified by the two vertices
 
@@ -124,6 +161,22 @@ class Graph:
             return False
 
         return v2 in self._forward[v1]
+
+    def in_edges(self, vertex):
+        """Get a list of edges connecting towards the specified vertex
+
+        :param vertex: vertex to retrieve edges for
+        """
+
+        return [(v, vertex) for v in self.predecessors(vertex)]
+
+    def out_edges(self, vertex):
+        """Get a list of edges connecting away from the specified vertex
+
+        :param vertex: vertex to retrieve edges for
+        """
+
+        return [(v, vertex) for v in self.successors(vertex)]
 
     def get(self, v1, v2):
         """Get value of edge
@@ -151,76 +204,6 @@ class Graph:
             # set edge value
             self._forward[v1][v2] = value
             self._reverse[v2][v1] = value
-
-    def vertices(self):
-        """Get a list of vertices in this graph"""
-
-        return list(self._forward.keys())
-
-    def edges(self):
-        """Get a list of the edges in this graph"""
-
-        # empty list
-        l = []
-
-        for i in self._forward:
-            for j in self._forward[i]:
-                l.append((i, j))
-
-        return l
-
-    def outgoing_vertices(self, vertex):
-        """Get a list of vertices connected from the specified vertex via an \
-        edge
-
-        :param vertex: vertex to use as a reference
-        """
-
-        # look up forward graph
-        return list(self._forward[vertex].keys())
-
-    def ingoing_vertices(self, vertex):
-        """Get a list of vertices connected to the specified vertex via an \
-        edge
-
-        :param vertex: vertex to use as a reference
-        """
-
-        # look up the reverse graph
-        return list(self._reverse[vertex].keys())
-
-    def adjacent_vertices(self, vertex):
-        """Get a list of adjacent (ingoing or outgoing) vertices
-
-        :param vertex: vertex to use as a reference
-        """
-
-        # return union of ingoing and outgoing vertices
-        return list(set(self.ingoing_vertices(vertex)).union(set(self.outgoing_vertices(vertex))))
-
-    def ingoing_edges(self, vertex):
-        """Get a list of edges connecting towards the specified vertex
-
-        :param vertex: vertex to retrieve edges for
-        """
-
-        return [(v, vertex) for v in self.ingoing_vertices(vertex)]
-
-    def outgoing_edges(self, vertex):
-        """Get a list of edges connecting away from the specified vertex
-
-        :param vertex: vertex to retrieve edges for
-        """
-
-        return [(v, vertex) for v in self.outgoing_vertices(vertex)]
-
-    def adjacent_edges(self, vertex):
-        """Get a list of ingoing and outgoing edges
-
-        :param vertex: vertex to retrieve edges for
-        """
-
-        return self.ingoing_edges(vertex) + self.outgoing_edges(vertex)
 
     def path(self, start, end):
         """Gets an arbitrary path (list of vertices) from start to end
@@ -252,7 +235,7 @@ class Graph:
             # current path
             this_path = trails[key]
 
-            for v in self.outgoing_vertices(key):
+            for v in self.successors(key):
                 if v == end:
                     # found the end, so return the path we have taken
                     return this_path + [v]

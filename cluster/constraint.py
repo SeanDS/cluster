@@ -114,7 +114,7 @@ class ConstraintGraph(Notifier):
         self._variables[var_name] = None
 
         # create a vertex in the graph for the variable
-        self._graph.add_vertex(var_name)
+        self._graph.add_node(var_name)
 
         # notify listeners that a new variable has been added
         self.send_notify(("add_variable", var_name))
@@ -139,7 +139,7 @@ that isn't in graph")
         del(self._variables[var_name])
 
         # remove graph vertex associated with the variable
-        self._graph.remove_vertex(var_name)
+        self._graph.remove_node(var_name)
 
         # notify listeners that a variable has been removed
         self.send_notify(("rem_variable", var_name))
@@ -185,7 +185,7 @@ constraint that isn't in graph")
         del(self._constraints[constraint])
 
         # remove graph vertex associated with the constraint
-        self._graph.remove_vertex(constraint)
+        self._graph.remove_node(constraint)
 
         # notify listeners that a constraint was removed
         self.send_notify(("rem_constraint", constraint))
@@ -197,12 +197,12 @@ constraint that isn't in graph")
         """
 
         # check if variable is in the graph
-        if not self._graph.has_vertex(variable):
+        if not self._graph.has_node(variable):
             # default to empty list
             return []
 
         # return the variable's outgoing vertices
-        return self._graph.outgoing_vertices(variable)
+        return self._graph.successors(variable)
 
     def get_constraints_on_all(self, variables):
         """Gets a list of the constraints shared by all of the variables \

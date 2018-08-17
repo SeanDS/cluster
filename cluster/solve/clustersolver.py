@@ -41,15 +41,15 @@ class ClusterSolver(Notifier):
         super().__init__(*args, **kwargs)
 
         self._graph = Graph()
-        self._graph.add_vertex("_root")
-        self._graph.add_vertex("_toplevel")
-        self._graph.add_vertex("_variables")
-        self._graph.add_vertex("_distances")
-        self._graph.add_vertex("_angles")
-        self._graph.add_vertex("_rigids")
-        self._graph.add_vertex("_hedgehogs")
-        self._graph.add_vertex("_balloons")
-        self._graph.add_vertex("_methods")
+        self._graph.add_node("_root")
+        self._graph.add_node("_toplevel")
+        self._graph.add_node("_variables")
+        self._graph.add_node("_distances")
+        self._graph.add_node("_angles")
+        self._graph.add_node("_rigids")
+        self._graph.add_node("_hedgehogs")
+        self._graph.add_node("_balloons")
+        self._graph.add_node("_methods")
 
         # queue of new objects to process
         self._new = []
@@ -59,35 +59,35 @@ class ClusterSolver(Notifier):
 
     def variables(self):
         """get list of variables"""
-        return self._graph.outgoing_vertices("_variables")
+        return self._graph.successors("_variables")
 
     def distances(self):
         """get list of distances"""
-        return self._graph.outgoing_vertices("_distances")
+        return self._graph.successors("_distances")
 
     def angles(self):
         """get list of angles"""
-        return self._graph.outgoing_vertices("_angles")
+        return self._graph.successors("_angles")
 
     def rigids(self):
         """get list of rigids"""
-        return self._graph.outgoing_vertices("_rigids")
+        return self._graph.successors("_rigids")
 
     def hedgehogs(self):
         """get list of hedgehogs"""
-        return self._graph.outgoing_vertices("_hedgehogs")
+        return self._graph.successors("_hedgehogs")
 
     def balloons(self):
         """get list of balloons"""
-        return self._graph.outgoing_vertices("_balloons")
+        return self._graph.successors("_balloons")
 
     def methods(self):
         """get list of methods"""
-        return self._graph.outgoing_vertices("_methods")
+        return self._graph.successors("_methods")
 
     def top_level(self):
         """get top-level objects"""
-        return self._graph.outgoing_vertices("_toplevel")
+        return self._graph.successors("_toplevel")
 
     def is_top_level(self, obj):
         return self._graph.has_edge("_toplevel", obj)
@@ -128,21 +128,21 @@ class ClusterSolver(Notifier):
               cluster: A Rigid
            """
         LOGGER.debug("Setting root to %s", rigid)
-        self._graph.remove_vertex("_root")
+        self._graph.remove_node("_root")
         self._graph.add_edge("_root", rigid)
 
     def find_dependent(self, obj):
         """Return a list of objects that depend on given object directly."""
-        l = self._graph.outgoing_vertices(obj)
+        l = self._graph.successors(obj)
         return [x for x in l if self._graph.get(obj, x) == "dependency"]
 
     def find_depends(self, obj):
         """Return a list of objects that the given object depends on directly"""
-        l = self._graph.ingoing_vertices(obj)
+        l = self._graph.predecessors(obj)
         return [x for x in l if self._graph.get(x, obj) == "dependency"]
 
     def contains(self, obj):
-        return self._graph.has_vertex(obj)
+        return self._graph.has_node(obj)
 
     def _add_dependency(self, on, dependend):
         """Add a dependence for second object on first object"""
@@ -158,11 +158,11 @@ class ClusterSolver(Notifier):
 
     def _objects_that_need(self, needed):
         """Return objects needed by given object"""
-        return [x for x in self._graph.outgoing_vertices(needed) if self._graph.get(needed,x) == "needed_by"]
+        return [x for x in self._graph.successors(needed) if self._graph.get(needed,x) == "needed_by"]
 
     def _objects_needed_by(self, needer):
         """Return objects needed by given object"""
-        return [x for x in self._graph.ingoing_vertices(needer) if self._graph.get(x,needer) == "needed_by"]
+        return [x for x in self._graph.predecessors(needer) if self._graph.get(x,needer) == "needed_by"]
 
     def _add_top_level(self, obj):
         self._graph.add_edge("_toplevel", obj)
@@ -189,7 +189,7 @@ class ClusterSolver(Notifier):
 
             # delete it from graph
             LOGGER.debug("Deleting %s", item)
-            self._graph.remove_vertex(item)
+            self._graph.remove_node(item)
 
             # remove from _new list
             if item in self._new:
@@ -210,7 +210,7 @@ class ClusterSolver(Notifier):
 
         # restore top level (also added to _new)
         list(map(lambda x: self._add_top_level(x), [cluster for cluster \
-        in to_restore if self._graph.has_vertex(cluster)]))
+        in to_restore if self._graph.has_node(cluster)]))
 
         # re-solve
         self._process_new()
@@ -240,7 +240,7 @@ class ClusterSolver(Notifier):
               var: any hashable object
         """
 
-        if not self._graph.has_vertex(var):
+        if not self._graph.has_node(var):
             LOGGER.debug("Adding variable %s", var)
 
             self._add_to_group("_variables", var)
@@ -261,7 +261,7 @@ class ClusterSolver(Notifier):
         LOGGER.debug("Adding rigid %s", newcluster)
 
         # check if not already exists
-        if self._graph.has_vertex(newcluster):
+        if self._graph.has_node(newcluster):
             raise Exception("rigid already in clsolver")
 
         # update graph
@@ -272,7 +272,7 @@ class ClusterSolver(Notifier):
             self._add_dependency(var, newcluster)
 
         # if there is no root cluster, this one will be it
-        if len(self._graph.outgoing_vertices("_root")) == 0:
+        if len(self._graph.successors("_root")) == 0:
             self._graph.add_edge("_root", newcluster)
 
         # add to top level
@@ -288,7 +288,7 @@ class ClusterSolver(Notifier):
         LOGGER.debug("Adding hedgehog: %s", hog)
 
         # check if not already exists
-        if self._graph.has_vertex(hog):
+        if self._graph.has_node(hog):
             raise Exception("hedgehog already in clsolver")
 
         # update graph
@@ -312,7 +312,7 @@ class ClusterSolver(Notifier):
         LOGGER.debug("Adding balloon %s", newballoon)
 
         # check if not already exists
-        if self._graph.has_vertex(newballoon):
+        if self._graph.has_node(newballoon):
             raise Exception("balloon already in clsolver")
 
         # update graph
@@ -382,7 +382,7 @@ class ClusterSolver(Notifier):
         selclusters = []
 
         for var in variables:
-            clusters = self._graph.outgoing_vertices(var)
+            clusters = self._graph.successors(var)
             clusters = [c for c in clusters if isinstance(c, Rigid)]
             clusters = [c for c in clusters if len(c.vars) == 1]
 
@@ -738,7 +738,7 @@ merge from rigid")
                 if len(shared) >= 1 and len(shared) \
                 < len(hog.xvars) and len(shared) < len(xvars):
                     tmphog = Hedgehog(cvar, xvars)
-                    if not self._graph.has_vertex(tmphog):
+                    if not self._graph.has_node(tmphog):
                         newhog = self._make_hog_from_balloon(cvar, newballoon)
                         self._merge_hogs(hog, newhog)
 
@@ -762,7 +762,7 @@ merge from rigid")
                 if len(shared) >= 1 and len(shared) \
                 < len(hog.xvars) and len(shared) < len(xvars):
                     tmphog = Hedgehog(cvar, xvars)
-                    if not self._graph.has_vertex(tmphog):
+                    if not self._graph.has_node(tmphog):
                         newhog = self._make_hog_from_rigid(cvar, newcluster)
                         self._merge_hogs(hog, newhog)
 
@@ -791,7 +791,7 @@ merge from rigid")
             and len(shared) < len(newhog.xvars):
                 tmphog = Hedgehog(newhog.cvar, xvars)
 
-                if not self._graph.has_vertex(tmphog):
+                if not self._graph.has_node(tmphog):
                     newnewhog = self._make_hog_from_rigid(newhog.cvar, \
                     cluster)
 
@@ -808,7 +808,7 @@ merge from rigid")
             < len(xvars) and len(shared) < len(newhog.xvars):
                 tmphog = Hedgehog(newhog.cvar, xvars)
 
-                if not self._graph.has_vertex(tmphog):
+                if not self._graph.has_node(tmphog):
                     newnewhog = self._make_hog_from_balloon(newhog.cvar, \
                     balloon)
 
@@ -904,7 +904,7 @@ rigid %s", newcluster)
         overlap = {}
         for var in newcluster.vars:
             # get dependent objects
-            dep = self._graph.outgoing_vertices(var)
+            dep = self._graph.successors(var)
 
             # only clusters
             dep = [c for c in dep if self._graph.has_edge("_rigids",c)]
@@ -1230,15 +1230,15 @@ derived = %s), rigid %s (root derived = %s) and hedgehog %s", r1, \
         #  - no more merges -> False
 
         # get the vertices attached to root
-        outgoing_vertices = self._graph.outgoing_vertices("_root")
+        successors = self._graph.successors("_root")
 
         # number of root clusters
-        num_roots = len(outgoing_vertices)
+        num_roots = len(successors)
 
         if num_roots > 1:
             raise Exception("more than one root cluster")
         if num_roots == 1:
-            cluster = outgoing_vertices[0]
+            cluster = successors[0]
         else:
             cluster = None
 
@@ -1247,7 +1247,7 @@ derived = %s), rigid %s (root derived = %s) and hedgehog %s", r1, \
                 return True
 
             # list of vertices this cluster is linked to
-            fr = self._graph.outgoing_vertices(cluster)
+            fr = self._graph.successors(cluster)
 
             # get vertices that are merges with this cluster as an input
             me = [x for x in fr if isinstance(x, Merge) and cluster in x.inputs]
@@ -1399,9 +1399,9 @@ Hedgehogs:\n\t{3}\nBalloons:\n\t{4}\nMethods:\n\t{5}".format(\
             raise Exception("all vars in angle must be different")
 
         # get objects dependend on a, b and c
-        dep_a = self._graph.outgoing_vertices(a)
-        dep_b = self._graph.outgoing_vertices(b)
-        dep_c = self._graph.outgoing_vertices(c)
+        dep_a = self._graph.successors(a)
+        dep_b = self._graph.successors(b)
+        dep_c = self._graph.successors(c)
 
         dependend = []
 
