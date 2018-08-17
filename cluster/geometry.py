@@ -343,8 +343,7 @@ def lr_int(p1, v1, p2, v2):
     :rtype: list
     """
 
-    LOGGER.debug("lr_int %s %s %s %s", p1, v1, p2, \
-    v2)
+    LOGGER.debug("lr_int %s %s %s %s", p1, v1, p2, v2)
 
     # assume ray is a line and get intersection with line
     s = ll_int(p1, v1, p2, v2)

@@ -189,12 +189,11 @@ class GeometricProblem(Notifier, Listener):
                         break
 
                 if not solved:
-                    logging.getLogger("geometric").debug("%s not solved", con)
+                    LOGGER.debug(f"{con} not solved", con)
 
                     sat = False
                 elif not con.satisfied(solution):
-                    logging.getLogger("geometric").debug("%s not satisfied", \
-                    con)
+                    LOGGER.debug(f"{con} not satisfied")
 
                     sat = False
 
@@ -443,7 +442,7 @@ class GeometricSolver(Listener):
 
     def _add_variable(self, variable):
         if variable not in self.mapping:
-            logging.getLogger("geometric").debug("Adding variable %s", variable)
+            LOGGER.debug("Adding variable %s", variable)
 
             rigid = Rigid([variable])
 
@@ -455,7 +454,7 @@ class GeometricSolver(Listener):
             self._update_variable(variable)
 
     def _rem_variable(self, var):
-        logging.getLogger("geometric").debug("GeometricSolver._rem_variable")
+        LOGGER.debug("GeometricSolver._rem_variable")
 
         if var in self.mapping:
             self.solver.remove(self.mapping[var])
@@ -463,7 +462,7 @@ class GeometricSolver(Listener):
             del(self.mapping[var])
 
     def _add_constraint(self, con):
-        logging.getLogger("geometric").debug("Adding constraint %s", con)
+        LOGGER.debug("Adding constraint %s", con)
 
         if isinstance(con, AngleConstraint):
             # map to hedgehog
@@ -512,7 +511,7 @@ class GeometricSolver(Listener):
             pass
 
     def _rem_constraint(self, con):
-        logging.getLogger("geometric").debug("GeometricSolver._rem_constraint")
+        LOGGER.debug("GeometricSolver._rem_constraint")
 
         if isinstance(con,FixConstraint):
             if self.fixcluster != None:
@@ -589,7 +588,7 @@ class GeometricSolver(Listener):
             raise Exception("unknown constraint type")
 
     def _update_variable(self, variable):
-        logging.getLogger("geometric").debug("Updating variable %s", variable)
+        LOGGER.debug("Updating variable %s", variable)
 
         cluster = self.mapping[variable]
         proto = self.problem.get_point(variable)
@@ -600,7 +599,7 @@ class GeometricSolver(Listener):
 
     def _update_fix(self):
         if not self.fixcluster:
-            logging.getLogger("geometric").warning("No fix cluster to update")
+            LOGGER.warning("No fix cluster to update")
 
             return
 
@@ -800,7 +799,7 @@ class AngleConstraint(ParametricConstraint):
             result = tol_eq(ang, self._value)
 
         if not result:
-            logging.getLogger("geometric").debug("measured angle = %s, parameter value = %s, geometric", ang, self._value)
+            LOGGER.debug("measured angle = %s, parameter value = %s, geometric", ang, self._value)
 
         return result
 
