@@ -133,35 +133,35 @@ class ClusterSolver(Notifier):
     def find_dependent(self, obj):
         """Return a list of objects that depend on given object directly."""
         l = self._graph.successors(obj)
-        return [x for x in l if self._graph.get(obj, x) == "dependency"]
+        return [x for x in l if self._graph.value(obj, x) == "dependency"]
 
     def find_depends(self, obj):
         """Return a list of objects that the given object depends on directly"""
         l = self._graph.predecessors(obj)
-        return [x for x in l if self._graph.get(x, obj) == "dependency"]
+        return [x for x in l if self._graph.value(x, obj) == "dependency"]
 
     def contains(self, obj):
         return self._graph.has_node(obj)
 
     def _add_dependency(self, on, dependend):
         """Add a dependence for second object on first object"""
-        self._graph.add_edge(on, dependend, "dependency")
+        self._graph.add_edge(on, dependend, value="dependency")
 
     def _add_to_group(self, group, obj):
         """Add object to group"""
-        self._graph.add_edge(group, obj, "contains")
+        self._graph.add_edge(group, obj, value="contains")
 
     def _add_needed_by(self, needed, by):
         """Add relation 'needed' object is needed 'by'"""
-        self._graph.add_edge(needed, by, "needed_by")
+        self._graph.add_edge(needed, by, value="needed_by")
 
     def _objects_that_need(self, needed):
         """Return objects needed by given object"""
-        return [x for x in self._graph.successors(needed) if self._graph.get(needed,x) == "needed_by"]
+        return [x for x in self._graph.successors(needed) if self._graph.value(needed, x) == "needed_by"]
 
     def _objects_needed_by(self, needer):
         """Return objects needed by given object"""
-        return [x for x in self._graph.predecessors(needer) if self._graph.get(x,needer) == "needed_by"]
+        return [x for x in self._graph.predecessors(needer) if self._graph.value(x, needer) == "needed_by"]
 
     def _add_top_level(self, obj):
         self._graph.add_edge("_toplevel", obj)
@@ -272,7 +272,7 @@ class ClusterSolver(Notifier):
             self._add_dependency(var, newcluster)
 
         # if there is no root cluster, this one will be it
-        if len(self._graph.successors("_root")) == 0:
+        if len(list(self._graph.successors("_root"))) == 0:
             self._graph.add_edge("_root", newcluster)
 
         # add to top level
@@ -1233,7 +1233,7 @@ derived = %s), rigid %s (root derived = %s) and hedgehog %s", r1, \
         #  - no more merges -> False
 
         # get the vertices attached to root
-        successors = self._graph.successors("_root")
+        successors = list(self._graph.successors("_root"))
 
         # number of root clusters
         num_roots = len(successors)

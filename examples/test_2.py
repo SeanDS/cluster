@@ -54,7 +54,7 @@ solver = GeometricSolver(problem)
 print("drplan:")
 # at this point, the solver has already solved it, if a solution exists
 print(solver.solver)
-print("number of top-level rigids:",len(solver.solver.top_level()))
+print("number of top-level rigids:",len(list(solver.solver.top_level())))
 result = solver.decomposition()
 print("result:")
 print(result)
@@ -69,5 +69,7 @@ if check:
     print("all solutions valid")
 else:
     print("INVALID")
+
+print("Root = " + str(list(solver.solver._graph.successors('_root'))))
 
 solution_viewer(problem, result.solutions[0])

@@ -8,8 +8,6 @@ variable is changed, one or more methods are executed to update the value of
 import abc
 import logging
 
-from .graph import Graph
-
 LOGGER = logging.getLogger(__name__)
 
 class Method(object, metaclass=abc.ABCMeta):
