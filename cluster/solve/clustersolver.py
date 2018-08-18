@@ -114,11 +114,11 @@ class ClusterSolver(Notifier):
 
     def set(self, cluster, configurations):
         """Associate a list of configurations with a cluster"""
-        self._mg.set(cluster, configurations)
+        self._mg.set_node_value(cluster, configurations)
 
     def get(self, cluster):
         """Return a set of configurations associated with a cluster"""
-        return self._mg.get(cluster)
+        return self._mg.get_node_value(cluster)
 
     def set_root(self, rigid):
         """Make given rigid cluster the root cluster

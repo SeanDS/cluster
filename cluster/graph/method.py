@@ -27,28 +27,24 @@ class MethodGraph:
         # map from variable names (the keys) to values
         self._map = {}
 
-        # collection of methods (keys)
-        self._methods = {}
-
         # collection of changed variables since last propagation
         self._changed = {}
+
+    @property
+    def methods(self):
+        return [node for node, data in self._graph.nodes(data=True) if data.get("node_type") == "method"]
 
     def variables(self):
         """Returns a list of variables in the method graph"""
 
         return list(self._map.keys())
 
-    def methods(self):
-        """Returns a list of methods associated with the graph"""
-
-        return list(self._methods.keys())
-
     def add_variable(self, varname, value=None):
         """Adds a variable, optionally with a value"""
 
         if varname not in self._map:
             self._map[varname] = value
-            self._graph.add_node(varname)
+            self._graph.add_node(varname, node_type="variable", value=value)
 
     def rem_variable(self, varname):
         """Remove a variable and all methods on that variable"""
@@ -71,12 +67,12 @@ class MethodGraph:
         # remove it from graph
         self._graph.remove_node(varname)
 
-    def get(self, variable):
+    def get_node_value(self, variable):
         """Gets the value of a variable"""
 
         return self._map[variable]
 
-    def set(self, varname, value, prop=True):
+    def set_node_value(self, varname, value, prop=True):
         """Sets the value of a variable.
 
         :param prop: whether to propagate changes
@@ -94,10 +90,10 @@ class MethodGraph:
         :param prop: whether to propagate changes
         """
 
-        if met in self._methods:
+        if met in self.methods:
             return
 
-        self._methods[met] = 1
+        self._graph.add_node(met, node_type="method", value=1)
 
         # update graph
         for var in met.inputs:
@@ -128,10 +124,9 @@ by multiple methods".format(var))
     def rem_method(self, met):
         """Removes a method"""
 
-        if met not in self._methods:
+        if met not in self.methods:
             raise Exception("Method not in graph")
 
-        del(self._methods[met])
         self._graph.remove_node(met)
 
     def propagate(self):
@@ -167,7 +162,7 @@ by multiple methods".format(var))
         Method must be in MethodGraph
         """
 
-        if method not in self._methods:
+        if method not in self.methods:
             raise Exception("Method not in graph")
 
         self._do_execute(method)
@@ -224,7 +219,7 @@ by multiple methods".format(var))
         variables = ", ".join([str(element) \
         for element in list(self._map.keys())])
         methods = ", ".join([str(element) \
-        for element in list(self._methods.keys())])
+        for element in list(self.methods)])
 
         return "MethodGraph(variables=[{0}], methods=[{1}])".format(variables, \
         methods)
