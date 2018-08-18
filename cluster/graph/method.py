@@ -24,9 +24,6 @@ class MethodGraph:
         # the graph structure
         self._graph = Graph()
 
-        # map from variable names (the keys) to values
-        self._map = {}
-
         # collection of changed variables since last propagation
         self._changed = {}
 
@@ -34,25 +31,21 @@ class MethodGraph:
     def methods(self):
         return [node for node, data in self._graph.nodes(data=True) if data.get("node_type") == "method"]
 
+    @property
     def variables(self):
-        """Returns a list of variables in the method graph"""
-
-        return list(self._map.keys())
+        return [node for node, data in self._graph.nodes(data=True) if data.get("node_type") == "variable"]
 
     def add_variable(self, varname, value=None):
         """Adds a variable, optionally with a value"""
 
-        if varname not in self._map:
-            self._map[varname] = value
+        if varname not in self.variables:
             self._graph.add_node(varname, node_type="variable", value=value)
 
     def rem_variable(self, varname):
         """Remove a variable and all methods on that variable"""
 
-        if varname not in self._map:
+        if varname not in self.variables:
             raise Exception("Variable not in graph")
-
-        del(self._map[varname])
 
         if varname in self._changed:
             del(self._changed[varname])
@@ -69,8 +62,7 @@ class MethodGraph:
 
     def get_node_value(self, variable):
         """Gets the value of a variable"""
-
-        return self._map[variable]
+        return self._graph.get_node_value(variable)
 
     def set_node_value(self, varname, value, prop=True):
         """Sets the value of a variable.
@@ -78,7 +70,7 @@ class MethodGraph:
         :param prop: whether to propagate changes
         """
 
-        self._map[varname] = value
+        self._graph.set_node_value(varname, value)
         self._changed[varname] = 1
 
         if prop:
@@ -150,12 +142,6 @@ by multiple methods".format(var))
             if pick in self._changed:
                 del(self._changed[pick])
 
-    def clear(self):
-        """Clears the method graph by removing all its variables"""
-
-        while (len(self._map) > 0):
-            self.rem_variable(list(self._map.keys())[0])
-
     def execute(self, method):
         """Executes a method and propagates changes
 
@@ -182,7 +168,7 @@ by multiple methods".format(var))
         has_nones = False
 
         for var in method.inputs:
-            value = self._map[var]
+            value = self.get_node_value(var)
 
             if value == None:
                 has_nones = True
@@ -190,7 +176,7 @@ by multiple methods".format(var))
             inmap[var] = value
 
         for var in method.outputs:
-            inmap[var] = self._map[var]
+            inmap[var] = self.get_node_value(var)
 
         # call method.execute
         if has_nones:
@@ -203,26 +189,17 @@ by multiple methods".format(var))
         # set output variables changed
         for var in method.outputs:
             if var in outmap:
-                self._map[var] = outmap[var]
+                self.set_node_value(var, outmap[var], prop=False)
                 self._changed[var] = 1
             else:
-                if self._map[var] != None:
+                if self.get_node_value(var) is not None:
                     self._changed[var] = 1
-                    self._map[var] = None
+                    self.set_node_value(var, None, prop=False)
 
         # clear change flag on input variables
         for var in method.inputs:
             if var in self._changed:
                 del(self._changed[var])
-
-    def __str__(self):
-        variables = ", ".join([str(element) \
-        for element in list(self._map.keys())])
-        methods = ", ".join([str(element) \
-        for element in list(self.methods)])
-
-        return "MethodGraph(variables=[{0}], methods=[{1}])".format(variables, \
-        methods)
 
 class MethodGraphCycleException(Exception):
     """Error indicating a cyclic connection in a MethodGraph"""
