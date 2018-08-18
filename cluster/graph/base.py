@@ -22,9 +22,6 @@ class Graph(nx.DiGraph):
         """Sets the value of a node"""
         self.nodes[node]["value"] = value
 
-    def has_path(self, *args, **kwargs):
-        return nx.has_path(self, *args, **kwargs)
-
     def has_cycle(self, node):
         try:
             nx.algorithms.cycles.find_cycle(self, node)
