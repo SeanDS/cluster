@@ -3,7 +3,7 @@ from .base import Graph
 
 LOGGER = logging.getLogger(__name__)
 
-class MethodGraph:
+class MethodGraph(Graph):
     """A method graph
 
     A method graph is represented by a directed bi-partite graph: nodes are
@@ -21,26 +21,25 @@ class MethodGraph:
     """
 
     def __init__(self):
-        # the graph structure
-        self._graph = Graph()
+        super().__init__()
 
         # collection of changed variables since last propagation
         self._changed = {}
 
     @property
     def variables(self):
-        return [node for node, data in self._graph.nodes(data=True)
+        return [node for node, data in self.nodes(data=True)
                 if data.get("node_type") == "variable"]
 
     @property
     def methods(self):
-        return [node for node, data in self._graph.nodes(data=True)
+        return [node for node, data in self.nodes(data=True)
                 if data.get("node_type") == "method"]
 
     def add_variable(self, variable, value=None):
         """Adds a variable, optionally with a value"""
         if variable not in self.variables:
-            self._graph.add_node(variable, node_type="variable", value=value)
+            self.add_node(variable, node_type="variable", value=value)
 
     def rem_variable(self, variable):
         """Remove a variable and all methods on that variable"""
@@ -52,18 +51,14 @@ class MethodGraph:
             del(self._changed[variable])
 
         # delete all methods on it
-        for method in self._graph.predecessors(variable):
+        for method in self.predecessors(variable):
             self.rem_method(method)
 
-        for method in self._graph.successors(variable):
+        for method in self.successors(variable):
             self.rem_method(method)
 
         # remove it from graph
-        self._graph.remove_node(variable)
-
-    def get_node_value(self, variable):
-        """Gets the value of a variable"""
-        return self._graph.get_node_value(variable)
+        self.remove_node(variable)
 
     def set_node_value(self, variable, value, propagate=True):
         """Sets the value of a variable.
@@ -71,7 +66,7 @@ class MethodGraph:
         :param propagate: whether to propagate changes
         """
 
-        self._graph.set_node_value(variable, value)
+        super().set_node_value(variable, value)
         self._changed[variable] = 1
 
         if propagate:
@@ -86,25 +81,25 @@ class MethodGraph:
         if method in self.methods:
             return
 
-        self._graph.add_node(method, node_type="method", value=1)
+        self.add_node(method, node_type="method", value=1)
 
         # update graph
         for variable in method.inputs:
             self.add_variable(variable)
-            self._graph.add_edge(variable, method)
+            self.add_edge(variable, method)
 
         for variable in method.outputs:
             self.add_variable(variable)
-            self._graph.add_edge(method, variable)
+            self.add_edge(method, variable)
 
         # check validity of graph
         for variable in method.outputs:
-            if len(list(self._graph.predecessors(variable))) > 1:
+            if len(list(self.predecessors(variable))) > 1:
                 self.rem_method(method)
 
                 raise MethodGraphDetermineException("Variable {0} determined \
 by multiple methods".format(variable))
-            elif self._graph.has_cycle(variable):
+            elif self.has_cycle(variable):
                 self.rem_method(method)
 
                 raise MethodGraphCycleException("Cycle in graph not allowed \
@@ -120,7 +115,7 @@ by multiple methods".format(variable))
         if method not in self.methods:
             raise ValueError(f"method '{method}' not in graph")
 
-        self._graph.remove_node(method)
+        self.remove_node(method)
 
     def propagate(self):
         """Propagates any pending changes
@@ -137,7 +132,7 @@ by multiple methods".format(variable))
         while len(self._changed) != 0:
             pick = list(self._changed)[0]
 
-            for method in self._graph.successors(pick):
+            for method in self.successors(pick):
                 self._do_execute(method)
 
             if pick in self._changed:
