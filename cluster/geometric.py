@@ -8,7 +8,8 @@ import numpy as np
 from .solve import PrototypeMethod, ClusterSolver, is_information_increasing
 from .cluster import Rigid, Hedgehog
 from .configuration import Configuration
-from .constraint import Constraint, ConstraintGraph
+from .constraint import Constraint
+from .graph import ConstraintGraph
 from .notify import Notifier, Listener
 from .selconstr import SelectionConstraint
 from .geometry import Vector, tol_eq
