@@ -28,98 +28,99 @@ class MethodGraph:
         self._changed = {}
 
     @property
-    def methods(self):
-        return [node for node, data in self._graph.nodes(data=True) if data.get("node_type") == "method"]
+    def variables(self):
+        return [node for node, data in self._graph.nodes(data=True)
+                if data.get("node_type") == "variable"]
 
     @property
-    def variables(self):
-        return [node for node, data in self._graph.nodes(data=True) if data.get("node_type") == "variable"]
+    def methods(self):
+        return [node for node, data in self._graph.nodes(data=True)
+                if data.get("node_type") == "method"]
 
-    def add_variable(self, varname, value=None):
+    def add_variable(self, variable, value=None):
         """Adds a variable, optionally with a value"""
+        if variable not in self.variables:
+            self._graph.add_node(variable, node_type="variable", value=value)
 
-        if varname not in self.variables:
-            self._graph.add_node(varname, node_type="variable", value=value)
-
-    def rem_variable(self, varname):
+    def rem_variable(self, variable):
         """Remove a variable and all methods on that variable"""
 
-        if varname not in self.variables:
-            raise Exception("Variable not in graph")
+        if variable not in self.variables:
+            raise ValueError(f"variable '{variable}' not in graph")
 
-        if varname in self._changed:
-            del(self._changed[varname])
+        if variable in self._changed:
+            del(self._changed[variable])
 
         # delete all methods on it
-        for method in self._graph.predecessors(varname):
+        for method in self._graph.predecessors(variable):
             self.rem_method(method)
 
-        for method in self._graph.successors(varname):
+        for method in self._graph.successors(variable):
             self.rem_method(method)
 
         # remove it from graph
-        self._graph.remove_node(varname)
+        self._graph.remove_node(variable)
 
     def get_node_value(self, variable):
         """Gets the value of a variable"""
         return self._graph.get_node_value(variable)
 
-    def set_node_value(self, varname, value, prop=True):
+    def set_node_value(self, variable, value, propagate=True):
         """Sets the value of a variable.
 
-        :param prop: whether to propagate changes
+        :param propagate: whether to propagate changes
         """
 
-        self._graph.set_node_value(varname, value)
-        self._changed[varname] = 1
+        self._graph.set_node_value(variable, value)
+        self._changed[variable] = 1
 
-        if prop:
+        if propagate:
             self.propagate()
 
-    def add_method(self, met, prop=True):
+    def add_method(self, method, propagate=True):
         """Adds a method.
 
-        :param prop: whether to propagate changes
+        :param propagate: whether to propagate changes
         """
 
-        if met in self.methods:
+        if method in self.methods:
             return
 
-        self._graph.add_node(met, node_type="method", value=1)
+        self._graph.add_node(method, node_type="method", value=1)
 
         # update graph
-        for var in met.inputs:
-            self.add_variable(var)
-            self._graph.add_edge(var, met)
+        for variable in method.inputs:
+            self.add_variable(variable)
+            self._graph.add_edge(variable, method)
 
-        for var in met.outputs:
-            self.add_variable(var)
-            self._graph.add_edge(met, var)
+        for variable in method.outputs:
+            self.add_variable(variable)
+            self._graph.add_edge(method, variable)
 
         # check validity of graph
-        for var in met.outputs:
-            if len(list(self._graph.predecessors(var))) > 1:
-                self.rem_method(met)
+        for variable in method.outputs:
+            if len(list(self._graph.predecessors(variable))) > 1:
+                self.rem_method(method)
 
                 raise MethodGraphDetermineException("Variable {0} determined \
-by multiple methods".format(var))
-            elif self._graph.has_cycle(var):
-                self.rem_method(met)
+by multiple methods".format(variable))
+            elif self._graph.has_cycle(variable):
+                self.rem_method(method)
 
                 raise MethodGraphCycleException("Cycle in graph not allowed \
-(variable {0})".format(var))
+(variable {0})".format(variable))
 
-        if prop:
+        if propagate:
             # execute includes propagation
-            self.execute(met)
+            self.execute(method)
 
-    def rem_method(self, met):
+    def rem_method(self, method):
         """Removes a method"""
 
-        if met not in self.methods:
-            raise Exception("Method not in graph")
+        if method not in self.methods:
+            raise ValueError(f"method '{method}' not in graph")
 
-        self._graph.remove_node(met)
+        self._graph.remove_node(method)
 
     def propagate(self):
         """Propagates any pending changes
@@ -134,7 +135,7 @@ by multiple methods".format(var))
         LOGGER.debug("Propagating changes")
 
         while len(self._changed) != 0:
-            pick = list(self._changed.keys())[0]
+            pick = list(self._changed)[0]
 
             for method in self._graph.successors(pick):
                 self._do_execute(method)
@@ -161,45 +162,42 @@ by multiple methods".format(var))
         Updates mapping and change flags.
         """
 
-        LOGGER.debug("Executing method %s", method)
+        LOGGER.debug(f"executing method '{method}'")
 
         # create input map and check for None values
-        inmap = {}
+        input_map = {}
         has_nones = False
 
-        for var in method.inputs:
-            value = self.get_node_value(var)
+        for variable in method.inputs:
+            value = self.get_node_value(variable)
 
-            if value == None:
+            if value is None:
                 has_nones = True
 
-            inmap[var] = value
+            input_map[variable] = value
 
-        for var in method.outputs:
-            inmap[var] = self.get_node_value(var)
+        for variable in method.outputs:
+            input_map[variable] = self.get_node_value(variable)
 
         # call method.execute
         if has_nones:
-            outmap = {}
+            output_map = {}
         else:
-            LOGGER.debug("No None values in map")
-            outmap = method.execute(inmap)
+            LOGGER.debug("No None values in input map")
+            output_map = method.execute(input_map)
 
-        # update values in self._map
-        # set output variables changed
-        for var in method.outputs:
-            if var in outmap:
-                self.set_node_value(var, outmap[var], prop=False)
-                self._changed[var] = 1
+        # update variable values and set changed flags
+        for variable in method.outputs:
+            if variable in output_map:
+                self.set_node_value(variable, output_map[variable], propagate=False)
             else:
-                if self.get_node_value(var) is not None:
-                    self._changed[var] = 1
-                    self.set_node_value(var, None, prop=False)
+                if self.get_node_value(variable) is not None:
+                    self.set_node_value(variable, None, propagate=False)
 
         # clear change flag on input variables
-        for var in method.inputs:
-            if var in self._changed:
-                del(self._changed[var])
+        for variable in method.inputs:
+            if variable in self._changed:
+                del(self._changed[variable])
 
 class MethodGraphCycleException(Exception):
     """Error indicating a cyclic connection in a MethodGraph"""
