@@ -23,8 +23,8 @@ class MethodGraph(Graph):
     def __init__(self):
         super().__init__()
 
-        # collection of changed variables since last propagation
-        self._changed = {}
+        # variables changed since last propagation
+        self._changed = []
 
     @property
     def variables(self):
@@ -36,30 +36,6 @@ class MethodGraph(Graph):
         return [node for node, data in self.nodes(data=True)
                 if data.get("node_type") == "method"]
 
-    def add_variable(self, variable, value=None):
-        """Adds a variable, optionally with a value"""
-        if variable not in self.variables:
-            self.add_node(variable, node_type="variable", value=value)
-
-    def rem_variable(self, variable):
-        """Remove a variable and all methods on that variable"""
-
-        if variable not in self.variables:
-            raise ValueError(f"variable '{variable}' not in graph")
-
-        if variable in self._changed:
-            del(self._changed[variable])
-
-        # delete all methods on it
-        for method in self.predecessors(variable):
-            self.rem_method(method)
-
-        for method in self.successors(variable):
-            self.rem_method(method)
-
-        # remove it from graph
-        self.remove_node(variable)
-
     def set_node_value(self, variable, value, propagate=True):
         """Sets the value of a variable.
 
@@ -67,10 +43,36 @@ class MethodGraph(Graph):
         """
 
         super().set_node_value(variable, value)
-        self._changed[variable] = 1
+        # flag that a change must be propagated
+        self._changed.append(variable)
 
         if propagate:
             self.propagate()
+
+    def add_variable(self, variable, value=None):
+        """Adds a variable, optionally with a value"""
+        if variable not in self.variables:
+            self.add_node(variable, node_type="variable", value=value)
+
+    def remove_variable(self, variable):
+        """Remove a variable and all methods on that variable"""
+
+        if variable not in self.variables:
+            raise ValueError(f"variable '{variable}' not in graph")
+
+        if variable in self._changed:
+            # remove variable from pending changes
+            self._changed.remove(variable)
+
+        # delete all methods on it
+        for method in self.predecessors(variable):
+            self.remove_method(method)
+
+        for method in self.successors(variable):
+            self.remove_method(method)
+
+        # remove it from graph
+        self.remove_node(variable)
 
     def add_method(self, method, propagate=True):
         """Adds a method.
@@ -95,23 +97,19 @@ class MethodGraph(Graph):
         # check validity of graph
         for variable in method.outputs:
             if len(list(self.predecessors(variable))) > 1:
-                self.rem_method(method)
-
-                raise MethodGraphDetermineException("Variable {0} determined \
-by multiple methods".format(variable))
+                self.remove_method(method)
+                raise MethodGraphDetermineException(f"variable '{variable}' determined by multiple "
+                                                    "methods")
             elif self.has_cycle(variable):
-                self.rem_method(method)
-
-                raise MethodGraphCycleException("Cycle in graph not allowed \
-(variable {0})".format(variable))
+                self.remove_method(method)
+                raise MethodGraphCycleException(f"adding variable '{variable}' results in a cycle")
 
         if propagate:
             # execute includes propagation
             self.execute(method)
 
-    def rem_method(self, method):
+    def remove_method(self, method):
         """Removes a method"""
-
         if method not in self.methods:
             raise ValueError(f"method '{method}' not in graph")
 
@@ -126,17 +124,14 @@ by multiple methods".format(variable))
         will not call propagate, and the user should call this function at a
         convenient time.
         """
-
-        LOGGER.debug("Propagating changes")
+        LOGGER.debug("propagating changes")
 
         while len(self._changed) != 0:
-            pick = list(self._changed)[0]
+            # get a pending change
+            pick = self._changed.pop()
 
             for method in self.successors(pick):
                 self._do_execute(method)
-
-            if pick in self._changed:
-                del(self._changed[pick])
 
     def execute(self, method):
         """Executes a method and propagates changes
@@ -145,7 +140,7 @@ by multiple methods".format(variable))
         """
 
         if method not in self.methods:
-            raise Exception("Method not in graph")
+            raise ValueError(f"method '{method}' not in graph")
 
         self._do_execute(method)
         self.propagate()
@@ -156,7 +151,6 @@ by multiple methods".format(variable))
         Method is executed only if all input variable values are not None.
         Updates mapping and change flags.
         """
-
         LOGGER.debug(f"executing method '{method}'")
 
         # create input map and check for None values
@@ -178,7 +172,7 @@ by multiple methods".format(variable))
         if has_nones:
             output_map = {}
         else:
-            LOGGER.debug("No None values in input map")
+            LOGGER.debug("no None values in input map")
             output_map = method.execute(input_map)
 
         # update variable values and set changed flags
@@ -192,11 +186,13 @@ by multiple methods".format(variable))
         # clear change flag on input variables
         for variable in method.inputs:
             if variable in self._changed:
-                del(self._changed[variable])
+                self._changed.remove(variable)
+
 
 class MethodGraphCycleException(Exception):
     """Error indicating a cyclic connection in a MethodGraph"""
     pass
+
 
 class MethodGraphDetermineException(Exception):
     """Error indicating a variable is determined by more than one method in a

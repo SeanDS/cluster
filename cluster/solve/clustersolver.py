@@ -198,11 +198,11 @@ class ClusterSolver(Notifier):
             if isinstance(item, Method):
                 # note: method may have been removed because variable removed
                 try:
-                    self._mg.rem_method(item)
+                    self._mg.remove_method(item)
                 except:
                     pass
             elif isinstance(item, MultiVariable):
-                self._mg.rem_variable(item)
+                self._mg.remove_variable(item)
 
             # notify listeners
             self.send_notify(("remove", item))
