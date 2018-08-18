@@ -133,12 +133,12 @@ class ClusterSolver(Notifier):
     def find_dependent(self, obj):
         """Return a list of objects that depend on given object directly."""
         l = self._graph.successors(obj)
-        return [x for x in l if self._graph.value(obj, x) == "dependency"]
+        return [x for x in l if self._graph.get_edge_value(obj, x) == "dependency"]
 
     def find_depends(self, obj):
         """Return a list of objects that the given object depends on directly"""
         l = self._graph.predecessors(obj)
-        return [x for x in l if self._graph.value(x, obj) == "dependency"]
+        return [x for x in l if self._graph.get_edge_value(x, obj) == "dependency"]
 
     def contains(self, obj):
         return self._graph.has_node(obj)
@@ -157,11 +157,11 @@ class ClusterSolver(Notifier):
 
     def _objects_that_need(self, needed):
         """Return objects needed by given object"""
-        return [x for x in self._graph.successors(needed) if self._graph.value(needed, x) == "needed_by"]
+        return [x for x in self._graph.successors(needed) if self._graph.get_edge_value(needed, x) == "needed_by"]
 
     def _objects_needed_by(self, needer):
         """Return objects needed by given object"""
-        return [x for x in self._graph.predecessors(needer) if self._graph.value(x, needer) == "needed_by"]
+        return [x for x in self._graph.predecessors(needer) if self._graph.get_edge_value(x, needer) == "needed_by"]
 
     def _add_top_level(self, obj):
         self._graph.add_edge("_toplevel", obj)
