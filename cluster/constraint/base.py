@@ -20,7 +20,7 @@ import abc
 import logging
 
 from ..geometry import tol_eq
-from ..notify import Notifier
+from ..event import Observable, Event
 
 LOGGER = logging.getLogger(__name__)
 
@@ -64,7 +64,7 @@ class Constraint(metaclass=abc.ABCMeta):
     def __hash__(self):
         return hash((self.NAME, tuple(self.variables)))
 
-class ParametricConstraint(Constraint, Notifier, metaclass=abc.ABCMeta):
+class ParametricConstraint(Constraint, Observable, metaclass=abc.ABCMeta):
     """A constraint with a parameter and notification when parameter changes"""
 
     NAME = "ParametricConstraint"
@@ -77,14 +77,12 @@ class ParametricConstraint(Constraint, Notifier, metaclass=abc.ABCMeta):
 
     def get_parameter(self):
         """get parameter value"""
-
         return self.value
 
     def set_parameter(self, value):
-        """set parameter value and notify any listeners"""
-
+        """set parameter value and notify any observers"""
         self.value = value
-        self.send_notify(("set_parameter", value))
+        self.fire(Event("set_parameter", constraint=self, value=value))
 
     @abc.abstractmethod
     def mapped_value(self, mapping):

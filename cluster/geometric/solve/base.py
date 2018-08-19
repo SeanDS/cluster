@@ -2,7 +2,7 @@ import logging
 import copy
 import numpy as np
 
-from ...notify import Notifier, Listener
+from ...event import Observable, Observer, UnknownEventException
 from ...graph import Graph
 from ...geometry import Vector
 from ...method import Method, Variable, MethodGraph, PrototypeMethod
@@ -16,7 +16,7 @@ from .derives import SubHog, RigidToHog, BalloonToHog
 
 LOGGER = logging.getLogger(__name__)
 
-class GeometricSolver(Listener):
+class GeometricSolver(Observer, Observable):
     """The GeometricSolver monitors changes in a GeometricProblem and
        maps any changes to corresponding changes in a GeometricCluster
     """
@@ -44,8 +44,8 @@ class GeometricSolver(Listener):
         self.mapping = {}
 
         # register listeners
-        self.constraint_graph.add_listener(self)
-        self.solver.add_listener(self)
+        self.constraint_graph.add_observer(self)
+        self.problem.add_observer(self)
 
         # create an initial fix cluster
         self.fixvars = []
@@ -184,38 +184,26 @@ class GeometricSolver(Listener):
 
         return result
 
-    def receive_notify(self, obj, message):
+    def _handle_event(self, event):
         """Take notice of changes in constraint graph"""
-
-        if obj == self.constraint_graph:
-            (dtype, data) = message
-            if dtype == "add_constraint":
-                self._add_constraint(data)
-            elif dtype == "rem_constraint":
-                self._rem_constraint(data)
-            elif dtype == "add_variable":
-                self._add_variable(data)
-            elif dtype == "rem_variable":
-                self._rem_variable(data)
-            else:
-                raise Exception("unknown message type {0}".format(dtype))
-        elif obj == self.problem:
-            (dtype, data) = message
-
-            if dtype == "set_point":
-                (variable, point) = data
-
-                self._update_variable(variable)
-            elif dtype == "set_parameter":
-                (constraint, value) = data
-
-                self._update_constraint(constraint)
-            else:
-                raise Exception("unknown message type {0}".format(dtype))
-        elif obj == self.solver:
-            pass
+        # constraint graph events
+        if event.message == "add_constraint":
+            self._add_constraint(event.data["constraint"])
+        elif event.message == "remove_constraint":
+            self._rem_constraint(event.data["constraint"])
+        elif event.message == "add_variable":
+            self._add_variable(event.data["variable"])
+        elif event.message == "remove_variable":
+            self._rem_variable(event.data["variable"])
+        # problem events
+        elif event.message == "set_point":
+            self._update_variable(event.data["variable"])
+        elif event.message == "set_parameter":
+            if "constraint" in event.data:
+                # a constraint's parameter has been changed
+                self._update_constraint(event.data["constraint"])
         else:
-            raise Exception("message from unknown source {0} {1}".format(obj, message))
+            raise UnknownEventException(event)
 
     def _add_variable(self, variable):
         if variable not in self.mapping:
@@ -391,8 +379,10 @@ class GeometricSolver(Listener):
 
         self.solver.set_configurations(self.fixcluster, [conf])
 
+    def __str__(self):
+        return f"GeometricSolver({self.problem})"
 
-class ClusterSolver(Notifier):
+class ClusterSolver:
     """A generic 2D geometric constraint solver
 
     Finds a generic solution for problems formulated by cluster constraints.
@@ -570,9 +560,6 @@ class ClusterSolver(Notifier):
             elif isinstance(item, Variable):
                 self._mg.remove_variable(item)
 
-            # notify listeners
-            self.send_notify(("remove", item))
-
         # restore top level (also added to _new)
         for cluster in to_restore:
             if self._graph.has_node(cluster):
@@ -607,7 +594,6 @@ class ClusterSolver(Notifier):
 
         if not self._graph.has_node(var):
             LOGGER.debug("Adding variable %s", var)
-
             self._add_to_group("_variables", var)
 
     def _add_cluster(self, cluster):
@@ -646,9 +632,6 @@ class ClusterSolver(Notifier):
         # add to methodgraph
         self._mg.add_variable(newcluster)
 
-        # notify
-        self.send_notify(("add", newcluster))
-
     def _add_hog(self, hog):
         LOGGER.debug("Adding hedgehog: %s", hog)
 
@@ -668,9 +651,6 @@ class ClusterSolver(Notifier):
 
         # add to methodgraph
         self._mg.add_variable(hog)
-
-        # notify
-        self.send_notify(("add", hog))
 
     def _add_balloon(self, newballoon):
         """add a cluster if not already in system"""
@@ -692,9 +672,6 @@ class ClusterSolver(Notifier):
 
          # add to methodgraph
         self._mg.add_variable(newballoon)
-
-        # notify
-        self.send_notify(("add", newballoon))
 
     def _add_merge(self, merge):
         # structural check that method has one output
@@ -750,7 +727,7 @@ class ClusterSolver(Notifier):
         selclusters = []
 
         for variable in variables:
-            clusters = self._graph.successors(var)
+            clusters = self._graph.successors(variable)
             clusters = [c for c in clusters if isinstance(c, Rigid)]
             clusters = [c for c in clusters if len(c.variables) == 1]
 
@@ -783,7 +760,6 @@ class ClusterSolver(Notifier):
             self._add_dependency(obj, method)
 
         self._mg.add_method(method)
-        self.send_notify(("add", method))
 
     def _process_new(self):
         while len(self._new) > 0:
@@ -1604,20 +1580,24 @@ class ClusterSolver(Notifier):
 
         oc = over_constraints(object1, object2)
 
-        LOGGER.debug("Overconstraints of consistent pair: %s", [str(c) for c in oc])
+        if len(oc):
+            LOGGER.debug(f"overconstraints of consistent pair: {oc}")
 
         # calculate consistency (True if no overconstraints)
         consistent = True
         for constraint in oc:
             consistent = consistent and self._consistent_overconstraint_in_pair(constraint, object1, object2)
 
-        LOGGER.debug("Global consistent? %s", consistent)
+        if consistent:
+            LOGGER.debug(f"pair is globally consistent")
+        else:
+            LOGGER.debug(f"pair is not globally consistent")
 
         return consistent
 
     def _consistent_overconstraint_in_pair(self, overconstraint, object1, object2):
-        LOGGER.debug("Checking if %s and %s have a consistent overconstraint %s", object1, object2,
-                     overconstraint)
+        LOGGER.debug(f"checking if '{object1}' and '{object2}' have consistent overconstraint"
+                     f"'{overconstraint}'")
 
         # get sources for constraint in given clusters
         s1 = self._source_constraint_in_cluster(overconstraint, object1)

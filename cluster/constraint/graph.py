@@ -1,22 +1,20 @@
 import logging
 
 from ..graph import Graph
-from ..notify import Notifier
+from ..event import Observable, Event
 
 LOGGER = logging.getLogger(__name__)
 
-class ConstraintGraph(Notifier):
+class ConstraintGraph(Observable):
     """A constraint graph"""
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self):
         """Creates a new, empty ConstraintGraph
 
         Defines relation between variables and constraints using a graph. If a
         constraint is imposed upon a variable, an edge is defined between them
         in the graph."""
-
-        # initialise Notifier
-        super().__init__(*args, **kwargs)
+        super().__init__()
 
         # empty dict of variables
         self._variables = {}
@@ -37,49 +35,49 @@ class ConstraintGraph(Notifier):
 
         return list(self._constraints.keys())
 
-    def add_variable(self, var_name):
+    def add_variable(self, variable):
         """Adds the specified variable to the graph
 
         :param var_name: name of the variable to add
         """
 
         # only add if it doesn't already exist
-        if var_name in self._variables:
+        if variable in self._variables:
             return
 
         # create entry in variables dict
-        self._variables[var_name] = None
+        self._variables[variable] = None
 
         # create a vertex in the graph for the variable
-        self._graph.add_node(var_name)
+        self._graph.add_node(variable)
 
-        # notify listeners that a new variable has been added
-        self.send_notify(("add_variable", var_name))
+        # notify observers that a new variable has been added
+        self.fire(Event("add_variable", variable=variable))
 
-    def rem_variable(self, var_name):
+    def rem_variable(self, variable):
         """Removes the specified variable from the graph
 
         :param var_name: name of the variable to remove
         """
 
         # only remove if it already exists
-        if var_name not in self._variables:
+        if variable not in self._variables:
             LOGGER.warning("Trying to remove variable that isn't in graph")
 
             return
 
         # remove variable's constraints
-        for constraint in self.get_constraints_on(var_name):
+        for constraint in self.get_constraints_on(variable):
             self.rem_constraint(constraint)
 
         # remove variable from dict
-        del(self._variables[var_name])
+        del(self._variables[variable])
 
         # remove graph vertex associated with the variable
-        self._graph.remove_node(var_name)
+        self._graph.remove_node(variable)
 
-        # notify listeners that a variable has been removed
-        self.send_notify(("rem_variable", var_name))
+        # notify observers that a variable has been removed
+        self.fire(Event("rem_variable", variable=variable))
 
     def add_constraint(self, constraint):
         """Adds the specified constraint to the graph
@@ -102,8 +100,8 @@ class ConstraintGraph(Notifier):
             # create edge in the graph for the variable
             self._graph.add_edge(var, constraint)
 
-        # notify listeners that a constraint has been added
-        self.send_notify(("add_constraint", constraint))
+        # notify observers that a constraint has been added
+        self.fire(Event("add_constraint", constraint=constraint))
 
     def rem_constraint(self, constraint):
         """Removes the specified constraint from the graph
@@ -123,8 +121,8 @@ class ConstraintGraph(Notifier):
         # remove graph vertex associated with the constraint
         self._graph.remove_node(constraint)
 
-        # notify listeners that a constraint was removed
-        self.send_notify(("rem_constraint", constraint))
+        # notify observers that a constraint was removed
+        self.fire(Event("remove_constraint", constraint=constraint))
 
     def get_constraints_on(self, variable):
         """Returns a list of all constraints on the specified variable

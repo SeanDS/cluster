@@ -1,13 +1,13 @@
 import logging
 
-from ..notify import Notifier, Listener
+from ..event import Observable, Observer, Event, UnknownEventException
 from ..constraint import ConstraintGraph
 from .constraints import (DistanceConstraint, AngleConstraint, FixConstraint, ParametricConstraint,
                           SelectionConstraint)
 
 LOGGER = logging.getLogger(__name__)
 
-class GeometricProblem(Notifier, Listener):
+class GeometricProblem(Observable, Observer):
     """A geometric constraint problem with a prototype.
 
     A problem consists of point variables (just variables for short), prototype
@@ -61,7 +61,9 @@ class GeometricProblem(Notifier, Listener):
             raise ValueError(f"point '{point}' not in problem")
 
         self.prototype[point] = position
-        self.send_notify(("set_point", (point, position)))
+
+        # fire event
+        self.fire(Event("set_point", point=point, position=position))
 
     def get_point(self, point):
         """get prototype position of point variable"""
@@ -82,8 +84,8 @@ class GeometricProblem(Notifier, Listener):
             if variable not in self.prototype:
                 raise ValueError(f"constraint '{constraint}' point '{variable}' not in problem")
 
-        # add listener
-        constraint.add_listener(self)
+        # observe object for updates
+        constraint.add_observer(self)
 
         self.constraint_graph.add_constraint(constraint)
 
@@ -124,15 +126,19 @@ class GeometricProblem(Notifier, Listener):
 
         return True
 
-    def receive_notify(self, obj, notify):
+    def _handle_event(self, event):
         """When notified of changed constraint parameters, pass on to listeners"""
-        if isinstance(obj, ParametricConstraint):
-            (message, data) = notify
-
-            if message == "set_parameter":
-                self.send_notify(("set_parameter", (obj, data)))
+        if event.message == "set_parameter":
+            # pass through
+            self.fire(event)
+        else:
+            raise UnknownEventException(event)
 
     def __str__(self):
+        points = ", ".join(self.prototype)
+        return f"Problem({points})"
+
+    def __repr__(self):
         # variable list on separate lines
         variables = "\n".join(["{0} = {1}".format(variable, \
         self.prototype[variable]) for variable in self.prototype])
