@@ -12,6 +12,7 @@ class Notifier(object, metaclass=abc.ABCMeta):
 
     def __init__(self):
         """Instantiate a Notifier"""
+        super().__init__()
 
         # create listeners dict, using weak references to prevent references
         # to deleted objects being kept
@@ -67,6 +68,7 @@ class Listener(object, metaclass=abc.ABCMeta):
 
     def __init__(self):
         """Instantiate a Notifier"""
+        super().__init__()
 
         # create notifiers dict, using weak references to prevent references
         # to deleted objects being kept

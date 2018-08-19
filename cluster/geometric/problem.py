@@ -10,65 +10,68 @@ LOGGER = logging.getLogger(__name__)
 class GeometricProblem(Notifier, Listener):
     """A geometric constraint problem with a prototype.
 
-       A problem consists of point variables (just variables for short), prototype
-       points for each variable and constraints.
+    A problem consists of point variables (just variables for short), prototype
+    points for each variable and constraints.
 
-       Variables are just names and can be identified by any hashable object
-       (recommend strings).
-       Supported constraints are instances of DistanceConstraint,
-       AngleConstraint, FixConstraint or SelectionConstraint.
+    Variables are just names and can be identified by any hashable object
+    (recommend strings).
+    Supported constraints are instances of DistanceConstraint,
+    AngleConstraint, FixConstraint or SelectionConstraint.
 
-       Prototype points are instances of the :class:`Vector` class.
+    Prototype points are instances of the :class:`Vector` class.
 
-       GeometricProblem listens for changes in constraint parameters and passes
-       these changes, and changes in the system of constraints and the prototype,
-       to any other listeners (e.g. GeometricSolver)
+    GeometricProblem listens for changes in constraint parameters and passes
+    these changes, and changes in the system of constraints and the prototype,
+    to any other listeners (e.g. GeometricSolver)
 
-       instance attributes:
-         cg         - a ConstraintGraph instance
-         prototype  - a dictionary mapping variables to points
+    instance attributes:
+        cg         - a ConstraintGraph instance
+        prototype  - a dictionary mapping variables to points
     """
 
     def __init__(self):
         """initialize a new problem"""
-
-        Notifier.__init__(self)
-        Listener.__init__(self)
+        super().__init__()
 
         self.prototype = {}
         self.constraint_graph = ConstraintGraph()
 
-    def add_point(self, variable, position):
+    def add_point(self, point, position):
         """add a point variable with a prototype position"""
+        if point in self.prototype:
+            raise ValueError(f"point '{point}' already in problem")
 
-        if variable not in self.prototype:
-            # add point to prototype
-            self.prototype[variable] = position
+        # add point to prototype
+        self.prototype[point] = position
 
-            # add to constraint graph
-            self.constraint_graph.add_variable(variable)
-        else:
-            raise Exception("point already in problem")
+        # add to constraint graph
+        self.constraint_graph.add_variable(point)
 
-    def set_point(self, variable, position):
+    def remove_point(self, point):
+        """remove a point variable from the constraint system"""
+        if point not in self.prototype:
+            raise ValueError(f"point {point} not in problem")
+
+        self.constraint_graph.rem_variable(point)
+        del(self.prototype[point])
+
+    def set_point(self, point, position):
         """set prototype position of point variable"""
+        if point not in self.prototype:
+            raise ValueError(f"point '{point}' not in problem")
 
-        if variable not in self.prototype:
-            raise Exception("unknown point variable")
+        self.prototype[point] = position
+        self.send_notify(("set_point", (point, position)))
 
-        self.prototype[variable] = position
-        self.send_notify(("set_point", (variable, position)))
-
-    def get_point(self, variable):
+    def get_point(self, point):
         """get prototype position of point variable"""
+        if point not in self.prototype:
+            raise ValueError(f"point '{point}' not in problem")
 
-        if variable not in self.prototype:
-            raise Exception("unknown point variable")
+        return self.prototype[point]
 
-        return self.prototype[variable]
-
-    def has_point(self, variable):
-        return variable in self.prototype
+    def has_point(self, point):
+        return point in self.prototype
 
     def add_constraint(self, constraint):
         """add a constraint"""
@@ -84,108 +87,46 @@ class GeometricProblem(Notifier, Listener):
 
         self.constraint_graph.add_constraint(constraint)
 
-    def get_distance(self, a, b):
-        """return the distance constraint on given points, or None"""
+    def remove_constraint(self, constraint):
+        """remove a constraint from the constraint system"""
+        if constraint not in self.constraint_graph.constraints():
+            raise ValueError(f"constraint {constraint} not in problem")
 
-        on_a = self.constraint_graph.get_constraints_on(a)
-        on_b = self.constraint_graph.get_constraints_on(b)
+        self.constraint_graph.rem_constraint(constraint)
 
-        on_ab = [c for c in on_a if c in on_a and c in on_b]
-        distances = list([c for c in on_ab if isinstance(c, DistanceConstraint)])
+    def get_fix(self, point):
+        """return the fix constraint on given point, or None"""
+        constraints = self.constraint_graph.get_constraints_on(point)
+        constraints = [constraint for constraint in constraints if isinstance(constraint, FixConstraint)]
 
-        if len(distances) > 1:
+        if len(constraints) > 1:
             raise Exception("multiple constraints found")
-        elif len(distances) == 0:
+        elif len(constraints) == 0:
             return None
 
-        return distances[0]
-
-    def get_angle(self, a, b, c):
-        """return the angle constraint on given points, or None"""
-
-        on_a = self.constraint_graph.get_constraints_on(a)
-        on_b = self.constraint_graph.get_constraints_on(b)
-        on_c = self.constraint_graph.get_constraints_on(c)
-
-        on_abc = [x for x in on_a if x in on_a and x in on_b and x in on_c]
-        angles = [x for x in on_abc if isinstance(x, AngleConstraint)]
-        candidates = list([x for x in angles if x.variables[1] == b])
-
-        if len(candidates) > 1:
-            raise Exception("multiple constraints found")
-        elif len(candidates) == 1:
-            return candidates[0]
-
-        return None
-
-    def get_fix(self, p):
-        """return the fix constraint on given point, or None"""
-
-        on_p = self.constraint_graph.get_constraints_on(p)
-
-        fixes = [x for x in on_p if isinstance(x, FixConstraint)]
-
-        if len(fixes) > 1:
-            raise Exception("multiple constraints found")
-        elif len(fixes) == 1:
-            return fixes[0]
-
-        return None
+        return constraints[0]
 
     def verify(self, solution):
         """returns true iff all constraints satisfied by given solution.
            solution is a dictionary mapping variables (names) to values (points)"""
-
         if solution is None:
-            sat = False
-        else:
-            sat = True
+            return False
 
-            for con in self.constraint_graph.constraints():
-                solved = True
+        for constraint in self.constraint_graph.constraints():
+            if not constraint.satisfied(solution):
+                LOGGER.debug(f"{constraint} not satisfied")
+                return False
 
-                for v in con.variables:
-                    if v not in solution:
-                        solved = False
+            for variable in constraint.variables:
+                if variable not in solution:
+                    LOGGER.debug(f"{constraint} not solved")
+                    return False
 
-                        break
-
-                if not solved:
-                    LOGGER.debug(f"{con} not solved", con)
-
-                    sat = False
-                elif not con.satisfied(solution):
-                    LOGGER.debug(f"{con} not satisfied")
-
-                    sat = False
-
-        return sat
-
-    def rem_point(self, var):
-        """remove a point variable from the constraint system"""
-
-        if var in self.prototype:
-            self.constraint_graph.rem_variable(var)
-
-            del( self.prototype[var])
-        else:
-            raise Exception("variable {0} not in problem.".format(var))
-
-    def rem_constraint(self, con):
-        """remove a constraint from the constraint system"""
-
-        if con in self.constraint_graph.constraints():
-            if isinstance(con, SelectionConstraint):
-                self.send_notify(("rem_selection_constraint", con))
-
-            self.constraint_graph.rem_constraint(con)
-        else:
-            raise Exception("no constraint {0} in problem.".format(con))
+        return True
 
     def receive_notify(self, obj, notify):
         """When notified of changed constraint parameters, pass on to listeners"""
-
-        if isinstance(object, ParametricConstraint):
+        if isinstance(obj, ParametricConstraint):
             (message, data) = notify
 
             if message == "set_parameter":

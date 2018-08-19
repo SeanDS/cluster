@@ -64,11 +64,11 @@ class MethodGraph(Graph):
             # remove variable from pending changes
             self._changed.remove(variable)
 
-        # delete all methods on it
-        for method in self.predecessors(variable):
+        # delete methods
+        # must convert nodes to list because the graph changes
+        for method in list(self.predecessors(variable)):
             self.remove_method(method)
-
-        for method in self.successors(variable):
+        for method in list(self.successors(variable)):
             self.remove_method(method)
 
         # remove it from graph
@@ -149,7 +149,7 @@ class MethodGraph(Graph):
         """Executes a method
 
         Method is executed only if all input variable values are not None.
-        Updates mapping and change flags.
+        Updates mapping and changes flag.
         """
         LOGGER.debug(f"executing method '{method}'")
 
