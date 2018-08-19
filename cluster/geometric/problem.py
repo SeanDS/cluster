@@ -1,8 +1,9 @@
 import logging
 
 from ..notify import Notifier, Listener
-from ..constraint import SelectionConstraint, ConstraintGraph
-from .constraints import DistanceConstraint, AngleConstraint, FixConstraint, ParametricConstraint
+from ..constraint import ConstraintGraph
+from .constraints import (DistanceConstraint, AngleConstraint, FixConstraint, ParametricConstraint,
+                          SelectionConstraint)
 
 LOGGER = logging.getLogger(__name__)
 

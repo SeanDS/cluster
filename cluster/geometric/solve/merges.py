@@ -6,7 +6,7 @@ import numpy.linalg as la
 from ...configuration import Configuration
 from ...geometry import Vector, cc_int, cr_int, rr_int, tol_zero
 from ...method import Method
-from ...constraint import (NotClockwiseConstraint, NotCounterClockwiseConstraint,
+from ..constraints import (NotClockwiseConstraint, NotCounterClockwiseConstraint,
                            NotAcuteConstraint, NotObtuseConstraint)
 
 LOGGER = logging.getLogger(__name__)
