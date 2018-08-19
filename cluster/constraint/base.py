@@ -73,15 +73,20 @@ class ParametricConstraint(Constraint, Observable, metaclass=abc.ABCMeta):
         """initialize ParametricConstraint"""
         super().__init__(*args, **kwargs)
 
+        self._value = None
+
+        # set properties
         self.value = value
 
-    def get_parameter(self):
-        """get parameter value"""
-        return self.value
+    @property
+    def value(self):
+        return self._value
 
-    def set_parameter(self, value):
-        """set parameter value and notify any observers"""
-        self.value = value
+    @value.setter
+    def value(self, value):
+        self._value = value
+
+        # fire event
         self.fire(Event("set_parameter", constraint=self, value=value))
 
     @abc.abstractmethod

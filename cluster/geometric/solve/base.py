@@ -314,7 +314,7 @@ class GeometricSolver(Observer, Observable):
             v2 = variables[2]
 
             # get the constraint's specified angle
-            angle = con.get_parameter()
+            angle = con.value
 
             # create points representing the constraint
             p0 = Vector([1.0, 0.0])
@@ -337,7 +337,7 @@ class GeometricSolver(Observer, Observable):
             v0 = variables[0]
             v1 = variables[1]
 
-            dist = con.get_parameter()
+            dist = con.value
 
             p0 = Vector.origin()
             p1 = Vector([dist, 0.0])
@@ -373,7 +373,7 @@ class GeometricSolver(Observer, Observable):
         mapping = {}
 
         for variable in variables:
-            mapping[variable] = self.problem.get_fix(variable).get_parameter()
+            mapping[variable] = self.problem.get_fix(variable).value
 
         conf = Configuration(mapping)
 
