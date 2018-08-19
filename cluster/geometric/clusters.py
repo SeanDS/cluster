@@ -29,6 +29,7 @@ class PointRelation(metaclass=abc.ABCMeta):
 
         return "{0}({1})".format(self.name, points)
 
+
 class Distance(PointRelation):
     """Represents a known distance between two points"""
 
@@ -56,6 +57,7 @@ class Distance(PointRelation):
 
     def __hash__(self):
         return hash(frozenset(self.points))
+
 
 class Angle(PointRelation):
     """Represents a known angle between three points"""
@@ -89,8 +91,11 @@ class Angle(PointRelation):
     def __hash__(self):
         return hash(frozenset(self.points))
 
+
 class Cluster(Variable, metaclass=abc.ABCMeta):
     """A set of points, satisfying some constaint"""
+
+    NAME = "Cluster"
 
     def __init__(self, variables, *args, **kwargs):
         """Create a new cluster
@@ -189,20 +194,21 @@ class Cluster(Variable, metaclass=abc.ABCMeta):
         # if all fails
         raise TypeError("Intersection of unknown cluster types")
 
+    def __copy__(self):
+        return self.__class__(self.variables)
+
+
 class Rigid(Cluster):
     """Represents a set of points that form a rigid body"""
 
-    def __init__(self, *args, **kwargs):
-        """Creates a new rigid cluster"""
-        # call parent
-        super().__init__(name="rigid", *args, **kwargs)
+    NAME = "Rigid"
 
-    def copy(self):
-        return Rigid(self.variables)
 
 class Hedgehog(Cluster):
     """Represents a set of points (C, X1...XN) where all angles a(Xi, C, Xj) are
     known"""
+
+    NAME = "Hedgehog"
 
     def __init__(self, cvar, xvars):
         """Creates a new hedgehog cluster
@@ -225,18 +231,21 @@ class Hedgehog(Cluster):
         self.xvars = set(xvars)
 
         # call parent constructor with all variables
-        super().__init__(self.xvars.union([self.cvar]), name="hedgehog")
+        super().__init__(self.xvars.union([self.cvar]))
 
     def _variable_str(self):
         extra = ", ".join(self.xvars)
         return f"{self.cvar}, [{extra}]"
 
-    def copy(self):
-        return Hedgehog(self.cvar, self.xvars)
+    def __copy__(self):
+        return self.__class__(self.cvar, self.xvars)
+
 
 class Balloon(Cluster):
     """Represents a set of points that is invariant to rotation, translation and
     scaling"""
+
+    NAME = "Balloon"
 
     def __init__(self, *args, **kwargs):
         """Create a new balloon
@@ -245,14 +254,12 @@ class Balloon(Cluster):
         """
 
         # call parent
-        super().__init__(name="balloon", *args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         # check there are enough variables for a balloon
         if len(self.variables) < 3:
             raise ValueError("Balloon must have at least three variables")
 
-    def copy(self):
-        return Balloon(self.variables)
 
 def over_constraints(c1, c2):
     """returns the over-constraints (duplicate distances and angles) for

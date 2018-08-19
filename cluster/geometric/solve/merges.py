@@ -1,5 +1,6 @@
 import abc
 import logging
+import copy
 import numpy as np
 import numpy.linalg as la
 
@@ -16,8 +17,10 @@ class Merge(Method, metaclass=abc.ABCMeta):
     all constraints in several input clusters. The output cluster
     replaces the input clusters in the constriant problem"""
 
+    NAME = "Merge"
+
     def __init__(self, consistent, overconstrained, *args, **kwargs):
-        super(Merge, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         self.consistent = consistent
         self.overconstrained = overconstrained
@@ -48,15 +51,17 @@ class Merge(Method, metaclass=abc.ABCMeta):
 
         return "{0}, {1}".format(consistent_status, constrained_status)
 
+
 class MergePR(Merge):
     """Represents a merging of one point with a rigid
 
     The first cluster determines the orientation of the resulting cluster.
     """
 
+    NAME = "MergePR"
+
     def __init__(self, in1, in2, out):
-        super().__init__(name="MergePR", inputs=[in1, in2], outputs=[out], overconstrained=False,
-                         consistent=True)
+        super().__init__(inputs=[in1, in2], outputs=[out], overconstrained=False, consistent=True)
 
     def multi_execute(self, inmap):
         LOGGER.debug("MergePR.multi_execute called")
@@ -68,18 +73,20 @@ class MergePR(Merge):
         conf2 = inmap[c2]
 
         if len(c1.variables) == 1:
-            return [conf2.copy()]
+            return [copy.copy(conf2)]
         else:
-            return [conf1.copy()]
+            return [copy.copy(conf1)]
+
 
 class MergeRR(Merge):
     """Represents a merging of two rigids (overconstrained)
 
     The first rigid determines the orientation of the resulting cluster"""
 
+    NAME = "MergeRR"
+
     def __init__(self, in1, in2, out):
-        super().__init__(name="MergeRR", inputs=[in1, in2], outputs=[out], overconstrained=True,
-                         consistent=True)
+        super().__init__(inputs=[in1, in2], outputs=[out], overconstrained=True, consistent=True)
 
     def multi_execute(self, inmap):
         LOGGER.debug("MergeRR.multi_execute called")
@@ -92,12 +99,17 @@ class MergeRR(Merge):
 
         return [conf1.merge(conf2)[0]]
 
+
 class MergeRH(Merge):
-    """Represents a merging of a rigid and a hog (where the hog is absorbed by the rigid). Overconstrained."""
+    """Represents a merging of a rigid and a hog (where the hog is absorbed by the rigid)
+
+    Overconstrained.
+    """
+
+    NAME = "MergeRH"
 
     def __init__(self, rigid, hog, out):
-        super().__init__(name="MergeRH", inputs=[rigid, hog], outputs=[out], overconstrained=True,
-                         consistent=True)
+        super().__init__(inputs=[rigid, hog], outputs=[out], overconstrained=True, consistent=True)
 
         self.rigid = rigid
         self.hog = hog
@@ -108,15 +120,19 @@ class MergeRH(Merge):
 
         conf1 = inmap[self.rigid]
 
-        return [conf1.copy()]
+        return [copy.copy(conf1)]
+
 
 class MergeBH(Merge):
-    """Represents a merging of a balloon and a hog (where
-       the hog is absorbed by the balloon). Overconstrained.
+    """Represents a merging of a balloon and a hog (where the hog is absorbed by the balloon)
+
+    Overconstrained.
     """
 
+    NAME = "MergeBH"
+
     def __init__(self, balloon, hog, out):
-        super().__init__(name="MergeBH", inputs=[balloon, hog], outputs=[out], overconstrained=True,
+        super().__init__(inputs=[balloon, hog], outputs=[out], overconstrained=True,
                          consistent=True)
 
         self.balloon = balloon
@@ -126,7 +142,8 @@ class MergeBH(Merge):
 
         conf1 = inmap[self.balloon]
 
-        return [conf1.copy()]
+        return [copy.copy(conf1)]
+
 
 class MergeRRR(Merge):
     """Represents a merging of three rigids
@@ -134,9 +151,10 @@ class MergeRRR(Merge):
     The first rigid determines the orientation of the resulting cluster.
     """
 
+    NAME = "MergeRRR"
+
     def __init__(self, r1, r2, r3, out):
-        super().__init__(name="MergeRRR", inputs=[r1, r2, r3], outputs=[out], overconstrained=False,
-                         consistent=True)
+        super().__init__(inputs=[r1, r2, r3], outputs=[out], overconstrained=False, consistent=True)
 
         # check coincidence
         shared12 = set(r1.variables).intersection(r2.variables)
@@ -264,15 +282,18 @@ class MergeRRR(Merge):
 
         return solutions
 
+
 class MergeRHR(Merge):
     """Represents a merging of two rigids and a hedgehog
 
     The first rigid determines the orientation of the resulting cluster
     """
 
+    NAME = "MergeRHR"
+
     def __init__(self, c1, hog, c2, out):
-        super().__init__(name="MergeRHR", inputs=[c1, hog, c2], outputs=[out],
-                         overconstrained=False, consistent=True)
+        super().__init__(inputs=[c1, hog, c2], outputs=[out], overconstrained=False,
+                         consistent=True)
 
         self.c1 = c1
         self.hog = hog
@@ -386,14 +407,18 @@ class MergeRHR(Merge):
 
         return solutions
 
+
 class MergeRRH(Merge):
     """Represents a merging of two rigids and a hedgehog
-       The first rigid determines the orientation of the resulting
-       cluster
+
+    The first rigid determines the orientation of the resulting cluster.
     """
+
+    NAME = "MergeRRH"
+
     def __init__(self, c1, c2, hog, out):
-        super().__init__(name="MergeRRH", inputs=[c1, c2, hog], outputs=[out],
-                         overconstrained=False, consistent=True)
+        super().__init__(inputs=[c1, c2, hog], outputs=[out], overconstrained=False,
+                         consistent=True)
 
         self.c1 = c1
         self.c2 = c2
@@ -566,8 +591,12 @@ class MergeRRH(Merge):
 
         return constraints
 
+
 class BalloonFromHogs(Merge):
     """Represent a balloon merged from two hogs"""
+
+    NAME = "BalloonFromHedgehogs"
+
     def __init__(self, hog1, hog2, balloon):
         """Create a new balloon from two angles
 
@@ -577,8 +606,8 @@ class BalloonFromHogs(Merge):
             balloon - a Balloon instance
         """
 
-        super().__init__(name="BalloonFromHogs", inputs=[hog1, hog2], outputs=[balloon],
-                         overconstrained=False, consistent=True)
+        super().__init__(inputs=[hog1, hog2], outputs=[balloon], overconstrained=False,
+                         consistent=True)
 
         self.hog1 = hog1
         self.hog2 = hog2
@@ -662,12 +691,14 @@ class BalloonFromHogs(Merge):
 
         return rval
 
+
 class BalloonMerge(Merge):
     """Represents a merging of two balloons"""
 
+    NAME = "BalloonMerge"
+
     def __init__(self, in1, in2, out):
-        super().__init__(name="BalloonMerge", inputs=[in1, in2], outputs=[out],
-                         overconstrained=False, consistent=True)
+        super().__init__(inputs=[in1, in2], outputs=[out], overconstrained=False, consistent=True)
 
         self.input1 = in1
         self.input2 = in2
@@ -694,12 +725,15 @@ class BalloonMerge(Merge):
 
         return [conf1.merge_scale(conf2)[0]]
 
+
 class BalloonRigidMerge(Merge):
     """Represents a merging of a balloon and a rigid"""
 
+    NAME = "BalloonRigidMerge"
+
     def __init__(self, balloon, cluster, output):
-        super().__init__(name="BalloonRigidMerge", inputs=[balloon, cluster], outputs=[output],
-                         overconstrained=False, consistent=True)
+        super().__init__(inputs=[balloon, cluster], outputs=[output], overconstrained=False,
+                         consistent=True)
 
         self.balloon = balloon
         self.cluster= cluster
@@ -725,12 +759,15 @@ class BalloonRigidMerge(Merge):
 
         return [rigid.merge_scale(balloon)[0]]
 
+
 class MergeHogs(Merge):
     """Represents a merging of two hogs to form a new hog"""
 
+    NAME = "MergeHogs"
+
     def __init__(self, hog1, hog2, output):
-        super().__init__(name="MergeHogs", inputs=[hog1, hog2], outputs=[output],
-                         overconstrained=False, consistent=True)
+        super().__init__(inputs=[hog1, hog2], outputs=[output], overconstrained=False,
+                         consistent=True)
 
         self.hog1 = hog1
         self.hog2 = hog2

@@ -8,7 +8,7 @@ from .geometry import Vector, tol_gt, tol_zero, make_hcs, make_hcs_scaled, cs_tr
 
 LOGGER = logging.getLogger(__name__)
 
-class Configuration(object):
+class Configuration:
     """A set of named points with coordinates.
 
     Immutable. Defines equality and a hash function.
@@ -21,7 +21,6 @@ class Configuration(object):
         {v0: p0, v1: p1, v2: p2}, note that points are objects of class \
         :class:`Vector`
         """
-
         # dictionary mapping variable names to point values
         self.mapping = dict(mapping)
 
@@ -30,13 +29,16 @@ class Configuration(object):
 
         self.makehash()
 
-    def copy(self):
-        """returns a shallow copy"""
-        new = Configuration(self.mapping)
-        new.underconstrained = self.underconstrained
-        return new
+    def __copy__(self):
+        obj = self.__class__(self.mapping)
 
-    def vars(self):
+        # copy constrainedness
+        obj.underconstrained = self.underconstrained
+
+        return obj
+
+    @property
+    def variables(self):
         """return list of variables"""
         return list(self.mapping.keys())
 
@@ -83,14 +85,14 @@ class Configuration(object):
     def merge_transform(self, other):
         """returns a new configurations which is this one plus the given other configuration transformed, such that common points will overlap (if possible)."""
 
-        shared = set(self.vars()).intersection(other.vars())
+        shared = set(self.variables).intersection(other.variables)
         underconstrained = self.underconstrained or other.underconstrained
         if len(shared) == 0:
             underconstrained = True
             cs1 = make_hcs(Vector.origin(), Vector([1.0, 0.0]))
             cs2 = make_hcs(Vector.origin(), Vector([1.0, 0.0]))
         elif len(shared) == 1:
-            if len(self.vars()) > 1 and len(other.vars()) > 1:
+            if len(self.variables) > 1 and len(other.variables) > 1:
                 underconstrained = True
             v1 = list(shared)[0]
             p11 = self.mapping[v1]
@@ -121,7 +123,7 @@ class Configuration(object):
     def merge_scale(self, other, vars=[]):
         """returns a new configurations which is this one plus the given other configuration transformed, such that common points will overlap (if possible)."""
         if len(vars) == 0:
-            shared = set(self.vars()).intersection(other.vars())
+            shared = set(self.variables).intersection(other.variables)
         else:
             shared = vars
         underconstrained = self.underconstrained or other.underconstrained

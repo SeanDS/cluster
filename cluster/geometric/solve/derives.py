@@ -8,13 +8,15 @@ LOGGER = logging.getLogger(__name__)
 class Derive(Method, metaclass=abc.ABCMeta):
     """A derive is a method such that a single output cluster is a
     subconstraint of a single input cluster."""
-    pass
+    NAME = "Derive"
 
 class RigidToHog(Derive):
     """Represents a derivation of a hog from a cluster"""
 
+    NAME = "RigidToHedgehog"
+
     def __init__(self, cluster, hog):
-        super().__init__(name="RigidToHog", inputs=[cluster], outputs=[hog])
+        super().__init__(inputs=[cluster], outputs=[hog])
 
         self.cluster = cluster
         self.hog = hog
@@ -29,11 +31,12 @@ class RigidToHog(Derive):
         return [conf]
 
 class BalloonToHog(Derive):
-    """Represents a derivation of a hog from a balloon
-    """
-    def __init__(self, balloon, hog):
-        super().__init__(name="BalloonToHog", inputs=[balloon], outputs=[hog])
+    """Represents a derivation of a hog from a balloon"""
 
+    NAME = "BalloonToHedgehog"
+
+    def __init__(self, balloon, hog):
+        super().__init__(inputs=[balloon], outputs=[hog])
         self.balloon = balloon
         self.hog = hog
 
@@ -47,8 +50,10 @@ class BalloonToHog(Derive):
         return [conf]
 
 class SubHog(Derive):
+    NAME = "HedgehogToHedgehog"
+
     def __init__(self, hog, sub):
-        super(SubHog, self).__init__(name="SubHog", inputs=[hog], outputs=[sub])
+        super(SubHog, self).__init__(inputs=[hog], outputs=[sub])
 
         self.hog = hog
         self.sub = sub

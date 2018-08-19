@@ -7,8 +7,10 @@ from .graph import MethodGraph
 
 LOGGER = logging.getLogger(__name__)
 
-class Variable:
+class Variable(metaclass=abc.ABCMeta):
     """Represents multi-valued variables"""
+
+    NAME = "Variable"
 
     # last unique cluster id
     _last_id = 0
@@ -28,11 +30,8 @@ class Variable:
 
         return obj
 
-    def __init__(self, name):
-        self.name = name
-
     def __str__(self):
-        return f"{self.name}#{self._number}"
+        return f"{self.NAME}#{self._number}"
 
     def __repr__(self):
         return str(self)
@@ -57,8 +56,9 @@ class Method(metaclass=abc.ABCMeta):
     Variable.
     """
 
-    def __init__(self, name, inputs, outputs):
-        self.name = str(name)
+    NAME = None
+
+    def __init__(self, inputs, outputs):
         self.inputs = list(inputs)
         self.outputs = list(outputs)
 
@@ -121,16 +121,17 @@ class Method(metaclass=abc.ABCMeta):
         output_str = " + ".join([str(output) for output in self.outputs])
 
         # combined string
-        return "{0}({1} -> {2})".format(self.name, input_str, \
-        output_str)
+        return f"{self.NAME}({input_str} -> {output_str})"
 
 
 class SumProdMethod(Method):
     """A Method that assigns the sum and product of its input to its output
     Variable"""
 
+    NAME = "SumProdMethod"
+
     def __init__(self, a, b, c):
-        super(SumProdMethod, self).__init__("SumProdMethod", [a, b], [c])
+        super().__init__([a, b], [c])
 
     def multi_execute(self, inmap):
         a = inmap[self.inputs[0]]

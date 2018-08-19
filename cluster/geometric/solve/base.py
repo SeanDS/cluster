@@ -1,4 +1,5 @@
 import logging
+import copy
 import numpy as np
 
 from ...notify import Notifier, Listener
@@ -763,7 +764,7 @@ class ClusterSolver(Notifier):
 
             selclusters.append(clusters[0])
 
-        outcluster = incluster.copy()
+        outcluster = copy.copy(incluster)
 
         # Rick 20090519 - copy does not copy structural overconstrained flag?
         outcluster.overconstrained = incluster.overconstrained

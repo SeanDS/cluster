@@ -8,10 +8,11 @@ LOGGER = logging.getLogger(__name__)
 class PrototypeMethod(Method):
     """Selects solutions of a cluster for which the prototype and the solution satisfy the same constraints."""
 
+    NAME = "PrototypeMethod"
+
     def __init__(self, incluster, selclusters, outcluster, constraints):
         # call parent constructor
-        super().__init__(name="PrototypeMethod", inputs=[incluster]+selclusters,
-                         outputs=[outcluster])
+        super().__init__(inputs=[incluster]+selclusters, outputs=[outcluster])
 
         # set constraints
         self.constraints = list(constraints)
@@ -35,9 +36,9 @@ class PrototypeMethod(Method):
         for cluster in selclusters:
             conf = inmap[cluster]
 
-            assert len(conf.vars()) == 1
+            assert len(conf.variables) == 1
 
-            var = conf.vars()[0]
+            var = conf.variables[0]
             selmap[var] = conf.mapping[var]
 
         selconf = Configuration(selmap)
