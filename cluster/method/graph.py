@@ -1,5 +1,5 @@
 import logging
-from .base import Graph
+from ..graph import Graph
 
 LOGGER = logging.getLogger(__name__)
 

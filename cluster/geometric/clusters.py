@@ -5,7 +5,7 @@
 import abc
 import logging
 
-from .multimethod import MultiVariable
+from ..method import Variable
 
 LOGGER = logging.getLogger(__name__)
 
@@ -89,7 +89,7 @@ class Angle(PointRelation):
     def __hash__(self):
         return hash(frozenset(self.points))
 
-class Cluster(MultiVariable, metaclass=abc.ABCMeta):
+class Cluster(Variable, metaclass=abc.ABCMeta):
     """A set of points, satisfying some constaint"""
 
     def __init__(self, variables, *args, **kwargs):

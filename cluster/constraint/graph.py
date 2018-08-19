@@ -1,6 +1,6 @@
 import logging
 
-from .base import Graph
+from ..graph import Graph
 from ..notify import Notifier
 
 LOGGER = logging.getLogger(__name__)

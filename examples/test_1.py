@@ -7,7 +7,8 @@ logger = logging.getLogger("cluster")
 logger.addHandler(handler)
 logger.setLevel(logging.DEBUG)
 
-from cluster.geometric import *
+from cluster import (GeometricProblem, GeometricSolver, DistanceConstraint, AngleConstraint,
+                     FixConstraint)
 from cluster.geometry import Vector
 from cluster.view import solution_viewer
 

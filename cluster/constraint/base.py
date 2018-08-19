@@ -19,12 +19,11 @@ Constraint, and must also be non-mutable, hashable objects.
 import abc
 import logging
 
-from .graph import Graph
-from .notify import Notifier
+from ..notify import Notifier
 
 LOGGER = logging.getLogger(__name__)
 
-class Constraint(object, metaclass=abc.ABCMeta):
+class Constraint(metaclass=abc.ABCMeta):
     """Abstract constraint
 
     A constraint defines a relation between variables that should be satisfied.
@@ -66,6 +65,30 @@ class Constraint(object, metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def __str__(self):
         raise NotImplementedError
+
+
+class ParametricConstraint(Constraint, Notifier, metaclass=abc.ABCMeta):
+    """A constraint with a parameter and notification when parameter changes"""
+
+    def __init__(self):
+        """initialize ParametricConstraint"""
+
+        Constraint.__init__(self)
+        Notifier.__init__(self)
+
+        self._value = None
+
+    def get_parameter(self):
+        """get parameter value"""
+
+        return self._value
+
+    def set_parameter(self, value):
+        """set parameter value and notify any listeners"""
+
+        self._value = value
+        self.send_notify(("set_parameter", value))
+
 
 class PlusConstraint(Constraint):
     """Constraint for testing purposes"""

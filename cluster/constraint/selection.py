@@ -3,8 +3,8 @@
 import abc
 import logging
 
-from .constraint import Constraint
-from .geometry import is_clockwise, is_counterclockwise, is_obtuse, is_acute
+from ..geometry import is_clockwise, is_counterclockwise, is_obtuse, is_acute
+from .base import Constraint
 
 LOGGER = logging.getLogger(__name__)
 
@@ -132,14 +132,3 @@ class NotAcuteConstraint(FunctionConstraint):
         # call parent constructor
         super(NotAcuteConstraint, self).__init__(function, [v1, v2, v3], \
         name="NotAcuteConstraint")
-
-def fnot(function):
-    notf = lambda *args: not function(*args)
-    notf.__name__ = str("fnot("+function.__name__+")")
-    return notf
-
-def test():
-    print((FunctionConstraint(is_right_handed, ['a','b','c','d'])))
-    print((FunctionConstraint(fnot(is_right_handed), ['a','b','c','d'])))
-
-if __name__ == "__main__": test()
