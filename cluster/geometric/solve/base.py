@@ -85,7 +85,7 @@ class GeometricSolver(Listener):
             cluster = toplevel[0]
 
             if isinstance(cluster, Rigid):
-                configurations = self.solver.get(cluster)
+                configurations = self.solver.get_configurations(cluster)
 
                 if configurations is None:
                     return "unsolved"
@@ -120,7 +120,7 @@ class GeometricSolver(Listener):
                 geocluster.variables.append(variables)
 
             # determine solutions
-            solutions = self.solver.get(drcluster)
+            solutions = self.solver.get_configurations(drcluster)
 
             underconstrained = False
 
@@ -294,7 +294,7 @@ class GeometricSolver(Listener):
             if self.fixcluster != None:
                 self.solver.remove(self.fixcluster)
 
-            var = self.get(con.variables()[0])
+            var = self.get_configurations(con.variables()[0])
 
             if var in self.fixvars:
                 self.fixvars.remove(var)
@@ -337,7 +337,7 @@ class GeometricSolver(Listener):
             conf = Configuration({v0: p0, v1: p1, v2: p2})
 
             # set the hedgehog's configuration in the solver
-            self.solver.set(hog, [conf])
+            self.solver.set_configurations(hog, [conf])
 
             assert con.satisfied(conf.mapping)
         elif isinstance(con, DistanceConstraint):
@@ -356,7 +356,7 @@ class GeometricSolver(Listener):
 
             conf = Configuration({v0: p0, v1: p1})
 
-            self.solver.set(rig, [conf])
+            self.solver.set_configurations(rig, [conf])
 
             assert con.satisfied(conf.mapping)
         elif isinstance(con, FixConstraint):
@@ -372,7 +372,7 @@ class GeometricSolver(Listener):
 
         conf = Configuration({variable: proto})
 
-        self.solver.set(cluster, [conf])
+        self.solver.set_configurations(cluster, [conf])
 
     def _update_fix(self):
         if not self.fixcluster:
@@ -389,7 +389,7 @@ class GeometricSolver(Listener):
 
         conf = Configuration(mapping)
 
-        self.solver.set(self.fixcluster, [conf])
+        self.solver.set_configurations(self.fixcluster, [conf])
 
 
 class ClusterSolver(Notifier):
@@ -483,11 +483,11 @@ class ClusterSolver(Notifier):
         self._remove(cluster)
         self._process_new()
 
-    def set(self, cluster, configurations):
+    def set_configurations(self, cluster, configurations):
         """Associate a list of configurations with a cluster"""
         self._mg.set_node_value(cluster, configurations)
 
-    def get(self, cluster):
+    def get_configurations(self, cluster):
         """Return a set of configurations associated with a cluster"""
         return self._mg.get_node_value(cluster)
 
