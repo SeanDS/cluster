@@ -50,6 +50,9 @@ class Vector(np.ndarray):
     def y(self, y):
         self[1] = float(y)
 
+    def __str__(self):
+        return f"({self.x:.3f}, {self.y:.3f})"
+
     @classmethod
     def origin(cls):
         """The coordinates of the origin"""

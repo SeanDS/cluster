@@ -74,3 +74,7 @@ else:
 print("Root = " + str(list(solver.solver._graph.successors('_root'))))
 
 solution_viewer(problem, result.solutions[0])
+
+#import networkx as nx
+#nx.drawing.nx_pydot.write_dot(solver.solver._mg, "test_4.dot")
+#nx.drawing.nx_pydot.write_dot(solver.constraint_graph, "test_4.dot")

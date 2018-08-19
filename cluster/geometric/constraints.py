@@ -69,7 +69,7 @@ class DistanceConstraint(ParametricConstraint):
         return self.value
 
     def __str__(self):
-        return f"{self.NAME}(|{self._variable_str}| = {self.distance})"
+        return f"{self.NAME}(|{self._variable_str}| = {self.distance:.3f})"
 
 
 class AngleConstraint(ParametricConstraint):
@@ -115,7 +115,7 @@ class AngleConstraint(ParametricConstraint):
         return np.degrees(self.angle)
 
     def __str__(self):
-        return f"{self.NAME}(∠({self._variable_str}) = {self.angle_degrees}°)"
+        return f"{self.NAME}(∠({self._variable_str}) = {self.angle_degrees:.3f}°)"
 
 
 class SelectionConstraint(Constraint, metaclass=abc.ABCMeta):
