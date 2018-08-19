@@ -42,7 +42,7 @@ class Configuration:
         """return list of variables"""
         return list(self.mapping.keys())
 
-    def get(self, var):
+    def position(self, var):
         """return position of point var"""
         return self.mapping[var]
 
@@ -169,7 +169,7 @@ class Configuration:
             othertransformed = other.transform(t)
             # test if point map onto eachother (distance metric tolerance)
             for var in self.mapping:
-                d = othertransformed.get(var).distance_to(self.get(var))
+                d = othertransformed.position(var).distance_to(self.position(var))
                 # check that d is greater than 0 within tolerance
                 if not tol_gt(d, 0):
                     return False

@@ -220,14 +220,14 @@ class MergeRRR(Merge):
         assert v1 != v3
         assert v2 != v3
 
-        p11 = r1.get(v1)
-        p21 = r1.get(v2)
+        p11 = r1.position(v1)
+        p21 = r1.position(v2)
         d12 = la.norm(p11 - p21)
-        p23 = r3.get(v2)
-        p33 = r3.get(v3)
+        p23 = r3.position(v2)
+        p33 = r3.position(v3)
         d23 = la.norm(p23 - p33)
-        p32 = r2.get(v3)
-        p12 = r2.get(v1)
+        p32 = r2.position(v3)
+        p12 = r2.position(v1)
         d31 = la.norm(p32 - p12)
 
         ddds = MergeRRR.solve_ddd(v1, v2, v3, d12, d23, d31)
@@ -366,19 +366,19 @@ class MergeRHR(Merge):
         conf2 = inmap[self.c2]
 
         # determine angle
-        p1h = confh.get(v1)
-        p2h = confh.get(v2)
-        p3h = confh.get(v3)
+        p1h = confh.position(v1)
+        p2h = confh.position(v2)
+        p3h = confh.position(v3)
         a123 = p2h.angle_between(p1h, p3h)
 
         # d1c
-        p11 = conf1.get(v1)
-        p21 = conf1.get(v2)
+        p11 = conf1.position(v1)
+        p21 = conf1.position(v2)
         d12 = p11.distance_to(p21)
 
         # d2c
-        p32 = conf2.get(v3)
-        p22 = conf2.get(v2)
+        p32 = conf2.position(v3)
+        p22 = conf2.position(v2)
         d23 = p32.distance_to(p22)
 
         # solve
@@ -515,19 +515,19 @@ class MergeRRH(Merge):
         conf2 = inmap[c2]
 
         # get angle
-        p1h = confh.get(v1)
-        p2h = confh.get(v2)
-        p3h = confh.get(v3)
+        p1h = confh.position(v1)
+        p2h = confh.position(v2)
+        p3h = confh.position(v3)
         a312 = p1h.angle_between(p3h, p2h)
 
         # get distance d12
-        p11 = conf1.get(v1)
-        p21 = conf1.get(v2)
+        p11 = conf1.position(v1)
+        p21 = conf1.position(v2)
         d12 = p11.distance_to(p21)
 
         # get distance d23
-        p22 = conf2.get(v2)
-        p32 = conf2.get(v3)
+        p22 = conf2.position(v2)
+        p32 = conf2.position(v3)
         d23 = p22.distance_to(p32)
         adds = MergeRRH.solve_add(v1, v2, v3, a312, d12, d23)
 
@@ -639,9 +639,9 @@ class BalloonFromHogs(Merge):
         # determine angle312
         conf1 = inmap[self.hog1]
 
-        p31 = conf1.get(v3)
-        p11 = conf1.get(v1)
-        p21 = conf1.get(v2)
+        p31 = conf1.position(v3)
+        p11 = conf1.position(v1)
+        p21 = conf1.position(v2)
         a312 = p11.angle_between(p31, p21)
 
         # determine distance d12
@@ -649,9 +649,9 @@ class BalloonFromHogs(Merge):
 
         # determine angle123
         conf2 = inmap[self.hog2]
-        p12 = conf2.get(v1)
-        p22 = conf2.get(v2)
-        p32 = conf2.get(v3)
+        p12 = conf2.position(v1)
+        p22 = conf2.position(v2)
+        p32 = conf2.position(v3)
         a123 = p22.angle_between(p12, p32)
 
         # solve
