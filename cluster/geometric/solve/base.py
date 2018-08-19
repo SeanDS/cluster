@@ -115,8 +115,8 @@ class GeometricSolver(Listener):
             mapping[geocluster] = drcluster
 
             # determine variables
-            for var in drcluster.vars:
-                geocluster.variables.append(var)
+            for variables in drcluster.variables:
+                geocluster.variables.append(variables)
 
             # determine solutions
             solutions = self.solver.get(drcluster)
@@ -379,12 +379,12 @@ class GeometricSolver(Listener):
 
             return
 
-        variables = self.fixcluster.vars
+        variables = self.fixcluster.variables
 
         mapping = {}
 
-        for var in variables:
-            mapping[var] = self.problem.get_fix(var).get_parameter()
+        for variable in variables:
+            mapping[variable] = self.problem.get_fix(variable).get_parameter()
 
         conf = Configuration(mapping)
 
@@ -636,9 +636,9 @@ class ClusterSolver(Notifier):
         # update graph
         self._add_to_group("_rigids", newcluster)
 
-        for var in newcluster.vars:
-            self._add_variable(var)
-            self._add_dependency(var, newcluster)
+        for variable in newcluster.variables:
+            self._add_variable(variable)
+            self._add_dependency(variable, newcluster)
 
         # if there is no root cluster, this one will be it
         if len(list(self._graph.successors("_root"))) == 0:
@@ -687,9 +687,9 @@ class ClusterSolver(Notifier):
         # update graph
         self._add_to_group("_balloons", newballoon)
 
-        for var in newballoon.vars:
-            self._add_variable(var)
-            self._add_dependency(var, newballoon)
+        for variable in newballoon.variables:
+            self._add_variable(variable)
+            self._add_dependency(variable, newballoon)
 
         # add to top level
         self._add_top_level(newballoon)
@@ -753,13 +753,13 @@ class ClusterSolver(Notifier):
 
         selclusters = []
 
-        for var in variables:
+        for variable in variables:
             clusters = self._graph.successors(var)
             clusters = [c for c in clusters if isinstance(c, Rigid)]
-            clusters = [c for c in clusters if len(c.vars) == 1]
+            clusters = [c for c in clusters if len(c.variables) == 1]
 
             if len(clusters) != 1:
-                raise Exception(f"no prototype cluster for variable '{var}'")
+                raise Exception(f"no prototype cluster for variable '{variable}'")
 
             selclusters.append(clusters[0])
 
@@ -839,25 +839,25 @@ class ClusterSolver(Notifier):
         self._search_hogs_from_rigid(rigid)
 
     def _search_absorb_from_balloon(self, balloon):
-        for cvar in balloon.vars:
+        for cvar in balloon.variables:
             # find all incident hedgehogs
             hogs = self._find_hogs(cvar)
 
             # determine shared vertices per hedgehog
             for hog in hogs:
-                shared = set(hog.xvars).intersection(balloon.vars)
+                shared = set(hog.xvars).intersection(balloon.variables)
 
                 if len(shared) == len(hog.xvars):
                     return self._merge_balloon_hog(balloon, hog)
 
     def _search_absorb_from_rigid(self, cluster):
-        for cvar in cluster.vars:
+        for cvar in cluster.variables:
             # find all incident hedgehogs
             hogs = self._find_hogs(cvar)
 
             # determine shared vertices per hedgehog
             for hog in hogs:
-                shared = set(hog.xvars).intersection(cluster.vars)
+                shared = set(hog.xvars).intersection(cluster.variables)
 
                 if len(shared) == len(hog.xvars):
                     return self._merge_rigid_hog(cluster, hog)
@@ -867,20 +867,20 @@ class ClusterSolver(Notifier):
 
         # case BH (overconstrained):
         balloons = [x for x in dep if isinstance(x, Balloon) and self.is_top_level(x)]
-        sharecx = [x for x in balloons if len(set(hog.xvars).intersection(x.vars)) >= 1]
+        sharecx = [x for x in balloons if len(set(hog.xvars).intersection(x.variables)) >= 1]
 
         for balloon in sharecx:
-            sharedcx = set(balloon.vars).intersection(hog.xvars)
+            sharedcx = set(balloon.variables).intersection(hog.xvars)
 
             if len(sharedcx) == len(hog.xvars):
                 return self._merge_balloon_hog(balloon, hog)
 
         # case CH (overconstrained)
         clusters = [x for x in dep if isinstance(x, Rigid) and self.is_top_level(x)]
-        sharecx = [x for x in clusters if len(set(hog.xvars).intersection(x.vars)) >= 1]
+        sharecx = [x for x in clusters if len(set(hog.xvars).intersection(x.variables)) >= 1]
 
         for cluster in sharecx:
-            sharedcx = set(cluster.vars).intersection(hog.xvars)
+            sharedcx = set(cluster.variables).intersection(hog.xvars)
 
             if len(sharedcx) == len(hog.xvars):
                 return self._merge_rigid_hog(cluster, hog)
@@ -942,7 +942,7 @@ class ClusterSolver(Notifier):
         # map from adjacent balloons to variables shared with input balloon
         mapping = {}
 
-        for var in balloon.vars:
+        for var in balloon.variables:
             deps = self.find_dependent(var)
 
             balloons = [x for x in deps if isinstance(x, Balloon)]
@@ -967,7 +967,7 @@ class ClusterSolver(Notifier):
         # map from adjacent clusters to variables shared with input balloon
         mapping = {}
 
-        for var in balloon.vars:
+        for var in balloon.variables:
             deps = self.find_dependent(var)
 
             clusters = [x for x in deps if isinstance(x, Rigid) or isinstance(x, Distance)]
@@ -991,7 +991,7 @@ class ClusterSolver(Notifier):
         # map from adjacent clusters to variables shared with input balloon
         mapping = {}
 
-        for var in rigid.vars:
+        for var in rigid.variables:
             deps = self.find_dependent(var)
 
             balloons = [x for x in deps if isinstance(x, Balloon)]
@@ -1013,7 +1013,7 @@ class ClusterSolver(Notifier):
         # create new balloon and merge method
 
         # get variables in both balloons
-        variables = set(balloon_a.vars).union(balloon_b.vars)
+        variables = set(balloon_a.variables).union(balloon_b.variables)
 
         # create new balloon cluster
         new_balloon = Balloon(variables)
@@ -1027,7 +1027,7 @@ class ClusterSolver(Notifier):
         # create new rigid and method
 
         # get variables in both the balloon and the rigid
-        variables = set(balloon.vars).union(rigid.vars)
+        variables = set(balloon.variables).union(rigid.variables)
 
         # create new rigid cluster
         new_cluster = Rigid(list(variables))
@@ -1048,7 +1048,7 @@ class ClusterSolver(Notifier):
 
     def _make_hog_from_rigid(self, cvar, rigid):
         # outer variables of hedgehog are the rigid's variables
-        xvars = set(rigid.vars)
+        xvars = set(rigid.variables)
 
         # remove the central value of the hedgehog from the list
         xvars.remove(cvar)
@@ -1065,7 +1065,7 @@ class ClusterSolver(Notifier):
         return hog
 
     def _make_hog_from_balloon(self, cvar, balloon):
-        xvars = set(balloon.vars)
+        xvars = set(balloon.variables)
 
         xvars.remove(cvar)
 
@@ -1080,13 +1080,13 @@ class ClusterSolver(Notifier):
         return hog
 
     def _search_hogs_from_balloon(self, newballoon):
-        if len(newballoon.vars) <= 2:
+        if len(newballoon.variables) <= 2:
             return None
 
         # create/merge hogs
-        for cvar in newballoon.vars:
+        for cvar in newballoon.variables:
             # potential new hog
-            xvars = set(newballoon.vars)
+            xvars = set(newballoon.variables)
 
             xvars.remove(cvar)
 
@@ -1103,13 +1103,13 @@ class ClusterSolver(Notifier):
                         self._merge_hogs(hog, newhog)
 
     def _search_hogs_from_rigid(self, newcluster):
-        if len(newcluster.vars) <= 2:
+        if len(newcluster.variables) <= 2:
             return None
 
         # create/merge hogs
-        for cvar in newcluster.vars:
+        for cvar in newcluster.variables:
             # potential new hog
-            xvars = set(newcluster.vars)
+            xvars = set(newcluster.variables)
             xvars.remove(cvar)
 
             # find all incident hogs
@@ -1137,11 +1137,11 @@ class ClusterSolver(Notifier):
         tomerge = []
 
         for cluster in clusters:
-            if len(cluster.vars) < 3:
+            if len(cluster.variables) < 3:
                 continue
 
             # determine shared vars
-            xvars = set(cluster.vars)
+            xvars = set(cluster.variables)
             xvars.remove(newhog.cvar)
 
             shared = set(newhog.xvars).intersection(xvars)
@@ -1156,7 +1156,7 @@ class ClusterSolver(Notifier):
 
         for balloon in balloons:
             # determine shared vars
-            xvars = set(balloon.vars)
+            xvars = set(balloon.variables)
             xvars.remove(newhog.cvar)
 
             shared = set(newhog.xvars).intersection(xvars)
@@ -1209,10 +1209,10 @@ class ClusterSolver(Notifier):
         dep = self.find_dependent(hog.cvar)
 
         clusters = [x for x in dep if isinstance(x,Rigid) and self.is_top_level(x)]
-        sharecx = [x for x in clusters if len(set(hog.xvars).intersection(x.vars)) >=1]
+        sharecx = [x for x in clusters if len(set(hog.xvars).intersection(x.variables)) >=1]
 
         for cluster in sharecx:
-            sharedcx = set(cluster.vars).intersection(hog.xvars)
+            sharedcx = set(cluster.variables).intersection(hog.xvars)
 
             if len(sharedcx) == len(hog.xvars):
                 return self._merge_rigid_hog(cluster, hog)
@@ -1238,8 +1238,8 @@ class ClusterSolver(Notifier):
             for c2 in sharex:
                 if c1 == c2: continue
 
-                shared12 = set(c1.vars).intersection(c2.vars)
-                sharedh2 = set(hog.xvars).intersection(c2.vars)
+                shared12 = set(c1.variables).intersection(c2.variables)
+                sharedh2 = set(hog.xvars).intersection(c2.variables)
                 shared2 = shared12.union(sharedh2)
 
                 if len(shared12) >= 1 and len(sharedh2) >= 1 and len(shared2) == 2:
@@ -1252,7 +1252,7 @@ class ClusterSolver(Notifier):
 
         # find clusters overlapping with new cluster
         overlap = {}
-        for var in newcluster.vars:
+        for var in newcluster.variables:
             # get dependent objects
             dep = self._graph.successors(var)
 
@@ -1275,9 +1275,9 @@ class ClusterSolver(Notifier):
         # point-cluster merge
         for cluster in overlap:
             if len(overlap[cluster]) == 1:
-                if len(cluster.vars) == 1:
+                if len(cluster.variables) == 1:
                     return self._merge_point_rigid(cluster, newcluster)
-                elif len(newcluster.vars) == 1:
+                elif len(newcluster.variables) == 1:
                     return self._merge_point_rigid(newcluster, cluster)
 
         # two cluster merge (overconstrained)
@@ -1293,9 +1293,9 @@ class ClusterSolver(Notifier):
             for j in range(i + 1, len(clusterlist)):
                 c2 = clusterlist[j]
 
-                shared12 = set(c1.vars).intersection(c2.vars)
-                shared13 = set(c1.vars).intersection(newcluster.vars)
-                shared23 = set(c2.vars).intersection(newcluster.vars)
+                shared12 = set(c1.variables).intersection(c2.variables)
+                shared13 = set(c1.variables).intersection(newcluster.variables)
+                shared23 = set(c2.variables).intersection(newcluster.variables)
                 shared1 = shared12.union(shared13)
                 shared2 = shared12.union(shared23)
                 shared3 = shared13.union(shared23)
@@ -1315,33 +1315,33 @@ class ClusterSolver(Notifier):
             hogs = self._find_hogs(cvar)
 
             for hog in hogs:
-                sharedch = set(cluster.vars).intersection(hog.xvars)
-                sharednh = set(newcluster.vars).intersection(hog.xvars)
+                sharedch = set(cluster.variables).intersection(hog.xvars)
+                sharednh = set(newcluster.variables).intersection(hog.xvars)
                 sharedh = sharedch.union(sharednh)
 
                 if len(sharedch) >= 1 and len(sharednh) >= 1 and len(sharedh) >= 2:
                     return self._merge_rigid_hog_rigid(cluster, hog, newcluster)
 
         # merge with an angle, case 2
-        for var in newcluster.vars:
+        for var in newcluster.variables:
             hogs = self._find_hogs(var)
 
             for hog in hogs:
-                sharednh = set(newcluster.vars).intersection(hog.xvars)
+                sharednh = set(newcluster.variables).intersection(hog.xvars)
 
                 if len(sharednh) < 1:
                     continue
 
                 for cluster in overlap:
-                    sharednc = set(newcluster.vars).intersection(cluster.vars)
+                    sharednc = set(newcluster.variables).intersection(cluster.variables)
 
                     if len(sharednc) != 1:
                         raise Exception("unexpected case")
 
-                    if hog.cvar in cluster.vars:
+                    if hog.cvar in cluster.variables:
                         continue
 
-                    sharedch = set(cluster.vars).intersection(hog.xvars)
+                    sharedch = set(cluster.variables).intersection(hog.xvars)
                     sharedc = sharedch.union(sharednc)
 
                     if len(sharedch) >= 1 and len(sharedc) >= 2:
@@ -1349,20 +1349,20 @@ class ClusterSolver(Notifier):
 
         # merge with an angle, case 3
         for cluster in overlap:
-            sharednc = set(newcluster.vars).intersection(cluster.vars)
+            sharednc = set(newcluster.variables).intersection(cluster.variables)
 
             if len(sharednc) != 1:
                 raise Exception("unexpected case")
 
-            for var in cluster.vars:
+            for var in cluster.variables:
                 hogs = self._find_hogs(var)
 
                 for hog in hogs:
-                    if hog.cvar in newcluster.vars:
+                    if hog.cvar in newcluster.variables:
                         continue
 
-                    sharedhc = set(newcluster.vars).intersection(hog.xvars)
-                    sharedhn = set(cluster.vars).intersection(hog.xvars)
+                    sharedhc = set(newcluster.variables).intersection(hog.xvars)
+                    sharedhn = set(cluster.variables).intersection(hog.xvars)
                     sharedh = sharedhn.union(sharedhc)
                     sharedc = sharedhc.union(sharednc)
 
@@ -1373,7 +1373,7 @@ class ClusterSolver(Notifier):
         LOGGER.debug("Merging point %s with rigid %s", point, rigid)
 
         # get variables from point and rigid
-        variables = set(point.vars).union(rigid.vars)
+        variables = set(point.variables).union(rigid.variables)
 
         # create new rigid from variables
         new_cluster = Rigid(variables)
@@ -1404,7 +1404,7 @@ class ClusterSolver(Notifier):
             return self._merge_rigid_pair(r2, r1)
 
         # create new cluster and merge
-        variables = set(r1.vars).union(r2.vars)
+        variables = set(r1.variables).union(r2.variables)
 
         # create new rigid cluster from variables
         new_cluster = Rigid(variables)
@@ -1420,7 +1420,7 @@ class ClusterSolver(Notifier):
         LOGGER.debug("Merging rigid %s with hedgehog %s", rigid, hog)
 
         # create new rigid from variables
-        new_cluster = Rigid(rigid.vars)
+        new_cluster = Rigid(rigid.variables)
 
         # add new rigid-hedgehog merge
         self._add_merge(MergeRH(rigid, hog, new_cluster))
@@ -1433,7 +1433,7 @@ class ClusterSolver(Notifier):
         LOGGER.debug("Merging balloon %s with hedgehog %s", balloon, hog)
 
         # create new balloon and merge
-        newballoon = Balloon(balloon.vars)
+        newballoon = Balloon(balloon.variables)
 
         merge = MergeBH(balloon, hog, newballoon)
 
@@ -1466,7 +1466,7 @@ class ClusterSolver(Notifier):
             return self._merge_rigid_triple(r3, r1, r2)
 
         # create new cluster and method
-        allvars = set(r1.vars).union(r2.vars).union(r3.vars)
+        allvars = set(r1.variables).union(r2.variables).union(r3.variables)
 
         newcluster = Rigid(allvars)
 
@@ -1492,7 +1492,7 @@ class ClusterSolver(Notifier):
             return self._merge_rigid_hog_rigid(r2, hog, r1)
 
         # derive sub-hog if nessecairy
-        allvars = set(r1.vars).union(r2.vars)
+        allvars = set(r1.variables).union(r2.variables)
         xvars = set(hog.xvars).intersection(allvars)
 
         if len(xvars) < len(hog.xvars):
@@ -1501,7 +1501,7 @@ class ClusterSolver(Notifier):
             hog = self._derive_subhog(hog, xvars)
 
         #create new cluster and merge
-        allvars = set(r1.vars).union(r2.vars)
+        allvars = set(r1.variables).union(r2.variables)
 
         newcluster = Rigid(allvars)
 
@@ -1542,7 +1542,7 @@ class ClusterSolver(Notifier):
             return self._merge_rigid_rigid_hog(r2, r1, hog)
 
         # derive subhog if necessary
-        allvars = set(r1.vars).union(r2.vars)
+        allvars = set(r1.variables).union(r2.variables)
         xvars = set(hog.xvars).intersection(allvars)
 
         if len(xvars) < len(hog.xvars):
@@ -1690,25 +1690,25 @@ class ClusterSolver(Notifier):
 
     def _contains_distance(self,object, distance):
         if isinstance(object, Rigid):
-            return (distance.points[0] in object.vars and distance.points[1] in object.vars)
+            return (distance.points[0] in object.variables and distance.points[1] in object.variables)
         elif isinstance(object, Distance):
-            return (distance.points[0] in object.vars and distance.points[1] in object.vars)
+            return (distance.points[0] in object.variables and distance.points[1] in object.variables)
         else:
             return False
 
     def _contains_angle(self, object, angle):
         if isinstance(object, Rigid) or isinstance(object, Balloon):
-            return (angle.points[0] in object.vars
-            and angle.points[1] in object.vars
-            and angle.points[2] in object.vars)
+            return (angle.points[0] in object.variables
+            and angle.points[1] in object.variables
+            and angle.points[2] in object.variables)
         elif isinstance(object, Hedgehog):
             return (angle.points[1] == object.cvar and
             angle.points[0] in object.xvars and
             angle.points[2] in object.xvars)
         elif isinstance(object, Angle):
-            return (angle.points[1] == object.vars[1] and
-            angle.points[0] in object.vars and
-            angle.points[2] in object.vars)
+            return (angle.points[1] == object.variables[1] and
+            angle.points[0] in object.variables and
+            angle.points[2] in object.variables)
         else:
             return False
 

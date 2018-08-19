@@ -67,7 +67,7 @@ class MergePR(Merge):
         conf1 = inmap[c1]
         conf2 = inmap[c2]
 
-        if len(c1.vars) == 1:
+        if len(c1.variables) == 1:
             return [conf2.copy()]
         else:
             return [conf1.copy()]
@@ -139,9 +139,9 @@ class MergeRRR(Merge):
                          consistent=True)
 
         # check coincidence
-        shared12 = set(r1.vars).intersection(r2.vars)
-        shared13 = set(r1.vars).intersection(r3.vars)
-        shared23 = set(r2.vars).intersection(r3.vars)
+        shared12 = set(r1.variables).intersection(r2.variables)
+        shared13 = set(r1.variables).intersection(r3.variables)
+        shared23 = set(r2.variables).intersection(r3.variables)
         shared1 = shared12.union(shared13)
         shared2 = shared12.union(shared23)
         shared3 = shared13.union(shared23)
@@ -190,9 +190,9 @@ class MergeRRR(Merge):
         r2 = inmap[self.inputs[1]]
         r3 = inmap[self.inputs[2]]
 
-        shared12 = set(r1.vars()).intersection(r2.vars()).difference(r3.vars())
-        shared13 = set(r1.vars()).intersection(r3.vars()).difference(r2.vars())
-        shared23 = set(r2.vars()).intersection(r3.vars()).difference(r1.vars())
+        shared12 = set(r1.variables).intersection(r2.variables).difference(r3.variables)
+        shared13 = set(r1.variables).intersection(r3.variables).difference(r2.variables)
+        shared23 = set(r2.variables).intersection(r3.variables).difference(r1.variables)
 
         v1 = list(shared12)[0]
         v2 = list(shared13)[0]
@@ -228,9 +228,9 @@ class MergeRRR(Merge):
         r2 = self.inputs[1]
         r3 = self.inputs[2]
 
-        shared12 = set(r1.vars).intersection(r2.vars).difference(r3.vars)
-        shared13 = set(r1.vars).intersection(r3.vars).difference(r2.vars)
-        shared23 = set(r2.vars).intersection(r3.vars).difference(r1.vars)
+        shared12 = set(r1.variables).intersection(r2.variables).difference(r3.variables)
+        shared13 = set(r1.variables).intersection(r3.variables).difference(r2.variables)
+        shared23 = set(r2.variables).intersection(r3.variables).difference(r1.variables)
 
         v1 = list(shared12)[0]
         v2 = list(shared13)[0]
@@ -280,12 +280,12 @@ class MergeRHR(Merge):
         self.output = out
 
         # check coincidence
-        if not (hog.cvar in c1.vars and hog.cvar in c2.vars):
-            raise Exception("hog.cvar not in c1.vars and c2.vars")
+        if not (hog.cvar in c1.variables and hog.cvar in c2.variables):
+            raise Exception("hog.cvar not in c1.variables and c2.variables")
 
-        shared12 = set(c1.vars).intersection(c2.vars)
-        shared1h = set(c1.vars).intersection(hog.xvars)
-        shared2h = set(c2.vars).intersection(hog.xvars)
+        shared12 = set(c1.variables).intersection(c2.variables)
+        shared1h = set(c1.variables).intersection(hog.xvars)
+        shared2h = set(c2.variables).intersection(hog.xvars)
 
         shared1 = shared12.union(shared1h)
         shared2 = shared12.union(shared2h)
@@ -332,8 +332,8 @@ class MergeRHR(Merge):
         LOGGER.debug("MergeRHR.multi_execute called")
 
         # determine vars
-        shared1 = set(self.hog.xvars).intersection(self.c1.vars)
-        shared2 = set(self.hog.xvars).intersection(self.c2.vars)
+        shared1 = set(self.hog.xvars).intersection(self.c1.variables)
+        shared2 = set(self.hog.xvars).intersection(self.c2.variables)
 
         v1 = list(shared1)[0]
         v2 = self.hog.cvar
@@ -401,14 +401,14 @@ class MergeRRH(Merge):
         self.output = out
 
         # check coincidence
-        if hog.cvar not in c1.vars:
-            raise Exception("hog.cvar not in c1.vars")
-        if hog.cvar in c2.vars:
-            raise Exception("hog.cvar in c2.vars")
+        if hog.cvar not in c1.variables:
+            raise Exception("hog.cvar not in c1.variables")
+        if hog.cvar in c2.variables:
+            raise Exception("hog.cvar in c2.variables")
 
-        shared12 = set(c1.vars).intersection(c2.vars)
-        shared1h = set(c1.vars).intersection(hog.xvars)
-        shared2h = set(c2.vars).intersection(hog.xvars)
+        shared12 = set(c1.variables).intersection(c2.variables)
+        shared1h = set(c1.variables).intersection(hog.xvars)
+        shared2h = set(c2.variables).intersection(hog.xvars)
 
         shared1 = shared12.union(shared1h)
         shared2 = shared12.union(shared2h)
@@ -455,7 +455,7 @@ class MergeRRH(Merge):
         LOGGER.debug("MergeRRH.multi_execute called")
 
         # assert hog.cvar in c1
-        if self.hog.cvar in self.c1.vars:
+        if self.hog.cvar in self.c1.variables:
             c1 = self.c1
             c2 = self.c2
         else:
@@ -466,14 +466,14 @@ class MergeRRH(Merge):
         v1 = self.hog.cvar
 
         # get v2
-        candidates2 = set(self.hog.xvars).intersection(c1.vars).intersection(c2.vars)
+        candidates2 = set(self.hog.xvars).intersection(c1.variables).intersection(c2.variables)
 
         assert len(candidates2) >= 1
 
         v2 = list(candidates2)[0]
 
         # get v3
-        candidates3 = set(self.hog.xvars).intersection(c2.vars).difference([v1, v2])
+        candidates3 = set(self.hog.xvars).intersection(c2.variables).difference([v1, v2])
 
         assert len(candidates3) >= 1
 
@@ -540,15 +540,15 @@ class MergeRRH(Merge):
 
     def prototype_constraints(self):
         # assert hog.cvar in c1
-        if self.hog.cvar in self.c1.vars:
+        if self.hog.cvar in self.c1.variables:
             c1 = self.c1
             c2 = self.c2
         else:
             c1 = self.c2
             c2 = self.c1
 
-        shared1h = set(self.hog.xvars).intersection(c1.vars).difference([self.hog.cvar])
-        shared2h = set(self.hog.xvars).intersection(c2.vars).difference(shared1h)
+        shared1h = set(self.hog.xvars).intersection(c1.variables).difference([self.hog.cvar])
+        shared2h = set(self.hog.xvars).intersection(c2.variables).difference(shared1h)
 
         # get vars
         v1 = self.hog.cvar
@@ -672,9 +672,9 @@ class BalloonMerge(Merge):
         self.input1 = in1
         self.input2 = in2
         self.output = out
-        self.shared = list(set(self.input1.vars).intersection(self.input2.vars))
+        self.shared = list(set(self.input1.variables).intersection(self.input2.variables))
 
-        shared = set(in1.vars).intersection(in2.vars)
+        shared = set(in1.variables).intersection(in2.variables)
 
         if len(shared) < 2:
             raise Exception("underconstrained")
@@ -705,10 +705,10 @@ class BalloonRigidMerge(Merge):
         self.cluster= cluster
 
         # FIXME: is this used?
-        self.shared = list(set(self.balloon.vars).intersection(self.cluster.vars))
+        self.shared = list(set(self.balloon.variables).intersection(self.cluster.variables))
 
         # check coincidence
-        shared = set(balloon.vars).intersection(cluster.vars)
+        shared = set(balloon.variables).intersection(cluster.variables)
 
         if len(shared) < 2:
             raise Exception("underconstrained balloon-cluster merge")
