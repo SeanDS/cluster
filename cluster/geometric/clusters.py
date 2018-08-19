@@ -92,24 +92,6 @@ class Angle(PointRelation):
 class Cluster(Variable, metaclass=abc.ABCMeta):
     """A set of points, satisfying some constaint"""
 
-    # last unique cluster id
-    _last_id = 0
-
-    # unique number
-    _number = None
-
-    def __new__(cls, *args, **kwargs):
-        # create object
-        obj = super().__new__(cls)
-
-        # assign unique cluster ID
-        obj._number = cls._last_id
-
-        # increment last id
-        cls._last_id += 1
-
-        return obj
-
     def __init__(self, variables, *args, **kwargs):
         """Create a new cluster
 
@@ -135,7 +117,10 @@ class Cluster(Variable, metaclass=abc.ABCMeta):
         else:
             overconstrained = ""
 
-        return f"{overconstrained}{self.name}#{self._number}({self._variable_str()})"
+        # get parent string
+        parent_str = super().__str__()
+
+        return f"{overconstrained}{parent_str}({self._variable_str()})"
 
     def _variable_str(self):
         return ", ".join(self.vars)

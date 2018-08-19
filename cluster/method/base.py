@@ -7,17 +7,32 @@ from .graph import MethodGraph
 
 LOGGER = logging.getLogger(__name__)
 
-class Variable(object):
+class Variable:
     """Represents multi-valued variables"""
 
-    def __init__(self, name=None):
+    # last unique cluster id
+    _last_id = 0
+
+    # unique number
+    _number = None
+
+    def __new__(cls, *args, **kwargs):
+        # create object
+        obj = super().__new__(cls)
+
+        # assign unique cluster ID
+        obj._number = cls._last_id
+
+        # increment last id
+        cls._last_id += 1
+
+        return obj
+
+    def __init__(self, name):
         self.name = name
 
     def __str__(self):
-        if self.name is None:
-            return "Variable#{0}".format(id(self))
-
-        return "Variable({0})".format(self.name)
+        return f"{self.name}#{self._number}"
 
     def __repr__(self):
         return str(self)
