@@ -60,7 +60,7 @@ class Event:
 
     @source.setter
     def source(self, source):
-        self._source = weakref.ref(source)()
+        self._source = source
 
     def __str__(self):
         return f"Event('{self.message}' from '{self.source}')"
