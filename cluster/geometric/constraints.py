@@ -10,6 +10,8 @@ LOGGER = logging.getLogger(__name__)
 class FixConstraint(ParametricConstraint):
     """A constraint to fix a point relative to the coordinate system"""
 
+    NAME = "FixConstraint"
+
     def __init__(self, var, pos):
         """Create a new DistanceConstraint instance
 
@@ -17,26 +19,29 @@ class FixConstraint(ParametricConstraint):
             var    - a point variable name
             pos    - the position parameter
         """
-        super().__init__()
-
-        self._variables = [var]
-        self.set_parameter(pos)
+        super().__init__(variables=[var], value=pos)
 
     def satisfied(self, mapping):
         """return True iff mapping from variable names to points satisfies constraint"""
 
-        a = mapping[self._variables[0]]
+        a = mapping[self.variables[0]]
 
-        result = a.tol_eq(self._value)
+        result = a.tol_eq(self.value)
 
         return result
 
+    @property
+    def point(self):
+        return self.variables[0]
+
     def __str__(self):
-        return "FixConstraint({0}, {1})".format(self._variables[0], self._value)
+        return f"{self.NAME}({self.point} = {self.value})"
 
 
 class DistanceConstraint(ParametricConstraint):
     """A constraint on the Euclidean distance between two points"""
+
+    NAME = "DistanceConstraint"
 
     def __init__(self, a, b, dist):
         """Create a new DistanceConstraint instance
@@ -46,28 +51,26 @@ class DistanceConstraint(ParametricConstraint):
             b    - a point variable name
             dist - the distance parameter value
         """
-        super().__init__()
-
-        self._variables = [a, b]
-        self.set_parameter(dist)
+        super().__init__(variables=[a, b], value=dist)
 
     def satisfied(self, mapping):
         """return True iff mapping from variable names to points satisfies constraint"""
 
-        a = mapping[self._variables[0]]
-        b = mapping[self._variables[1]]
+        a = mapping[self.variables[0]]
+        b = mapping[self.variables[1]]
 
-        result = tol_eq(a.distance_to(b), self._value)
+        result = tol_eq(a.distance_to(b), self.value)
 
         return result
 
     def __str__(self):
-        return "DistanceConstraint({0}, {1}, {2})".format(self._variables[0], \
-        self._variables[1], self._value)
+        return f"{self.NAME}(|{self._variable_str}| = {self.value})"
 
 
 class AngleConstraint(ParametricConstraint):
     """A constraint on the angle in point B of a triangle ABC"""
+
+    NAME = "AngleConstraint"
 
     def __init__(self, a, b, c, ang):
         """Create a new AngleConstraint instance.
@@ -78,60 +81,48 @@ class AngleConstraint(ParametricConstraint):
             c    - a point variable name
             ang  - the angle parameter value
         """
-
-        super(AngleConstraint, self).__init__()
-
-        self._variables = [a,b,c]
-        self.set_parameter(ang)
+        super().__init__(variables=[a, b, c], value=ang)
 
     def satisfied(self, mapping):
         """return True iff mapping from variable names to points satisfies constraint"""
 
-        a = mapping[self._variables[0]]
-        b = mapping[self._variables[1]]
-        c = mapping[self._variables[2]]
+        a = mapping[self.variables[0]]
+        b = mapping[self.variables[1]]
+        c = mapping[self.variables[2]]
 
         ang = b.angle_between(a, c)
 
         if ang is None:
             result = False
         else:
-            result = tol_eq(ang, self._value)
+            result = tol_eq(ang, self.value)
 
         if not result:
-            LOGGER.debug("measured angle = %s, parameter value = %s, geometric", ang, self._value)
+            LOGGER.debug("measured angle = %s, parameter value = %s, geometric", ang, self.value)
 
         return result
 
+    @property
     def angle_degrees(self):
-        return np.degrees(self._value)
+        return np.degrees(self.value)
 
     def __str__(self):
-        return "AngleConstraint({0}, {1}, {2}, {3})".format(\
-        self._variables[0], self._variables[1], self._variables[2], \
-        self.angle_degrees())
+        return f"{self.NAME}(∠({self._variable_str}) = {self.angle_degrees}°)"
 
 
 class SelectionConstraint(Constraint, metaclass=abc.ABCMeta):
     """Constraints for solution selection"""
 
-    def __init__(self, name, variables):
-        self.name = str(name)
-        self.variables = list(variables)
-
-    @abc.abstractmethod
-    def satisfied(self, mapping):
-        raise NotImplementedError
-
-    def __str__(self):
-        return "{0}({1})".format(self.name, ", ".join(self.variables))
+    NAME = "SelectionConstraint"
 
 
 class FunctionConstraint(SelectionConstraint, metaclass=abc.ABCMeta):
     """Selects solutions where function returns True when applied to specified \
     variables"""
 
-    def __init__(self, function, variables, name="FunctionConstraint"):
+    NAME = "FunctionConstraint"
+
+    def __init__(self, function, variables):
         """Instantiate a FunctionConstraint
 
         :param function: callable to call to check the constraint
@@ -139,7 +130,7 @@ class FunctionConstraint(SelectionConstraint, metaclass=abc.ABCMeta):
         """
 
         # call parent constructor
-        super(FunctionConstraint, self).__init__(name, variables)
+        super().__init__(variables=variables)
 
         # set the function
         self.function = function
@@ -153,17 +144,18 @@ class FunctionConstraint(SelectionConstraint, metaclass=abc.ABCMeta):
 
         # return whether the result of the function with the variables as
         # arguments is True or not
-        return self.function(*[mapping[variable] for variable in \
-        self.variables]) is True
+        return self.function(*[mapping[variable] for variable in self.variables]) is True
 
     def __str__(self):
-        return "{0}({1}, {2})".format(self.name, self.function.__name__, \
-        ", ".join(self.variables))
+        variables = ", ".join(self.variables)
+        return f"{self.NAME}({self.function.__name__}({variables}))"
 
 
 class NotClockwiseConstraint(FunctionConstraint):
     """Selects triplets that are not clockwise (i.e. counter clockwise or \
     degenerate)"""
+
+    NAME = "NotClockwiseConstraint"
 
     def __init__(self, v1, v2, v3):
         """Instantiate a NotClockwiseConstraint
@@ -178,13 +170,14 @@ class NotClockwiseConstraint(FunctionConstraint):
         function = lambda x, y, z: not is_clockwise(x, y, z)
 
         # call parent constructor
-        super(NotClockwiseConstraint, self).__init__(function, [v1, v2, v3], \
-        name="NotClockwiseConstraint")
+        super().__init__(function, [v1, v2, v3])
 
 
 class NotCounterClockwiseConstraint(FunctionConstraint):
     """Selects triplets that are not counter clockwise (i.e. clockwise or \
     degenerate)"""
+
+    NAME = "NotCounterClockwiseConstraint"
 
     def __init__(self, v1, v2, v3):
         """Instantiate a NotCounterClockwiseConstraint
@@ -199,12 +192,13 @@ class NotCounterClockwiseConstraint(FunctionConstraint):
         function = lambda x, y, z: not is_counterclockwise(x, y, z)
 
         # call parent constructor
-        super(NotCounterClockwiseConstraint, self).__init__(function, \
-        [v1, v2, v3], name="NotCounterClockwiseConstraint")
+        super().__init__(function, [v1, v2, v3])
 
 
 class NotObtuseConstraint(FunctionConstraint):
     """Selects triplets that are not obtuse (i.e. acute or degenerate)"""
+
+    NAME = "NotObtuseConstraint"
 
     def __init__(self, v1, v2, v3):
         """Instantiate a NotObtuseConstraint
@@ -219,12 +213,13 @@ class NotObtuseConstraint(FunctionConstraint):
         function = lambda x, y, z: not is_obtuse(x, y, z)
 
         # call parent constructor
-        super(NotObtuseConstraint, self).__init__(function, [v1, v2, v3], \
-        name="NotObtuseConstraint")
+        super().__init__(function, [v1, v2, v3])
 
 
 class NotAcuteConstraint(FunctionConstraint):
     """Selects triplets that are not acute (i.e. obtuse or degenerate)"""
+
+    NAME = "NotAcuteConstraint"
 
     def __init__(self,v1, v2, v3):
         """Instantiate a NotAcuteConstraint
@@ -239,5 +234,4 @@ class NotAcuteConstraint(FunctionConstraint):
         function = lambda x, y, z: not is_acute(x, y, z)
 
         # call parent constructor
-        super(NotAcuteConstraint, self).__init__(function, [v1, v2, v3], \
-        name="NotAcuteConstraint")
+        super().__init__(function, [v1, v2, v3])

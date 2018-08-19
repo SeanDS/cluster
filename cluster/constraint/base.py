@@ -34,23 +34,12 @@ class Constraint(metaclass=abc.ABCMeta):
     Constraints must be immutable, hashable objects.
     """
 
-    def variables(self):
-        """Returns a list of variables in this constraint
+    NAME = "Constraint"
 
-        If an attribute '_variables' has been defined, a new list with the
-        contents of that attribute will be returned.
+    def __init__(self, variables=None):
+        super().__init__()
 
-        Subclasses may choose to initialise this variable or to override this
-        function.
-        """
-
-        # check if there are explicit variables defined
-        if hasattr(self, "_variables"):
-            # return list of variables
-            return list(self._variables)
-        else:
-            # subclass hasn't set _variables or overridden this function
-            raise NotImplementedError
+        self.variables = variables
 
     @abc.abstractmethod
     def satisfied(self, mapping):
@@ -59,46 +48,47 @@ class Constraint(metaclass=abc.ABCMeta):
 
         :param mapping: dict containing mapping
         """
-
         pass
 
-    @abc.abstractmethod
+    @property
+    def _variable_str(self):
+        return ", ".join(self.variables)
+
     def __str__(self):
-        raise NotImplementedError
+        return f"{self.NAME}({self._variable_str})"
 
 
 class ParametricConstraint(Constraint, Notifier, metaclass=abc.ABCMeta):
     """A constraint with a parameter and notification when parameter changes"""
 
-    def __init__(self):
+    NAME = "ParametricConstraint"
+
+    def __init__(self, value=None, *args, **kwargs):
         """initialize ParametricConstraint"""
+        super().__init__(*args, **kwargs)
 
-        Constraint.__init__(self)
-        Notifier.__init__(self)
-
-        self._value = None
+        self.value = value
 
     def get_parameter(self):
         """get parameter value"""
 
-        return self._value
+        return self.value
 
     def set_parameter(self, value):
         """set parameter value and notify any listeners"""
 
-        self._value = value
+        self.value = value
         self.send_notify(("set_parameter", value))
+
+    def __str__(self):
+        return f"{self.NAME}(({self._variable_str}) = {self.value})"
 
 
 class PlusConstraint(Constraint):
     """Constraint for testing purposes"""
 
     def __init__(self, a, b, c):
-        self._variables = [a, b, c]
-
-    def __str__(self):
-        return "PlusConstraint({0})".format(", ".join(self.variables))
+        super().__init__([a, b, c])
 
     def satisfied(self, mapping):
-        return mapping[self._variables[0]] + mapping[self._variables[1]] \
-         == mapping[self._variables[2]]
+        return mapping[self.variables[0]] + mapping[self.variables[1]] == mapping[self.variables[2]]

@@ -74,40 +74,39 @@ class GeometricProblem(Notifier, Listener):
         """add a constraint"""
 
         if isinstance(con, DistanceConstraint):
-            for var in con.variables():
+            for var in con.variables:
                 if var not in self.prototype:
                     raise Exception("point variable not in problem")
 
-            if self.get_distance(con.variables()[0],con.variables()[1]):
+            if self.get_distance(con.variables[0], con.variables[1]):
                 raise Exception("distance already in problem")
             else:
                 con.add_listener(self)
 
                 self.constraint_graph.add_constraint(con)
         elif isinstance(con, AngleConstraint):
-            for var in con.variables():
+            for var in con.variables:
                 if var not in self.prototype:
                     raise Exception("point variable not in problem")
-            if self.get_angle(con.variables()[0], con.variables()[1], \
-            con.variables()[2]):
+            if self.get_angle(con.variables[0], con.variables[1], con.variables[2]):
                 raise Exception("angle already in problem")
             else:
                 con.add_listener(self)
 
                 self.constraint_graph.add_constraint(con)
         elif isinstance(con, SelectionConstraint):
-            for var in con.variables():
+            for var in con.variables:
                 if var not in self.prototype:
                     raise Exception("point variable not in problem")
 
             self.constraint_graph.add_constraint(con)
             self.send_notify(("add_selection_constraint", con))
         elif isinstance(con, FixConstraint):
-            for var in con.variables():
+            for var in con.variables:
                 if var not in self.prototype:
                     raise Exception("point variable not in problem")
 
-            if self.get_fix(con.variables()[0]):
+            if self.get_fix(con.variables[0]):
                 raise Exception("fix already in problem")
 
             self.constraint_graph.add_constraint(con)
@@ -139,7 +138,7 @@ class GeometricProblem(Notifier, Listener):
 
         on_abc = [x for x in on_a if x in on_a and x in on_b and x in on_c]
         angles = [x for x in on_abc if isinstance(x, AngleConstraint)]
-        candidates = list([x for x in angles if x.variables()[1] == b])
+        candidates = list([x for x in angles if x.variables[1] == b])
 
         if len(candidates) > 1:
             raise Exception("multiple constraints found")
@@ -174,7 +173,7 @@ class GeometricProblem(Notifier, Listener):
             for con in self.constraint_graph.constraints():
                 solved = True
 
-                for v in con.variables():
+                for v in con.variables:
                     if v not in solution:
                         solved = False
 

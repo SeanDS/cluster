@@ -243,7 +243,7 @@ class GeometricSolver(Listener):
 
         if isinstance(con, AngleConstraint):
             # map to hedgehog
-            vars = list(con.variables())
+            vars = con.variables
 
             # hedgehog with 2nd point of constraint as the main point, and the
             # other points specified w.r.t. it
@@ -258,7 +258,7 @@ class GeometricSolver(Listener):
             self._update_constraint(con)
         elif isinstance(con, DistanceConstraint):
             # map to rigid
-            vars = list(con.variables())
+            vars = con.variables
 
             rig = Rigid([vars[0], vars[1]])
 
@@ -274,7 +274,7 @@ class GeometricSolver(Listener):
                 self.solver.remove(self.fixcluster)
                 self.fixcluster = None
 
-            self.fixvars.append(con.variables()[0])
+            self.fixvars.append(con.variables[0])
 
             # check if there are more fixed variables than dimensions
             if len(self.fixvars) >= 2:
@@ -294,7 +294,7 @@ class GeometricSolver(Listener):
             if self.fixcluster != None:
                 self.solver.remove(self.fixcluster)
 
-            var = self.solver.get_configurations(con.variables()[0])
+            var = self.solver.get_configurations(con.variables[0])
 
             if var in self.fixvars:
                 self.fixvars.remove(var)
@@ -319,7 +319,7 @@ class GeometricSolver(Listener):
             hog = self.mapping[con]
 
             # get variables associated with constraint
-            variables = list(con.variables())
+            variables = con.variables
 
             v0 = variables[0]
             v1 = variables[1]
@@ -344,7 +344,7 @@ class GeometricSolver(Listener):
             # set configuration
             rig = self.mapping[con]
 
-            variables = list(con.variables())
+            variables = con.variables
 
             v0 = variables[0]
             v1 = variables[1]

@@ -16,7 +16,7 @@ def solution_viewer(problem, solution):
         if not isinstance(constraint, DistanceConstraint):
             continue
 
-        (componentA, componentB) = constraint.variables()
+        (componentA, componentB) = constraint.variables
 
         window.draw_line(solution[componentA], solution[componentB])
 

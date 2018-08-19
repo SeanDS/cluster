@@ -95,7 +95,7 @@ class ConstraintGraph(Notifier):
         self._constraints[constraint] = None
 
         # process the constraint's variables
-        for var in constraint.variables():
+        for var in constraint.variables:
             # add the variable to the graph
             self.add_variable(var)
 
@@ -162,7 +162,7 @@ class ConstraintGraph(Notifier):
             # loop over the variables in the rest of the list
             for var in variables[1:]:
                 # is this variable constrained by this constraint?
-                if var not in constraint.variables():
+                if var not in constraint.variables:
                     # this variable doesn't share the constraint
                     shared_constraint = False
 
