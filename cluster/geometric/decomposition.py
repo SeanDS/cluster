@@ -68,8 +68,11 @@ class Decomposition:
         elif len(result.subs) > 0:
             s = s + spaces + "|...\n"
 
+        # variables
+        variables = ", ".join(result.variables)
+
         # print cluster
         solutions = "solution"
         if len(result.solutions) != 1:
             solutions += "s"
-        return f"{spaces}cluster {result.variables} {result.flag} {len(result.solutions)} {solutions}\n{s}"
+        return f"{spaces}cluster({variables})[{result.flag}, {len(result.solutions)} {solutions}]\n{s}"

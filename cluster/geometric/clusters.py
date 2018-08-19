@@ -92,6 +92,24 @@ class Angle(PointRelation):
 class Cluster(Variable, metaclass=abc.ABCMeta):
     """A set of points, satisfying some constaint"""
 
+    # last unique cluster id
+    _last_id = 0
+
+    # unique number
+    _number = None
+
+    def __new__(cls, *args, **kwargs):
+        # create object
+        obj = super().__new__(cls)
+
+        # assign unique cluster ID
+        obj._number = cls._last_id
+
+        # increment last id
+        cls._last_id += 1
+
+        return obj
+
     def __init__(self, variables, *args, **kwargs):
         """Create a new cluster
 
@@ -112,25 +130,15 @@ class Cluster(Variable, metaclass=abc.ABCMeta):
     def __str__(self):
         # create character string to represent whether the cluster is
         # overconstrained
-        ovr_const = ""
-
         if self.overconstrained:
-            ovr_const += "!"
+            overconstrained = "!"
+        else:
+            overconstrained = ""
 
-        # create string variable list
-        var_list = ", ".join([str(var) for var in self._variable_list()])
+        return f"{overconstrained}{self.name}#{self._number}({self._variable_str()})"
 
-        return "{0}{1}#{2}({3})".format(ovr_const, self.name, id(self), \
-        var_list)
-
-    def _variable_list(self):
-        """Variable list for the cluster
-
-        :returns: variables
-        :rtype: list
-        """
-
-        return list(self.vars)
+    def _variable_str(self):
+        return ", ".join(self.vars)
 
     def intersection(self, other):
         """Get the intersection between this cluster and the specified cluster
@@ -232,20 +240,11 @@ class Hedgehog(Cluster):
         self.xvars = set(xvars)
 
         # call parent constructor with all variables
-        super().__init__(self.xvars.union([self.cvar]), \
-        name="hedgehog")
+        super().__init__(self.xvars.union([self.cvar]), name="hedgehog")
 
-    def _variable_list(self):
-        """Gets list of variables associated with this hedgehog
-
-        Overrides :class:`Cluster`.
-
-        :returns: variables
-        :rtype: list
-        """
-
-        # central value followed by other variables
-        return [self.cvar] + list(self.xvars)
+    def _variable_str(self):
+        extra = ", ".join(self.xvars)
+        return f"{self.cvar}, [{extra}]"
 
     def copy(self):
         return Hedgehog(self.cvar, self.xvars)
