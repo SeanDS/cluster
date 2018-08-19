@@ -5,51 +5,31 @@ from ..event import Observable, Event
 
 LOGGER = logging.getLogger(__name__)
 
-class ConstraintGraph(Observable):
+# Note: since NetworkX doesn't call super(), it must be second here
+# in order to achieve the correct MRO.
+class ConstraintGraph(Observable, Graph):
     """A constraint graph"""
-
-    def __init__(self):
-        """Creates a new, empty ConstraintGraph
-
-        Defines relation between variables and constraints using a graph. If a
-        constraint is imposed upon a variable, an edge is defined between them
-        in the graph."""
-        super().__init__()
-
-        # empty dict of variables
-        self._variables = {}
-
-        # empty dict of constraints
-        self._constraints = {}
-
-        # empty graph
-        self._graph = Graph()
-
+    @property
     def variables(self):
-        """Returns a list of this graph's variables"""
+        return [node for node, data in self.nodes(data=True)
+                if data.get("node_type") == "variable"]
 
-        return list(self._variables.keys())
-
+    @property
     def constraints(self):
-        """Returns a list of this graph's constraints"""
-
-        return list(self._constraints.keys())
+        return [node for node, data in self.nodes(data=True)
+                if data.get("node_type") == "constraint"]
 
     def add_variable(self, variable):
         """Adds the specified variable to the graph
 
         :param var_name: name of the variable to add
         """
-
         # only add if it doesn't already exist
-        if variable in self._variables:
+        if variable in self.variables:
             return
 
-        # create entry in variables dict
-        self._variables[variable] = None
-
         # create a vertex in the graph for the variable
-        self._graph.add_node(variable)
+        self.add_node(variable, node_type="variable")
 
         # notify observers that a new variable has been added
         self.fire(Event("add_variable", variable=variable))
@@ -59,22 +39,18 @@ class ConstraintGraph(Observable):
 
         :param var_name: name of the variable to remove
         """
-
         # only remove if it already exists
-        if variable not in self._variables:
+        if variable not in self.variables:
             LOGGER.warning("Trying to remove variable that isn't in graph")
 
             return
 
         # remove variable's constraints
-        for constraint in self.get_constraints_on(variable):
+        for constraint in self.constraints_on(variable):
             self.rem_constraint(constraint)
 
-        # remove variable from dict
-        del(self._variables[variable])
-
         # remove graph vertex associated with the variable
-        self._graph.remove_node(variable)
+        self.remove_node(variable)
 
         # notify observers that a variable has been removed
         self.fire(Event("rem_variable", variable=variable))
@@ -86,19 +62,18 @@ class ConstraintGraph(Observable):
         """
 
         # only add constraint if it isn't already in the graph
-        if constraint in self._constraints:
+        if constraint in self.constraints:
             return
 
-        # create entry in constraints dict
-        self._constraints[constraint] = None
+        self.add_node(constraint, node_type="constraint")
 
         # process the constraint's variables
-        for var in constraint.variables:
+        for variable in constraint.variables:
             # add the variable to the graph
-            self.add_variable(var)
+            self.add_variable(variable)
 
             # create edge in the graph for the variable
-            self._graph.add_edge(var, constraint)
+            self.add_edge(variable, constraint)
 
         # notify observers that a constraint has been added
         self.fire(Event("add_constraint", constraint=constraint))
@@ -110,35 +85,32 @@ class ConstraintGraph(Observable):
         """
 
         # only remove constraint if it already exists in the graph
-        if constraint not in self._constraints:
+        if constraint not in self.constraints:
             LOGGER.warning("Trying to remove constraint that isn't in graph")
 
             return
 
-        # remove constraint from dict
-        del(self._constraints[constraint])
-
         # remove graph vertex associated with the constraint
-        self._graph.remove_node(constraint)
+        self.remove_node(constraint)
 
         # notify observers that a constraint was removed
         self.fire(Event("remove_constraint", constraint=constraint))
 
-    def get_constraints_on(self, variable):
+    def constraints_on(self, variable):
         """Returns a list of all constraints on the specified variable
 
         :param variable: variable to get constraints for
         """
 
         # check if variable is in the graph
-        if not self._graph.has_node(variable):
+        if not self.has_node(variable):
             # default to empty list
             return []
 
         # return the variable's outgoing vertices
-        return self._graph.successors(variable)
+        return self.successors(variable)
 
-    def get_constraints_on_all(self, variables):
+    def constraints_on_all(self, variables):
         """Gets a list of the constraints shared by all of the variables \
         specified in the sequence
 
@@ -153,7 +125,7 @@ class ConstraintGraph(Observable):
         shared_constraints = []
 
         # loop over the constraints of the first variable in the list
-        for constraint in self.get_constraints_on(variables[0]):
+        for constraint in self.constraints_on(variables[0]):
             # default flag
             shared_constraint = True
 
@@ -173,7 +145,7 @@ class ConstraintGraph(Observable):
 
         return shared_constraints
 
-    def get_constraints_on_any(self, variables):
+    def constraints_on_any(self, variables):
         """Gets a list of the constraints on any of the specified variables
 
         :param variables: variables to get constraints for"""
@@ -187,13 +159,13 @@ class ConstraintGraph(Observable):
         constraints = set([])
 
         for variable in variables:
-            constraint = set(self.get_constraints_on(variable))
+            constraint = set(self.constraints_on(variable))
             constraints.update(constraint)
 
         # return constraints set as a list
         return list(constraints)
 
     def __str__(self):
-        return "ConstraintGraph(variables=[{0}], constraints=[{1}])".format( \
-        ", ".join([str(var) for var in list(self._variables.keys())]), \
-        ", ".join([str(const) for const in list(self._constraints.keys())]))
+        variables = ", ".join([str(variable) for variable in self.variables])
+        constraints = ", ".join([str(constraint) for constraint in self.constraints])
+        return f"ConstraintGraph(variables=[{variables}], constraints=[{constraints}])"

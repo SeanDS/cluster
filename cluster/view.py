@@ -12,7 +12,7 @@ def solution_viewer(problem, solution):
 
         window.draw_circle(position, component)
 
-    for constraint in problem.constraint_graph.constraints():
+    for constraint in problem.constraint_graph.constraints:
         if not isinstance(constraint, DistanceConstraint):
             continue
 

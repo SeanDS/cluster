@@ -31,7 +31,7 @@ class Observable(metaclass=abc.ABCMeta):
         # set event source
         event.source = self
 
-        LOGGER.debug(f"firing '{event}' from '{self}'")
+        LOGGER.debug(f"firing '{event}'")
         for observer in self.__observers:
             observer._receive_event(event)
 

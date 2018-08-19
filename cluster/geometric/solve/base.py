@@ -52,11 +52,11 @@ class GeometricSolver(Observer, Observable):
         self.fixcluster = None
 
         # map current constraint graph variables
-        for var in self.constraint_graph.variables():
+        for var in self.constraint_graph.variables:
             self._add_variable(var)
 
         # list of constraints from graph
-        constraints = self.constraint_graph.constraints()
+        constraints = self.constraint_graph.constraints
 
         # add fixed constraints first (avoids problems with invalid solutions)
         for constraint in constraints:

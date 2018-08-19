@@ -77,7 +77,7 @@ class GeometricProblem(Observable, Observer):
 
     def add_constraint(self, constraint):
         """add a constraint"""
-        if constraint in self.constraint_graph.constraints():
+        if constraint in self.constraint_graph.constraints:
             raise ValueError(f"constraint '{constraint}' already in problem'")
 
         for variable in constraint.variables:
@@ -91,14 +91,14 @@ class GeometricProblem(Observable, Observer):
 
     def remove_constraint(self, constraint):
         """remove a constraint from the constraint system"""
-        if constraint not in self.constraint_graph.constraints():
+        if constraint not in self.constraint_graph.constraints:
             raise ValueError(f"constraint {constraint} not in problem")
 
         self.constraint_graph.rem_constraint(constraint)
 
     def get_fix(self, point):
         """return the fix constraint on given point, or None"""
-        constraints = self.constraint_graph.get_constraints_on(point)
+        constraints = self.constraint_graph.constraints_on(point)
         constraints = [constraint for constraint in constraints if isinstance(constraint, FixConstraint)]
 
         if len(constraints) > 1:
@@ -114,7 +114,7 @@ class GeometricProblem(Observable, Observer):
         if solution is None:
             return False
 
-        for constraint in self.constraint_graph.constraints():
+        for constraint in self.constraint_graph.constraints:
             if not constraint.satisfied(solution):
                 LOGGER.debug(f"{constraint} not satisfied")
                 return False
@@ -144,7 +144,7 @@ class GeometricProblem(Observable, Observer):
         self.prototype[variable]) for variable in self.prototype])
 
         # constraints on separate lines
-        constraints = "\n".join([str(constraint) for constraint \
-        in self.constraint_graph.constraints()])
+        constraints = "\n".join([str(constraint) for constraint
+                                 in self.constraint_graph.constraints])
 
         return "{0}\n{1}".format(variables, constraints)
