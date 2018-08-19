@@ -124,7 +124,7 @@ class GeometricSolver(Listener):
 
             underconstrained = False
 
-            if solutions != None:
+            if solutions is not None:
                 for solution in solutions:
                     geocluster.solutions.append(solution.mapping)
 
@@ -170,7 +170,7 @@ class GeometricSolver(Listener):
             result.variables = []
             result.subs = []
             result.solutions = []
-            result.flags = Decomposition.UNSOLVED
+            result.flag = Decomposition.UNSOLVED
         elif len(rigids) == 1:
             # structurally well constrained
             result = mapping[rigids[0]]
