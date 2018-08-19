@@ -22,7 +22,7 @@ EXTRAS = {
 setup(
     name="cluster",
     use_scm_version=True,
-    description="Geometric constraint solver using cluster rewriting",
+    description="Geometric constraint solver using modified cluster rewriting",
     author="Sean Leavey",
     author_email="software@attackllama.com",
     url="https://github.com/SeanDS/cluster",
@@ -37,7 +37,6 @@ setup(
         "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
         "Natural Language :: English",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6"
     ]
 )
