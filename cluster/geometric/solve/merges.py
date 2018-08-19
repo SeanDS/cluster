@@ -2,7 +2,6 @@ import abc
 import logging
 import copy
 import numpy as np
-import numpy.linalg as la
 
 from ...configuration import Configuration
 from ...geometry import Vector, cc_int, cr_int, rr_int, tol_zero
@@ -222,13 +221,13 @@ class MergeRRR(Merge):
 
         p11 = r1.position(v1)
         p21 = r1.position(v2)
-        d12 = la.norm(p11 - p21)
+        d12 = p11.distance_to(p21)
         p23 = r3.position(v2)
         p33 = r3.position(v3)
-        d23 = la.norm(p23 - p33)
+        d23 = p23.distance_to(p33)
         p32 = r2.position(v3)
         p12 = r2.position(v1)
-        d31 = la.norm(p32 - p12)
+        d31 = p32.distance_to(p12)
 
         ddds = MergeRRR.solve_ddd(v1, v2, v3, d12, d23, d31)
 
@@ -395,17 +394,13 @@ class MergeRHR(Merge):
     def solve_dad(v1, v2, v3, d12, a123, d23):
         LOGGER.debug("Solving dad: %s %s %s %f %f %f", v1, v2, v3, d12, a123, d23)
 
-        p2 = Vector.origin()
         p1 = Vector([d12, 0.0])
-        p3s = [Vector([d23 * np.cos(a123), d23 * np.sin(a123)])]
+        p2 = Vector.origin()
+        p3 = Vector([d23 * np.cos(a123), d23 * np.sin(a123)])
 
-        solutions = []
+        solution = Configuration({v1: p1, v2: p2, v3: p3})
 
-        for p3 in p3s:
-            solution = Configuration({v1: p1, v2: p2, v3: p3})
-            solutions.append(solution)
-
-        return solutions
+        return [solution]
 
 
 class MergeRRH(Merge):
