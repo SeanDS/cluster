@@ -12,7 +12,7 @@ class Variable(metaclass=abc.ABCMeta):
 
     NAME = "Variable"
 
-    # last unique cluster id
+    # last unique variable id
     _last_id = 0
 
     # unique number
@@ -22,7 +22,7 @@ class Variable(metaclass=abc.ABCMeta):
         # create object
         obj = super().__new__(cls)
 
-        # assign unique cluster ID
+        # assign unique variable ID
         obj._number = cls._last_id
 
         # increment last id
@@ -56,7 +56,7 @@ class Method(metaclass=abc.ABCMeta):
     Variable.
     """
 
-    NAME = None
+    NAME = "Method"
 
     def __init__(self, inputs, outputs):
         self.inputs = list(inputs)
