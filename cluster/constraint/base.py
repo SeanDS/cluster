@@ -19,6 +19,7 @@ Constraint, and must also be non-mutable, hashable objects.
 import abc
 import logging
 
+from ..geometry import tol_eq
 from ..notify import Notifier
 
 LOGGER = logging.getLogger(__name__)
@@ -48,7 +49,7 @@ class Constraint(metaclass=abc.ABCMeta):
 
         :param mapping: dict containing mapping
         """
-        pass
+        raise NotImplementedError
 
     @property
     def _variable_str(self):
@@ -57,6 +58,11 @@ class Constraint(metaclass=abc.ABCMeta):
     def __str__(self):
         return f"{self.NAME}({self._variable_str})"
 
+    def __eq__(self, other):
+        return hash(self) == hash(other)
+
+    def __hash__(self):
+        return hash((self.NAME, tuple(self.variables)))
 
 class ParametricConstraint(Constraint, Notifier, metaclass=abc.ABCMeta):
     """A constraint with a parameter and notification when parameter changes"""
@@ -79,6 +85,14 @@ class ParametricConstraint(Constraint, Notifier, metaclass=abc.ABCMeta):
 
         self.value = value
         self.send_notify(("set_parameter", value))
+
+    @abc.abstractmethod
+    def mapped_value(self, mapping):
+        raise NotImplementedError
+
+    def satisfied(self, mapping):
+        """return True iff mapping from variable names to points satisfies constraint"""
+        return tol_eq(self.mapped_value(mapping), self.value)
 
     def __str__(self):
         return f"{self.NAME}(({self._variable_str}) = {self.value})"

@@ -70,48 +70,19 @@ class GeometricProblem(Notifier, Listener):
     def has_point(self, variable):
         return variable in self.prototype
 
-    def add_constraint(self, con):
+    def add_constraint(self, constraint):
         """add a constraint"""
+        if constraint in self.constraint_graph.constraints():
+            raise ValueError(f"constraint '{constraint}' already in problem'")
 
-        if isinstance(con, DistanceConstraint):
-            for var in con.variables:
-                if var not in self.prototype:
-                    raise Exception("point variable not in problem")
+        for variable in constraint.variables:
+            if variable not in self.prototype:
+                raise ValueError(f"constraint '{constraint}' point '{variable}' not in problem")
 
-            if self.get_distance(con.variables[0], con.variables[1]):
-                raise Exception("distance already in problem")
-            else:
-                con.add_listener(self)
+        # add listener
+        constraint.add_listener(self)
 
-                self.constraint_graph.add_constraint(con)
-        elif isinstance(con, AngleConstraint):
-            for var in con.variables:
-                if var not in self.prototype:
-                    raise Exception("point variable not in problem")
-            if self.get_angle(con.variables[0], con.variables[1], con.variables[2]):
-                raise Exception("angle already in problem")
-            else:
-                con.add_listener(self)
-
-                self.constraint_graph.add_constraint(con)
-        elif isinstance(con, SelectionConstraint):
-            for var in con.variables:
-                if var not in self.prototype:
-                    raise Exception("point variable not in problem")
-
-            self.constraint_graph.add_constraint(con)
-            self.send_notify(("add_selection_constraint", con))
-        elif isinstance(con, FixConstraint):
-            for var in con.variables:
-                if var not in self.prototype:
-                    raise Exception("point variable not in problem")
-
-            if self.get_fix(con.variables[0]):
-                raise Exception("fix already in problem")
-
-            self.constraint_graph.add_constraint(con)
-        else:
-            raise Exception("unsupported constraint type")
+        self.constraint_graph.add_constraint(constraint)
 
     def get_distance(self, a, b):
         """return the distance constraint on given points, or None"""
@@ -124,10 +95,10 @@ class GeometricProblem(Notifier, Listener):
 
         if len(distances) > 1:
             raise Exception("multiple constraints found")
-        elif len(distances) == 1:
-            return distances[0]
+        elif len(distances) == 0:
+            return None
 
-        return None
+        return distances[0]
 
     def get_angle(self, a, b, c):
         """return the angle constraint on given points, or None"""

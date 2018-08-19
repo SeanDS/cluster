@@ -12,30 +12,28 @@ class FixConstraint(ParametricConstraint):
 
     NAME = "FixConstraint"
 
-    def __init__(self, var, pos):
+    def __init__(self, variable, position):
         """Create a new DistanceConstraint instance
 
            keyword args:
             var    - a point variable name
             pos    - the position parameter
         """
-        super().__init__(variables=[var], value=pos)
+        super().__init__(variables=[variable], value=position)
 
-    def satisfied(self, mapping):
-        """return True iff mapping from variable names to points satisfies constraint"""
-
-        a = mapping[self.variables[0]]
-
-        result = a.tol_eq(self.value)
-
-        return result
+    def mapped_value(self, mapping):
+        return mapping[self.point]
 
     @property
     def point(self):
         return self.variables[0]
 
+    @property
+    def position(self):
+        return self.value
+
     def __str__(self):
-        return f"{self.NAME}({self.point} = {self.value})"
+        return f"{self.NAME}({self.point} = {self.position})"
 
 
 class DistanceConstraint(ParametricConstraint):
@@ -43,7 +41,7 @@ class DistanceConstraint(ParametricConstraint):
 
     NAME = "DistanceConstraint"
 
-    def __init__(self, a, b, dist):
+    def __init__(self, point_a, point_b, distance):
         """Create a new DistanceConstraint instance
 
            keyword args:
@@ -51,20 +49,27 @@ class DistanceConstraint(ParametricConstraint):
             b    - a point variable name
             dist - the distance parameter value
         """
-        super().__init__(variables=[a, b], value=dist)
+        super().__init__(variables=[point_a, point_b], value=distance)
 
-    def satisfied(self, mapping):
-        """return True iff mapping from variable names to points satisfies constraint"""
+    def mapped_value(self, mapping):
+        point_a = mapping[self.point_a]
+        point_b = mapping[self.point_b]
+        return point_a.distance_to(point_b)
 
-        a = mapping[self.variables[0]]
-        b = mapping[self.variables[1]]
+    @property
+    def point_a(self):
+        return self.variables[0]
 
-        result = tol_eq(a.distance_to(b), self.value)
+    @property
+    def point_b(self):
+        return self.variables[1]
 
-        return result
+    @property
+    def distance(self):
+        return self.value
 
     def __str__(self):
-        return f"{self.NAME}(|{self._variable_str}| = {self.value})"
+        return f"{self.NAME}(|{self._variable_str}| = {self.distance})"
 
 
 class AngleConstraint(ParametricConstraint):
@@ -72,7 +77,7 @@ class AngleConstraint(ParametricConstraint):
 
     NAME = "AngleConstraint"
 
-    def __init__(self, a, b, c, ang):
+    def __init__(self, point_a, point_b, point_c, angle):
         """Create a new AngleConstraint instance.
 
            keyword args:
@@ -81,30 +86,33 @@ class AngleConstraint(ParametricConstraint):
             c    - a point variable name
             ang  - the angle parameter value
         """
-        super().__init__(variables=[a, b, c], value=ang)
+        super().__init__(variables=[point_a, point_b, point_c], value=angle)
 
-    def satisfied(self, mapping):
-        """return True iff mapping from variable names to points satisfies constraint"""
+    def mapped_value(self, mapping):
+        point_a = mapping[self.point_a]
+        point_b = mapping[self.point_b]
+        point_c = mapping[self.point_c]
+        return point_b.angle_between(point_a, point_c)
 
-        a = mapping[self.variables[0]]
-        b = mapping[self.variables[1]]
-        c = mapping[self.variables[2]]
+    @property
+    def point_a(self):
+        return self.variables[0]
 
-        ang = b.angle_between(a, c)
+    @property
+    def point_b(self):
+        return self.variables[1]
 
-        if ang is None:
-            result = False
-        else:
-            result = tol_eq(ang, self.value)
+    @property
+    def point_c(self):
+        return self.variables[2]
 
-        if not result:
-            LOGGER.debug("measured angle = %s, parameter value = %s, geometric", ang, self.value)
-
-        return result
+    @property
+    def angle(self):
+        return self.value
 
     @property
     def angle_degrees(self):
-        return np.degrees(self.value)
+        return np.degrees(self.angle)
 
     def __str__(self):
         return f"{self.NAME}(∠({self._variable_str}) = {self.angle_degrees}°)"
@@ -141,7 +149,6 @@ class FunctionConstraint(SelectionConstraint, metaclass=abc.ABCMeta):
 
         :param mapping: map from variables to their points
         """
-
         # return whether the result of the function with the variables as
         # arguments is True or not
         return self.function(*[mapping[variable] for variable in self.variables]) is True
