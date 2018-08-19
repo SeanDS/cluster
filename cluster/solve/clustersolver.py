@@ -216,8 +216,7 @@ class ClusterSolver(Notifier):
         self._process_new()
 
     def _find_descendent(self,v):
-        """find all descendend objects of v (directly or indirectly \
-        dependent)"""
+        """find all descendend objects of v (directly or indirectly dependent)"""
 
         front = [v]
         result = {}
@@ -390,8 +389,7 @@ class ClusterSolver(Notifier):
             clusters = [c for c in clusters if len(c.vars) == 1]
 
             if len(clusters) != 1:
-                raise Exception("no prototype cluster for variable \
-{0}".format(var))
+                raise Exception(f"no prototype cluster for variable '{var}'")
 
             selclusters.append(clusters[0])
 
@@ -400,8 +398,7 @@ class ClusterSolver(Notifier):
         # Rick 20090519 - copy does not copy structural overconstrained flag?
         outcluster.overconstrained = incluster.overconstrained
 
-        selector = PrototypeMethod(incluster, selclusters, outcluster, \
-        constraints)
+        selector = PrototypeMethod(incluster, selclusters, outcluster, constraints)
 
         self._add_cluster(outcluster)
         self._add_method(selector)
@@ -425,8 +422,7 @@ class ClusterSolver(Notifier):
     def _process_new(self):
         while len(self._new) > 0:
             new_obj = self._new.pop()
-            LOGGER.debug("Searching from %s", \
-            new_obj)
+            LOGGER.debug("Searching from %s", new_obj)
 
             # do search
             search = self._search(new_obj)
@@ -500,10 +496,8 @@ class ClusterSolver(Notifier):
         dep = self.find_dependent(hog.cvar)
 
         # case BH (overconstrained):
-        balloons = [x for x in dep if isinstance(x, Balloon) \
-        and self.is_top_level(x)]
-        sharecx = [x for x in balloons if len(set(hog.xvars).intersection(x.vars)) \
-        >= 1]
+        balloons = [x for x in dep if isinstance(x, Balloon) and self.is_top_level(x)]
+        sharecx = [x for x in balloons if len(set(hog.xvars).intersection(x.vars)) >= 1]
 
         for balloon in sharecx:
             sharedcx = set(balloon.vars).intersection(hog.xvars)
@@ -512,10 +506,8 @@ class ClusterSolver(Notifier):
                 return self._merge_balloon_hog(balloon, hog)
 
         # case CH (overconstrained)
-        clusters = [x for x in dep if isinstance(x, Rigid) \
-        and self.is_top_level(x)]
-        sharecx = [x for x in clusters if len(set(hog.xvars).intersection(x.vars)) \
-        >= 1]
+        clusters = [x for x in dep if isinstance(x, Rigid) and self.is_top_level(x)]
+        sharecx = [x for x in clusters if len(set(hog.xvars).intersection(x.vars)) >= 1]
 
         for cluster in sharecx:
             sharedcx = set(cluster.vars).intersection(hog.xvars)
@@ -534,8 +526,7 @@ class ClusterSolver(Notifier):
         return balloons
 
     def _make_balloon(self, var1, var2, var3, hog1, hog2):
-        LOGGER.debug("Making balloon %s, %s, %s", \
-        var1, var2, var3)
+        LOGGER.debug("Making balloon %s, %s, %s", var1, var2, var3)
 
         # derive sub-hogs if necessary
         variables = set([var1, var2, var3])
@@ -570,8 +561,7 @@ class ClusterSolver(Notifier):
                     for var3 in hog2.xvars:
                         if var3 != var2 and var3 in hog.xvars:
                             if not self._known_angle(var1, var3, var2):
-                                new_balloons.append(self._make_balloon(var1, \
-                                var2, var3, hog, hog2))
+                                new_balloons.append(self._make_balloon(var1, var2, var3, hog, hog2))
 
         if len(new_balloons) > 0:
             return new_balloons
@@ -610,8 +600,7 @@ class ClusterSolver(Notifier):
         for var in balloon.vars:
             deps = self.find_dependent(var)
 
-            clusters = [x for x in deps if isinstance(x, Rigid) \
-            or isinstance(x, Distance)]
+            clusters = [x for x in deps if isinstance(x, Rigid) or isinstance(x, Distance)]
             clusters = [x for x in clusters if self.is_top_level(x)]
 
             for c in clusters:
@@ -627,8 +616,7 @@ class ClusterSolver(Notifier):
         return None
 
     def _search_balloonrigidmerge_from_rigid(self, rigid):
-        LOGGER.debug("Searching for balloon-rigid \
-merge from rigid")
+        LOGGER.debug("Searching for balloon-rigid merge from rigid")
 
         # map from adjacent clusters to variables shared with input balloon
         mapping = {}
@@ -738,8 +726,7 @@ merge from rigid")
             # determine shared vertices per hog
             for hog in hogs:
                 shared = set(hog.xvars).intersection(xvars)
-                if len(shared) >= 1 and len(shared) \
-                < len(hog.xvars) and len(shared) < len(xvars):
+                if len(shared) >= 1 and len(shared) < len(hog.xvars) and len(shared) < len(xvars):
                     tmphog = Hedgehog(cvar, xvars)
                     if not self._graph.has_node(tmphog):
                         newhog = self._make_hog_from_balloon(cvar, newballoon)
@@ -762,8 +749,7 @@ merge from rigid")
             for hog in hogs:
                 shared = set(hog.xvars).intersection(xvars)
 
-                if len(shared) >= 1 and len(shared) \
-                < len(hog.xvars) and len(shared) < len(xvars):
+                if len(shared) >= 1 and len(shared) < len(hog.xvars) and len(shared) < len(xvars):
                     tmphog = Hedgehog(cvar, xvars)
                     if not self._graph.has_node(tmphog):
                         newhog = self._make_hog_from_rigid(cvar, newcluster)
@@ -790,13 +776,11 @@ merge from rigid")
 
             shared = set(newhog.xvars).intersection(xvars)
 
-            if len(shared) >= 1 and len(shared) < len(xvars) \
-            and len(shared) < len(newhog.xvars):
+            if len(shared) >= 1 and len(shared) < len(xvars) and len(shared) < len(newhog.xvars):
                 tmphog = Hedgehog(newhog.cvar, xvars)
 
                 if not self._graph.has_node(tmphog):
-                    newnewhog = self._make_hog_from_rigid(newhog.cvar, \
-                    cluster)
+                    newnewhog = self._make_hog_from_rigid(newhog.cvar, cluster)
 
                     tomerge.append(newnewhog)
 
@@ -807,13 +791,11 @@ merge from rigid")
 
             shared = set(newhog.xvars).intersection(xvars)
 
-            if len(shared) >= 1 and len(shared) \
-            < len(xvars) and len(shared) < len(newhog.xvars):
+            if len(shared) >= 1 and len(shared) < len(xvars) and len(shared) < len(newhog.xvars):
                 tmphog = Hedgehog(newhog.cvar, xvars)
 
                 if not self._graph.has_node(tmphog):
-                    newnewhog = self._make_hog_from_balloon(newhog.cvar, \
-                    balloon)
+                    newnewhog = self._make_hog_from_balloon(newhog.cvar, balloon)
 
                     tomerge.append(newnewhog)
 
@@ -824,8 +806,7 @@ merge from rigid")
             # determine shared vars
             shared = set(newhog.xvars).intersection(hog.xvars)
 
-            if len(shared) >= 1 and len(shared) \
-            < len(hog.xvars) and len(shared) < len(newhog.xvars):
+            if len(shared) >= 1 and len(shared) < len(hog.xvars) and len(shared) < len(newhog.xvars):
                 # if mergeable, then create new hog
                 tomerge.append(hog)
 
@@ -840,8 +821,7 @@ merge from rigid")
             return lasthog
 
     def _merge_hogs(self, hog1, hog2):
-        LOGGER.debug("Merging hedgehogs %s and \
-%s", hog1, hog2)
+        LOGGER.debug("Merging hedgehogs %s and %s", hog1, hog2)
 
         # create new hog and method
         xvars = set(hog1.xvars).union(hog2.xvars)
@@ -882,8 +862,7 @@ merge from rigid")
         for var in hog.xvars:
             dep = self.find_dependent(var)
 
-            sharex.update([x for x in dep if isinstance(x,Rigid) \
-            and self.is_top_level(x)])
+            sharex.update([x for x in dep if isinstance(x,Rigid) and self.is_top_level(x)])
 
         for c1 in sharecx:
             for c2 in sharex:
@@ -893,15 +872,13 @@ merge from rigid")
                 sharedh2 = set(hog.xvars).intersection(c2.vars)
                 shared2 = shared12.union(sharedh2)
 
-                if len(shared12) >= 1 and len(sharedh2) >= 1 \
-                and len(shared2) == 2:
+                if len(shared12) >= 1 and len(sharedh2) >= 1 and len(shared2) == 2:
                     return self._merge_rigid_rigid_hog(c1, c2, hog)
 
         return None
 
     def _search_merge_from_rigid(self, newcluster):
-        LOGGER.debug("Searching for merge from \
-rigid %s", newcluster)
+        LOGGER.debug("Searching for merge from rigid %s", newcluster)
 
         # find clusters overlapping with new cluster
         overlap = {}
@@ -953,8 +930,7 @@ rigid %s", newcluster)
                 shared2 = shared12.union(shared23)
                 shared3 = shared13.union(shared23)
 
-                if len(shared1) == 2 and len(shared1) == 2 and \
-                   len(shared2) == 2:
+                if len(shared1) == 2 and len(shared1) == 2 and len(shared2) == 2:
                     return self._merge_rigid_triple(c1, c2, newcluster)
 
         # merge with an angle, case 1
@@ -973,10 +949,8 @@ rigid %s", newcluster)
                 sharednh = set(newcluster.vars).intersection(hog.xvars)
                 sharedh = sharedch.union(sharednh)
 
-                if len(sharedch) >= 1 and len(sharednh) >= 1 \
-                and len(sharedh) >= 2:
-                    return self._merge_rigid_hog_rigid(cluster, hog, \
-                    newcluster)
+                if len(sharedch) >= 1 and len(sharednh) >= 1 and len(sharedh) >= 2:
+                    return self._merge_rigid_hog_rigid(cluster, hog, newcluster)
 
         # merge with an angle, case 2
         for var in newcluster.vars:
@@ -1001,8 +975,7 @@ rigid %s", newcluster)
                     sharedc = sharedch.union(sharednc)
 
                     if len(sharedch) >= 1 and len(sharedc) >= 2:
-                        return self._merge_rigid_rigid_hog(newcluster, \
-                        cluster, hog)
+                        return self._merge_rigid_rigid_hog(newcluster, cluster, hog)
 
         # merge with an angle, case 3
         for cluster in overlap:
@@ -1023,14 +996,11 @@ rigid %s", newcluster)
                     sharedh = sharedhn.union(sharedhc)
                     sharedc = sharedhc.union(sharednc)
 
-                    if len(sharedhc) >= 1 and len(sharedhn) >= 1 \
-                    and len(sharedh) >= 2 and len(sharedc) == 2:
-                        return self._merge_rigid_rigid_hog(cluster, \
-                        newcluster, hog)
+                    if len(sharedhc) >= 1 and len(sharedhn) >= 1 and len(sharedh) >= 2 and len(sharedc) == 2:
+                        return self._merge_rigid_rigid_hog(cluster, newcluster, hog)
 
     def _merge_point_rigid(self, point, rigid):
-        LOGGER.debug("Merging point %s with rigid \
-%s", point, rigid)
+        LOGGER.debug("Merging point %s with rigid %s", point, rigid)
 
         # get variables from point and rigid
         variables = set(point.vars).union(rigid.vars)
@@ -1052,9 +1022,8 @@ rigid %s", newcluster)
         r1_contains_root = self._contains_root(r1)
         r2_contains_root = self._contains_root(r2)
 
-        LOGGER.debug("Merging rigid pair %s (root \
-derived = %s) and %s (root derived = %s)", r1, r1_contains_root, r2, \
-        r2_contains_root)
+        LOGGER.debug("Merging rigid pair %s (root derived = %s) and %s (root derived = %s)",
+                     r1, r1_contains_root, r2, r2_contains_root)
 
         # always use root cluster as first cluster, swap if needed
         if r1_contains_root and r2_contains_root:
@@ -1078,8 +1047,7 @@ derived = %s) and %s (root derived = %s)", r1, r1_contains_root, r2, \
     def _merge_rigid_hog(self, rigid, hog):
         """merge rigid and hog (absorb hog, overconstrained)"""
 
-        LOGGER.debug("Merging rigid %s with \
-hedgehog %s", rigid, hog)
+        LOGGER.debug("Merging rigid %s with hedgehog %s", rigid, hog)
 
         # create new rigid from variables
         new_cluster = Rigid(rigid.vars)
@@ -1092,8 +1060,7 @@ hedgehog %s", rigid, hog)
     def _merge_balloon_hog(self, balloon, hog):
         """merge balloon and hog (absorb hog, overconstrained)"""
 
-        LOGGER.debug("Merging balloon %s with \
-hedgehog %s", balloon, hog)
+        LOGGER.debug("Merging balloon %s with hedgehog %s", balloon, hog)
 
         # create new balloon and merge
         newballoon = Balloon(balloon.vars)
@@ -1114,9 +1081,9 @@ hedgehog %s", balloon, hog)
         r2_contains_root = self._contains_root(r2)
         r3_contains_root = self._contains_root(r3)
 
-        LOGGER.debug("Merging rigids %s (root \
-derived = %s), %s (root derived = %s) and %s (root derived = %s)", r1, \
-r1_contains_root, r2, r2_contains_root, r3, r3_contains_root)
+        LOGGER.debug("Merging rigids %s (root derived = %s), %s (root derived = %s) and %s "
+                     "(root derived = %s)", r1, r1_contains_root, r2, r2_contains_root, r3,
+                     r3_contains_root)
 
         # always use root rigid as first cluster, swap if needed
         if r2_contains_root:
@@ -1145,9 +1112,8 @@ r1_contains_root, r2, r2_contains_root, r3, r3_contains_root)
         r1_contains_root = self._contains_root(r1)
         r2_contains_root = self._contains_root(r2)
 
-        LOGGER.debug("Merging rigid %s (root \
-derived = %s), hedgehog %s and rigid %s (root derived = %s)", r1, \
-        r1_contains_root, hog, r2, r2_contains_root)
+        LOGGER.debug("Merging rigid %s (root derived = %s), hedgehog %s and rigid %s "
+                     "(root derived = %s)", r1, r1_contains_root, hog, r2, r2_contains_root)
 
         # always use root rigid as first cluster, swap if needed
         if r2_contains_root:
@@ -1194,9 +1160,8 @@ derived = %s), hedgehog %s and rigid %s (root derived = %s)", r1, \
         r1_contains_root = self._contains_root(r1)
         r2_contains_root = self._contains_root(r2)
 
-        LOGGER.debug("Merging rigid %s (root \
-derived = %s), rigid %s (root derived = %s) and hedgehog %s", r1, \
-        r1_contains_root, r2, r2_contains_root, hog)
+        LOGGER.debug("Merging rigid %s (root derived = %s), rigid %s (root derived = %s) and "
+                     "hedgehog %s", r1, r1_contains_root, r2, r2_contains_root, hog)
 
         # always use root rigid as first cluster, swap if needed
         if r1_contains_root and r2_contains_root:
@@ -1269,8 +1234,7 @@ derived = %s), rigid %s (root derived = %s) and hedgehog %s", r1, \
         return False
 
     def _is_consistent_pair(self, object1, object2):
-        LOGGER.debug("Checking if %s and %s are a \
-consistent pair", object1, object2)
+        LOGGER.debug("Checking if %s and %s are a consistent pair", object1, object2)
 
         oc = over_constraints(object1, object2)
 
@@ -1285,10 +1249,9 @@ consistent pair", object1, object2)
 
         return consistent
 
-    def _consistent_overconstraint_in_pair(self, overconstraint, object1, \
-    object2):
-        LOGGER.debug("Checking if %s and %s have \
-a consistent overconstraint %s", object1, object2, overconstraint)
+    def _consistent_overconstraint_in_pair(self, overconstraint, object1, object2):
+        LOGGER.debug("Checking if %s and %s have a consistent overconstraint %s", object1, object2,
+                     overconstraint)
 
         # get sources for constraint in given clusters
         s1 = self._source_constraint_in_cluster(overconstraint, object1)
@@ -1326,11 +1289,9 @@ a consistent overconstraint %s", object1, object2, overconstraint)
                 return cluster
             elif len(down) > 1:
                 if method.consistent:
-                    return self._source_constraint_in_cluster(constraint, \
-                    down[0])
+                    return self._source_constraint_in_cluster(constraint, down[0])
                 else:
-                    LOGGER.warning("Source is \
-inconsistent")
+                    LOGGER.warning("Source is inconsistent")
                     return None
             else:
                 return self._source_constraint_in_cluster(constraint, down[0])
@@ -1359,11 +1320,9 @@ inconsistent")
 
     def _contains_distance(self,object, distance):
         if isinstance(object, Rigid):
-            return (distance.points[0] in object.vars and distance.points[1] \
-            in object.vars)
+            return (distance.points[0] in object.vars and distance.points[1] in object.vars)
         elif isinstance(object, Distance):
-            return (distance.points[0] in object.vars and distance.points[1] \
-            in object.vars)
+            return (distance.points[0] in object.vars and distance.points[1] in object.vars)
         else:
             return False
 
@@ -1384,14 +1343,25 @@ inconsistent")
             return False
 
     def __str__(self):
-        return "Distances:\n\t{0}\nAngles:\n\t{1}\nRigids:\n\t{2}\n\
-Hedgehogs:\n\t{3}\nBalloons:\n\t{4}\nMethods:\n\t{5}".format(\
-        "\n\t".join([str(x) for x in self.distances()]), \
-        "\n\t".join([str(x) for x in self.angles()]), \
-        "\n\t".join([str(x) for x in self.rigids()]), \
-        "\n\t".join([str(x) for x in self.hedgehogs()]), \
-        "\n\t".join([str(x) for x in self.balloons()]), \
-        "\n\t".join([str(x) for x in self.methods()]))
+        distances = "\n\t".join([str(x) for x in self.distances()])
+        angles = "\n\t".join([str(x) for x in self.angles()])
+        rigids = "\n\t".join([str(x) for x in self.rigids()])
+        hedgehogs = "\n\t".join([str(x) for x in self.hedgehogs()])
+        balloons = "\n\t".join([str(x) for x in self.balloons()])
+        methods = "\n\t".join([str(x) for x in self.methods()])
+
+        return f"""Distances:
+\t{distances}
+Angles:
+\t{angles}
+Rigids:
+\t{rigids}
+Hedgehogs:
+\t{hedgehogs}
+Balloons:
+\t{balloons}
+Methods:
+\t{methods}"""
 
     def _known_angle(self, a, b, c):
         """returns Balloon, Rigid or Hedgehog that contains angle(a, b, c)"""
@@ -1435,13 +1405,12 @@ Hedgehogs:\n\t{3}\nBalloons:\n\t{4}\nMethods:\n\t{5}".format(\
         return None
 
 class PrototypeMethod(MultiMethod):
-    """A PrototypeMethod selects those solutions of a cluster for which the \
-    protoype and the solution satisfy the same constraints."""
+    """Selects solutions of a cluster for which the prototype and the solution satisfy the same constraints."""
 
     def __init__(self, incluster, selclusters, outcluster, constraints):
         # call parent constructor
-        super(PrototypeMethod, self).__init__(name="PrototypeMethod", \
-        inputs=[incluster]+selclusters, outputs=[outcluster])
+        super().__init__(name="PrototypeMethod", inputs=[incluster]+selclusters,
+                         outputs=[outcluster])
 
         # set constraints
         self.constraints = list(constraints)
@@ -1455,10 +1424,8 @@ class PrototypeMethod(MultiMethod):
         for i in range(1, len(self.inputs)):
             selclusters.append(self.inputs[i])
 
-        LOGGER.debug("Input clusters: %s", \
-        incluster)
-        LOGGER.debug("Selection clusters: %s", \
-        selclusters)
+        LOGGER.debug("Input clusters: %s", incluster)
+        LOGGER.debug("Selection clusters: %s", selclusters)
 
         # get confs
         inconf = inmap[incluster]
@@ -1475,22 +1442,17 @@ class PrototypeMethod(MultiMethod):
         selconf = Configuration(selmap)
         sat = True
 
-        LOGGER.debug("Input configuration: %s", \
-        inconf)
-        LOGGER.debug("Selection configuration: \
-%s", selconf)
+        LOGGER.debug("Input configuration: %s", inconf)
+        LOGGER.debug("Selection configuration: %s", selconf)
 
         for con in self.constraints:
-            satcon = con.satisfied(inconf.mapping) \
-            != con.satisfied(selconf.mapping)
+            satcon = con.satisfied(inconf.mapping) != con.satisfied(selconf.mapping)
 
             LOGGER.debug("Constraint: %s", con)
-            LOGGER.debug("Constraint satisfied? \
-%s", satcon)
+            LOGGER.debug("Constraint satisfied? %s", satcon)
             sat = sat and satcon
 
-        LOGGER.debug("Prototype satisfied? %s", \
-sat)
+        LOGGER.debug("Prototype satisfied? %s", sat)
 
         if sat:
             return [inconf]
@@ -1542,8 +1504,8 @@ class MergePR(Merge):
     """
 
     def __init__(self, in1, in2, out):
-        super(MergePR, self).__init__(name="MergePR", inputs=[in1, in2], \
-        outputs=[out], overconstrained=False, consistent=True)
+        super().__init__(name="MergePR", inputs=[in1, in2], outputs=[out], overconstrained=False,
+                         consistent=True)
 
     def multi_execute(self, inmap):
         LOGGER.debug("MergePR.multi_execute called")
@@ -1565,8 +1527,8 @@ class MergeRR(Merge):
     The first rigid determines the orientation of the resulting cluster"""
 
     def __init__(self, in1, in2, out):
-        super(MergeRR, self).__init__(name="MergeRR", inputs=[in1, in2], \
-        outputs=[out], overconstrained=True, consistent=True)
+        super().__init__(name="MergeRR", inputs=[in1, in2], outputs=[out], overconstrained=True,
+                         consistent=True)
 
     def multi_execute(self, inmap):
         LOGGER.debug("MergeRR.multi_execute called")
@@ -1580,12 +1542,11 @@ class MergeRR(Merge):
         return [conf1.merge(conf2)[0]]
 
 class MergeRH(Merge):
-    """Represents a merging of a rigid and a hog (where the hog is absorbed by \
-    the rigid). Overconstrained."""
+    """Represents a merging of a rigid and a hog (where the hog is absorbed by the rigid). Overconstrained."""
 
     def __init__(self, rigid, hog, out):
-        super(MergeRH, self).__init__(name="MergeRH", inputs=[rigid, hog], \
-        outputs=[out], overconstrained=True, consistent=True)
+        super().__init__(name="MergeRH", inputs=[rigid, hog], outputs=[out], overconstrained=True,
+                         consistent=True)
 
         self.rigid = rigid
         self.hog = hog
@@ -1604,8 +1565,8 @@ class MergeBH(Merge):
     """
 
     def __init__(self, balloon, hog, out):
-        super(MergeBH, self).__init__(name="MergeBH", inputs=[balloon, hog], \
-        outputs=[out], overconstrained=True, consistent=True)
+        super().__init__(name="MergeBH", inputs=[balloon, hog], outputs=[out], overconstrained=True,
+                         consistent=True)
 
         self.balloon = balloon
 
@@ -1623,8 +1584,8 @@ class MergeRRR(Merge):
     """
 
     def __init__(self, r1, r2, r3, out):
-        super(MergeRRR, self).__init__(name="MergeRRR", inputs=[r1, r2, r3], \
-        outputs=[out], overconstrained=False, consistent=True)
+        super().__init__(name="MergeRRR", inputs=[r1, r2, r3], outputs=[out], overconstrained=False,
+                         consistent=True)
 
         # check coincidence
         shared12 = set(r1.vars).intersection(r2.vars)
@@ -1637,15 +1598,13 @@ class MergeRRR(Merge):
         if len(shared12) < 1:
             raise Exception("underconstrained r1 and r2")
         elif len(shared12) > 1:
-            LOGGER.debug("Overconstrained RRR: r1 \
-and r2")
+            LOGGER.debug("Overconstrained RRR: r1 and r2")
 
             self.overconstrained = True
         if len(shared13) < 1:
             raise Exception("underconstrained r1 and r3")
         elif len(shared13) > 1:
-            LOGGER.debug("Overconstrained RRR: r1 \
-and r3")
+            LOGGER.debug("Overconstrained RRR: r1 and r3")
 
             self.overconstrained = True
         if len(shared23) < 1:
@@ -1739,8 +1698,7 @@ and r3")
 
     @staticmethod
     def solve_ddd(v1, v2, v3, d12, d23, d31):
-        LOGGER.debug("Solving ddd: %s %s %s %f %f \
-%f", v1, v2, v3, d12, d23, d31)
+        LOGGER.debug("Solving ddd: %s %s %s %f %f %f", v1, v2, v3, d12, d23, d31)
 
         p1 = Vector.origin()
         p2 = Vector([d12, 0.0])
@@ -1762,8 +1720,8 @@ class MergeRHR(Merge):
     """
 
     def __init__(self, c1, hog, c2, out):
-        super(MergeRHR, self).__init__(name="MergeRHR", inputs=[c1, hog, c2], \
-        outputs=[out], overconstrained=False, consistent=True)
+        super().__init__(name="MergeRHR", inputs=[c1, hog, c2], outputs=[out],
+                         overconstrained=False, consistent=True)
 
         self.c1 = c1
         self.hog = hog
@@ -1785,22 +1743,19 @@ class MergeRHR(Merge):
         if len(shared12) < 1:
             raise Exception("underconstrained c1 and c2")
         elif len(shared12) > 1:
-            LOGGER.debug("Overconstrained CHC: c1 \
-and c2")
+            LOGGER.debug("Overconstrained CHC: c1 and c2")
 
             self.overconstrained = True
         if len(shared1h) < 1:
             raise Exception("underconstrained c1 and hog")
         elif len(shared1h) > 1:
-            LOGGER.debug("Overconstrained CHC: c1 \
-and hog")
+            LOGGER.debug("Overconstrained CHC: c1 and hog")
 
             self.overconstrained = True
         if len(shared2h) < 1:
             raise Exception("underconstrained c2 and hog")
         elif len(shared2h) > 1:
-            LOGGER.debug("Overconstrained CHC: c2 \
-and hog")
+            LOGGER.debug("Overconstrained CHC: c2 and hog")
 
             self.overconstrained = True
         if len(shared1) < 2:
@@ -1818,8 +1773,7 @@ and hog")
         if len(sharedh) < 2:
             raise Exception("underconstrained hog")
         elif len(shared1) > 2:
-            LOGGER.debug("Overconstrained CHC: \
-hog")
+            LOGGER.debug("Overconstrained CHC: hog")
 
             self.overconstrained = True
 
@@ -1867,8 +1821,7 @@ hog")
 
     @staticmethod
     def solve_dad(v1, v2, v3, d12, a123, d23):
-        LOGGER.debug("Solving dad: %s %s %s %f %f \
-%f", v1, v2, v3, d12, a123, d23)
+        LOGGER.debug("Solving dad: %s %s %s %f %f %f", v1, v2, v3, d12, a123, d23)
 
         p2 = Vector.origin()
         p1 = Vector([d12, 0.0])
@@ -1888,8 +1841,8 @@ class MergeRRH(Merge):
        cluster
     """
     def __init__(self, c1, c2, hog, out):
-        super(MergeRRH, self).__init__(name="MergeRRH", inputs=[c1, c2, hog], \
-        outputs=[out], overconstrained=False, consistent=True)
+        super().__init__(name="MergeRRH", inputs=[c1, c2, hog], outputs=[out],
+                         overconstrained=False, consistent=True)
 
         self.c1 = c1
         self.c2 = c2
@@ -1913,22 +1866,19 @@ class MergeRRH(Merge):
         if len(shared12) < 1:
             raise Exception("underconstrained c1 and c2")
         elif len(shared12) > 1:
-            LOGGER.debug("Overconstrained CCH: c1 \
-and c2")
+            LOGGER.debug("Overconstrained CCH: c1 and c2")
 
             self.overconstrained = True
         if len(shared1h) < 1:
             raise Exception("underconstrained c1 and hog")
         elif len(shared1h) > 1:
-            LOGGER.debug("Overconstrained CCH: c1 \
-and hog")
+            LOGGER.debug("Overconstrained CCH: c1 and hog")
 
             self.overconstrained = True
         if len(shared2h) < 1:
             raise Exception("underconstrained c2 and hog")
         elif len(shared2h) > 2:
-            LOGGER.debug("Overconstrained CCH: c2 \
-and hog")
+            LOGGER.debug("Overconstrained CCH: c2 and hog")
 
             self.overconstrained = True
         if len(shared1) < 1:
@@ -1946,8 +1896,7 @@ and hog")
         if len(sharedh) < 2:
             raise Exception("underconstrained hog")
         elif len(sharedh) > 2:
-            LOGGER.debug("Overconstrained CCH: \
-hedgehog")
+            LOGGER.debug("Overconstrained CCH: hedgehog")
 
             self.overconstrained = True
 
@@ -2020,8 +1969,7 @@ hedgehog")
 
     @staticmethod
     def solve_add(a,b,c, a_cab, d_ab, d_bc):
-        LOGGER.debug("Solving add: %s %s %s %f %f \
-%f", a, b, c, a_cab, d_ab, d_bc)
+        LOGGER.debug("Solving add: %s %s %s %f %f %f", a, b, c, a_cab, d_ab, d_bc)
 
         p_a = Vector.origin()
         p_b = Vector([d_ab, 0.0])
@@ -2078,9 +2026,8 @@ class BalloonFromHogs(Merge):
             balloon - a Balloon instance
         """
 
-        super(BalloonFromHogs, self).__init__(name="BalloonFromHogs", \
-        inputs=[hog1, hog2], outputs=[balloon], overconstrained=False, \
-        consistent=True)
+        super().__init__(name="BalloonFromHogs", inputs=[hog1, hog2], outputs=[balloon],
+                         overconstrained=False, consistent=True)
 
         self.hog1 = hog1
         self.hog2 = hog2
@@ -2096,8 +2043,7 @@ class BalloonFromHogs(Merge):
             raise Exception("underconstrained")
 
     def multi_execute(self, inmap):
-        LOGGER.debug( \
-        "BalloonFromHogs.multi_execute called")
+        LOGGER.debug("BalloonFromHogs.multi_execute called")
 
         v1 = self.hog1.cvar
         v2 = self.hog2.cvar
@@ -2133,8 +2079,7 @@ class BalloonFromHogs(Merge):
 
     @staticmethod
     def solve_ada(a, b, c, a_cab, d_ab, a_abc):
-        LOGGER.debug("Solve ada: %s %s %s %f %f \
-%f", a, b, c, a_cab, d_ab, a_abc)
+        LOGGER.debug("Solve ada: %s %s %s %f %f %f", a, b, c, a_cab, d_ab, a_abc)
 
         p_a = Vector.origin()
         p_b = Vector([d_ab, 0.0])
@@ -2170,9 +2115,8 @@ class BalloonMerge(Merge):
     """Represents a merging of two balloons"""
 
     def __init__(self, in1, in2, out):
-        super(BalloonMerge, self).__init__(name="BalloonMerge", \
-        inputs=[in1, in2], outputs=[out], overconstrained=False, \
-        consistent=True)
+        super().__init__(name="BalloonMerge", inputs=[in1, in2], outputs=[out],
+                         overconstrained=False, consistent=True)
 
         self.input1 = in1
         self.input2 = in2
@@ -2184,14 +2128,12 @@ class BalloonMerge(Merge):
         if len(shared) < 2:
             raise Exception("underconstrained")
         elif len(shared) > 2:
-            LOGGER.debug("Overconstrained balloon \
-merge")
+            LOGGER.debug("Overconstrained balloon merge")
 
             self.overconstrained = True
 
     def multi_execute(self, inmap):
-        LOGGER.debug("BalloonMerge.multi_execute \
-called")
+        LOGGER.debug("BalloonMerge.multi_execute called")
 
         c1 = self.inputs[0]
         c2 = self.inputs[1]
@@ -2205,9 +2147,8 @@ class BalloonRigidMerge(Merge):
     """Represents a merging of a balloon and a rigid"""
 
     def __init__(self, balloon, cluster, output):
-        super(BalloonRigidMerge, self).__init__(name="BalloonRigidMerge", \
-        inputs=[balloon, cluster], outputs=[output], overconstrained=False, \
-        consistent=True)
+        super().__init__(name="BalloonRigidMerge", inputs=[balloon, cluster], outputs=[output],
+                         overconstrained=False, consistent=True)
 
         self.balloon = balloon
         self.cluster= cluster
@@ -2221,14 +2162,12 @@ class BalloonRigidMerge(Merge):
         if len(shared) < 2:
             raise Exception("underconstrained balloon-cluster merge")
         elif len(shared) > 2:
-            LOGGER.debug("Overconstrained merge of \
-%s and %s", balloon, cluster)
+            LOGGER.debug("Overconstrained merge of %s and %s", balloon, cluster)
 
             self.overconstrained = True
 
     def multi_execute(self, inmap):
-        LOGGER.debug( \
-"BalloonRigidMerge.multi_execute called")
+        LOGGER.debug("BalloonRigidMerge.multi_execute called")
 
         rigid = inmap[self.cluster]
         balloon = inmap[self.balloon]
@@ -2239,8 +2178,8 @@ class MergeHogs(Merge):
     """Represents a merging of two hogs to form a new hog"""
 
     def __init__(self, hog1, hog2, output):
-        super(MergeHogs, self).__init__(name="MergeHogs", inputs=[hog1, hog2], \
-        outputs=[output], overconstrained=False, consistent=True)
+        super().__init__(name="MergeHogs", inputs=[hog1, hog2], outputs=[output],
+                         overconstrained=False, consistent=True)
 
         self.hog1 = hog1
         self.hog2 = hog2
@@ -2254,14 +2193,12 @@ class MergeHogs(Merge):
         if len(shared) < 1:
             raise Exception("underconstrained balloon-cluster merge")
         elif len(shared) > 1:
-            LOGGER.debug("Overconstrained merge of \
-%s and %s", hog1, hog2)
+            LOGGER.debug("Overconstrained merge of %s and %s", hog1, hog2)
 
             self.overconstrained = True
 
     def multi_execute(self, inmap):
-        LOGGER.debug("MergeHogs.multi_execute \
-called")
+        LOGGER.debug("MergeHogs.multi_execute called")
 
         conf1 = inmap[self.inputs[0]]
         conf2 = inmap[self.inputs[1]]
@@ -2280,15 +2217,13 @@ class RigidToHog(Derive):
     """Represents a derivation of a hog from a cluster"""
 
     def __init__(self, cluster, hog):
-        super(RigidToHog, self).__init__(name="RigidToHog", inputs=[cluster], \
-        outputs=[hog])
+        super().__init__(name="RigidToHog", inputs=[cluster], outputs=[hog])
 
         self.cluster = cluster
         self.hog = hog
 
     def multi_execute(self, inmap):
-        LOGGER.debug("RigidToHog.multi_execute \
-called")
+        LOGGER.debug("RigidToHog.multi_execute called")
 
         conf1 = inmap[self.inputs[0]]
         variables = list(self.outputs[0].xvars) + [self.outputs[0].cvar]
@@ -2300,15 +2235,13 @@ class BalloonToHog(Derive):
     """Represents a derivation of a hog from a balloon
     """
     def __init__(self, balloon, hog):
-        super(BalloonToHog, self).__init__(name="BalloonToHog", \
-        inputs=[balloon], outputs=[hog])
+        super().__init__(name="BalloonToHog", inputs=[balloon], outputs=[hog])
 
         self.balloon = balloon
         self.hog = hog
 
     def multi_execute(self, inmap):
-        LOGGER.debug("BalloonToHog.multi_execute \
-called")
+        LOGGER.debug("BalloonToHog.multi_execute called")
 
         conf1 = inmap[self.inputs[0]]
         variables = list(self.outputs[0].xvars) + [self.outputs[0].cvar]
