@@ -552,11 +552,6 @@ class ClusterSolver(Notifier):
 
         # remove all objects
         for item in to_delete:
-            # if merge removed items from toplevel then add them back to top level
-            if hasattr(item, "restore_toplevel"):
-                for cluster in item.restore_toplevel:
-                    to_restore.add(cluster)
-
             # delete it from graph
             LOGGER.debug("Deleting %s", item)
             self._graph.remove_node(item)
