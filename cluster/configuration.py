@@ -27,8 +27,6 @@ class Configuration:
         # flag indicating an underconstrained merge (i.e. not a unique solution)
         self.underconstrained = False
 
-        self.makehash()
-
     def __copy__(self):
         obj = self.__class__(self.mapping)
 
@@ -175,15 +173,9 @@ class Configuration:
                     return False
             return True
 
-    def makehash(self):
-        """the hash is based only on variable names (not values)"""
-        val = 0
-        for var in self.mapping:
-            val = val + hash(var)
-        self.hashvalue = hash(val)
-
     def __hash__(self):
-        return self.hashvalue
+        # hash the configuration's points
+        return hash(frozenset(self.mapping))
 
     def __str__(self):
         return "Configuration({0})".format(self.mapping)
