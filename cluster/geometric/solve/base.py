@@ -290,11 +290,11 @@ class GeometricSolver(Listener):
     def _rem_constraint(self, con):
         LOGGER.debug("GeometricSolver._rem_constraint")
 
-        if isinstance(con,FixConstraint):
+        if isinstance(con, FixConstraint):
             if self.fixcluster != None:
                 self.solver.remove(self.fixcluster)
 
-            var = self.get_configurations(con.variables()[0])
+            var = self.solver.get_configurations(con.variables()[0])
 
             if var in self.fixvars:
                 self.fixvars.remove(var)
