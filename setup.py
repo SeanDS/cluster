@@ -16,6 +16,9 @@ EXTRAS = {
         "sphinx_rtd_theme",
         "numpydoc",
         "nbsphinx"
+    ],
+    "gui": [
+        "PyQt5"
     ]
 }
 
