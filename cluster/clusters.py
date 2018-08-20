@@ -84,8 +84,7 @@ class Angle(PointRelation):
         if isinstance(other, Angle):
             # check the middle point is identical, and that the other points are
             # the included
-            return self.points[2] == other.points[2] \
-            and frozenset(self.points) == frozenset(other.points)
+            return self.points[2] == other.points[2] and frozenset(self.points) == frozenset(other.points)
 
         return False
 
@@ -141,59 +140,18 @@ class Cluster(Variable, metaclass=abc.ABCMeta):
         :raises TypeError: if cluster types are unknown
         """
         # get shared points between this cluster and the other cluster
-        shared = self.variables & other.variables
+        shared_points = self.variables & other.variables
 
         # note, a one point cluster is never returned
         # because it is not a constraint
-        if len(shared) < 2:
+        if len(shared_points) < 2:
             return None
 
-        if isinstance(self, Rigid):
-            if isinstance(other, Rigid):
-                if len(shared) >= 2:
-                    return Rigid(shared)
-                else:
-                    return None
-            elif isinstance(other, Balloon):
-                if len(shared) >= 3:
-                    return Balloon(shared)
-                else:
-                    return None
-            elif isinstance(other, Hedgehog):
-                xvars = shared - set([other.cvar])
+        return self._intersect_with(other, shared_points)
 
-                if other.cvar in self.variables and len(xvars) >= 2:
-                    return Hedgehog(other.cvar,xvars)
-                else:
-                    return None
-        elif isinstance(self, Balloon):
-            if isinstance(other, Rigid) or isinstance(other, Balloon):
-                if len(shared) >= 3:
-                    return Balloon(shared)
-                else:
-                    return None
-            elif isinstance(other, Hedgehog):
-                xvars = shared - set([other.cvar])
-                if other.cvar in self.variables and len(xvars) >= 2:
-                    return Hedgehog(other.cvar,xvars)
-                else:
-                    return None
-        elif isinstance(self, Hedgehog):
-            if isinstance(other, Rigid) or isinstance(other, Balloon):
-                xvars = shared - set([self.cvar])
-                if self.cvar in other.variables and len(xvars) >= 2:
-                    return Hedgehog(self.cvar,xvars)
-                else:
-                    return None
-            elif isinstance(other, Hedgehog):
-                xvars = self.xvars & other.xvars
-                if self.cvar == other.cvar and len(xvars) >= 2:
-                    return Hedgehog(self.cvar,xvars)
-                else:
-                    return None
-
-        # if all fails
-        raise TypeError("Intersection of unknown cluster types")
+    @abc.abstractmethod
+    def _intersect_with(self, other, shared_points):
+        raise NotImplementedError
 
     def __copy__(self):
         return self.__class__(self.variables)
@@ -204,6 +162,21 @@ class Rigid(Cluster):
 
     NAME = "Rigid"
 
+    def _intersect_with(self, other, shared_points):
+        if isinstance(other, Rigid):
+            if len(shared_points) >= 2:
+                return Rigid(shared_points)
+        elif isinstance(other, Balloon):
+            if len(shared_points) >= 3:
+                return Balloon(shared_points)
+        elif isinstance(other, Hedgehog):
+            xvars = shared_points - set([other.cvar])
+
+            if other.cvar in self.variables and len(xvars) >= 2:
+                return Hedgehog(other.cvar, xvars)
+
+        # default
+        return None
 
 class Hedgehog(Cluster):
     """Represents a set of points (C, X1...XN) where all angles a(Xi, C, Xj) are
@@ -238,6 +211,20 @@ class Hedgehog(Cluster):
         extra = ", ".join(self.xvars)
         return f"{self.cvar}, [{extra}]"
 
+    def _intersect_with(self, other, shared_points):
+        if isinstance(other, (Rigid, Balloon)):
+            xvars = shared_points - set([self.cvar])
+
+            if self.cvar in other.variables and len(xvars) >= 2:
+                return Hedgehog(self.cvar,xvars)
+        elif isinstance(other, Hedgehog):
+            xvars = self.xvars & other.xvars
+            if self.cvar == other.cvar and len(xvars) >= 2:
+                return Hedgehog(self.cvar,xvars)
+
+        # default
+        return None
+
     def __copy__(self):
         return self.__class__(self.cvar, self.xvars)
 
@@ -260,6 +247,19 @@ class Balloon(Cluster):
         # check there are enough variables for a balloon
         if len(self.variables) < 3:
             raise ValueError("Balloon must have at least three variables")
+
+    def _intersect_with(self, other, shared_points):
+        if isinstance(other, (Rigid, Balloon)):
+            if len(shared_points) >= 3:
+                return Balloon(shared_points)
+        elif isinstance(other, Hedgehog):
+            xvars = shared_points - set([other.cvar])
+
+            if other.cvar in self.variables and len(xvars) >= 2:
+                return Hedgehog(other.cvar,xvars)
+
+        # default
+        return None
 
 
 def over_constraints(c1, c2):
