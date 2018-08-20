@@ -28,21 +28,20 @@ class MethodGraph(Graph):
 
     @property
     def variables(self):
-        return [node for node, data in self.nodes(data=True)
-                if data.get("node_type") == "variable"]
+        return [node for node, data in self.nodes(data=True) if data.get("node_type") == "variable"]
 
     @property
     def methods(self):
-        return [node for node, data in self.nodes(data=True)
-                if data.get("node_type") == "method"]
+        return [node for node, data in self.nodes(data=True) if data.get("node_type") == "method"]
 
     def set_node_value(self, variable, value, propagate=True):
         """Sets the value of a variable.
 
         :param propagate: whether to propagate changes
         """
-
+        # call parent
         super().set_node_value(variable, value)
+
         # flag that a change must be propagated
         self._changed.append(variable)
 
@@ -51,8 +50,10 @@ class MethodGraph(Graph):
 
     def add_variable(self, variable, value=None):
         """Adds a variable, optionally with a value"""
-        if variable not in self.variables:
-            self.add_node(variable, node_type="variable", value=value)
+        if variable in self.variables:
+            raise ValueError(f"variable '{variable}' already in graph")
+
+        self.add_node(variable, node_type="variable", value=value)
 
     def remove_variable(self, variable):
         """Remove a variable and all methods on that variable"""
@@ -81,17 +82,23 @@ class MethodGraph(Graph):
         """
 
         if method in self.methods:
-            return
+            raise ValueError(f"method '{method}' already in graph")
 
         self.add_node(method, node_type="method", value=1)
 
         # update graph
         for variable in method.inputs:
-            self.add_variable(variable)
+            if variable not in self.variables:
+                # add the variable to the graph
+                self.add_variable(variable)
+
             self.add_edge(variable, method)
 
         for variable in method.outputs:
-            self.add_variable(variable)
+            if variable not in self.variables:
+                # add the variable to the graph
+                self.add_variable(variable)
+
             self.add_edge(method, variable)
 
         # check validity of graph
