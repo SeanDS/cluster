@@ -1,7 +1,7 @@
 import abc
 import logging
 
-from ...method import Method
+from .base import Method
 
 LOGGER = logging.getLogger(__name__)
 

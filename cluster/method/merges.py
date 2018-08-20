@@ -3,11 +3,11 @@ import logging
 import copy
 import numpy as np
 
-from ...configuration import Configuration
-from ...geometry import Vector, cc_int, cr_int, rr_int, tol_zero
-from ...method import Method
-from ..constraints import (NotClockwiseConstraint, NotCounterClockwiseConstraint,
-                           NotAcuteConstraint, NotObtuseConstraint)
+from ..configuration import Configuration
+from ..geometry import Vector, cc_int, cr_int, rr_int, tol_zero
+from ..geometric import (NotClockwiseConstraint, NotCounterClockwiseConstraint,
+                         NotAcuteConstraint, NotObtuseConstraint)
+from .base import Method
 
 LOGGER = logging.getLogger(__name__)
 
