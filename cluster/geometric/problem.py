@@ -57,7 +57,7 @@ class GeometricProblem(Observable, Observer):
         if point not in self.prototype:
             raise ValueError(f"point {point} not in problem")
 
-        self.constraint_graph.rem_variable(point)
+        self.constraint_graph.remove_variable(point)
         del(self.prototype[point])
 
     def set_point(self, point, position):
@@ -99,7 +99,7 @@ class GeometricProblem(Observable, Observer):
         if constraint not in self.constraint_graph.constraints:
             raise ValueError(f"constraint {constraint} not in problem")
 
-        self.constraint_graph.rem_constraint(constraint)
+        self.constraint_graph.remove_constraint(constraint)
 
     def get_fix(self, point):
         """return the fix constraint on given point, or None"""

@@ -34,7 +34,7 @@ class ConstraintGraph(Observable, Graph):
         # notify observers that a new variable has been added
         self.fire(Event("add_variable", variable=variable))
 
-    def rem_variable(self, variable):
+    def remove_variable(self, variable):
         """Removes the specified variable from the graph
 
         :param var_name: name of the variable to remove
@@ -45,13 +45,13 @@ class ConstraintGraph(Observable, Graph):
 
         # remove variable's constraints
         for constraint in self.constraints_on(variable):
-            self.rem_constraint(constraint)
+            self.remove_constraint(constraint)
 
         # remove graph vertex associated with the variable
         self.remove_node(variable)
 
         # notify observers that a variable has been removed
-        self.fire(Event("rem_variable", variable=variable))
+        self.fire(Event("remove_variable", variable=variable))
 
     def add_constraint(self, constraint):
         """Adds the specified constraint to the graph
@@ -77,7 +77,7 @@ class ConstraintGraph(Observable, Graph):
         # notify observers that a constraint has been added
         self.fire(Event("add_constraint", constraint=constraint))
 
-    def rem_constraint(self, constraint):
+    def remove_constraint(self, constraint):
         """Removes the specified constraint from the graph
 
         :param constraint: constraint to remove

@@ -190,11 +190,11 @@ class GeometricSolver(Observer, Observable):
         if event.message == "add_constraint":
             self._add_constraint(event.data["constraint"])
         elif event.message == "remove_constraint":
-            self._rem_constraint(event.data["constraint"])
+            self._remove_constraint(event.data["constraint"])
         elif event.message == "add_variable":
             self._add_variable(event.data["variable"])
         elif event.message == "remove_variable":
-            self._rem_variable(event.data["variable"])
+            self._remove_variable(event.data["variable"])
         # problem events
         elif event.message == "set_point":
             self._update_variable(event.data["variable"])
@@ -218,8 +218,8 @@ class GeometricSolver(Observer, Observable):
 
             self._update_variable(variable)
 
-    def _rem_variable(self, var):
-        LOGGER.debug("GeometricSolver._rem_variable")
+    def _remove_variable(self, var):
+        LOGGER.debug("GeometricSolver._remove_variable")
 
         if var in self.mapping:
             self.solver.remove(self.mapping[var])
@@ -275,8 +275,8 @@ class GeometricSolver(Observer, Observable):
         else:
             pass
 
-    def _rem_constraint(self, con):
-        LOGGER.debug("GeometricSolver._rem_constraint")
+    def _remove_constraint(self, con):
+        LOGGER.debug("GeometricSolver._remove_constraint")
 
         if isinstance(con, FixConstraint):
             if self.fixcluster != None:
