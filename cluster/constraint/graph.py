@@ -26,7 +26,7 @@ class ConstraintGraph(Observable, Graph):
         """
         # only add if it doesn't already exist
         if variable in self.variables:
-            return
+            raise ValueError(f"variable '{variable}' already in graph")
 
         # create a vertex in the graph for the variable
         self.add_node(variable, node_type="variable")
@@ -41,9 +41,7 @@ class ConstraintGraph(Observable, Graph):
         """
         # only remove if it already exists
         if variable not in self.variables:
-            LOGGER.warning("Trying to remove variable that isn't in graph")
-
-            return
+            raise ValueError(f"variable '{variable}' not in graph")
 
         # remove variable's constraints
         for constraint in self.constraints_on(variable):
@@ -69,8 +67,9 @@ class ConstraintGraph(Observable, Graph):
 
         # process the constraint's variables
         for variable in constraint.variables:
-            # add the variable to the graph
-            self.add_variable(variable)
+            if variable not in self.variables:
+                # add the variable to the graph
+                self.add_variable(variable)
 
             # create edge in the graph for the variable
             self.add_edge(variable, constraint)
@@ -83,12 +82,8 @@ class ConstraintGraph(Observable, Graph):
 
         :param constraint: constraint to remove
         """
-
-        # only remove constraint if it already exists in the graph
         if constraint not in self.constraints:
-            LOGGER.warning("Trying to remove constraint that isn't in graph")
-
-            return
+            raise ValueError(f"constraint '{constraint}' not in graph")
 
         # remove graph vertex associated with the constraint
         self.remove_node(constraint)
@@ -104,8 +99,7 @@ class ConstraintGraph(Observable, Graph):
 
         # check if variable is in the graph
         if not self.has_node(variable):
-            # default to empty list
-            return []
+            raise ValueError(f"variable '{variable}' not in graph")
 
         # return the variable's outgoing vertices
         return self.successors(variable)
@@ -115,11 +109,8 @@ class ConstraintGraph(Observable, Graph):
         specified in the sequence
 
         :param variables: variables to find constraints for"""
-
-        # if no variables were specified, there are no shared constraints
         if len(variables) == 0:
-            # return  an empty list
-            return []
+            raise ValueError("no variables specified")
 
         # empty list of shared constraints
         shared_constraints = []
@@ -149,11 +140,8 @@ class ConstraintGraph(Observable, Graph):
         """Gets a list of the constraints on any of the specified variables
 
         :param variables: variables to get constraints for"""
-
-        # if no variables were specified, there are no constraints
         if len(variables) == 0:
-            # return  an empty list
-            return []
+            raise ValueError("no variables specified")
 
         # empty set of constraints
         constraints = set([])
