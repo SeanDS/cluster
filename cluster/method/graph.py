@@ -105,11 +105,10 @@ class MethodGraph(Graph):
         for variable in method.outputs:
             if len(list(self.predecessors(variable))) > 1:
                 self.remove_method(method)
-                raise MethodGraphDetermineException(f"variable '{variable}' determined by multiple "
-                                                    "methods")
+                raise MethodGraphDetermineException(method, variable)
             elif self.has_cycle(variable):
                 self.remove_method(method)
-                raise MethodGraphCycleException(f"adding variable '{variable}' results in a cycle")
+                raise MethodGraphCycleException(method, variable)
 
         if propagate:
             # execute includes propagation
@@ -198,10 +197,13 @@ class MethodGraph(Graph):
 
 class MethodGraphCycleException(Exception):
     """Error indicating a cyclic connection in a MethodGraph"""
-    pass
+    def __init__(self, method, variable):
+        super().__init__(f"adding variable '{variable}' from '{method}' would create a cycle")
 
 
 class MethodGraphDetermineException(Exception):
     """Error indicating a variable is determined by more than one method in a
     MethodGraph"""
-    pass
+    def __init__(self, method, variable):
+        super().__init__(f"adding variable '{variable}' from '{method}' would make it determined "
+                         "by multiple methods")
