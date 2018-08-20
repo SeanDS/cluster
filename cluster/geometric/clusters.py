@@ -4,6 +4,7 @@
 
 import abc
 import logging
+import itertools
 
 from ..method import Variable
 
@@ -139,9 +140,8 @@ class Cluster(Variable, metaclass=abc.ABCMeta):
         :rtype: :class:`Cluster`
         :raises TypeError: if cluster types are unknown
         """
-
         # get shared points between this cluster and the other cluster
-        shared = set(self.variables).intersection(other.variables)
+        shared = self.variables & other.variables
 
         # note, a one point cluster is never returned
         # because it is not a constraint
@@ -160,7 +160,8 @@ class Cluster(Variable, metaclass=abc.ABCMeta):
                 else:
                     return None
             elif isinstance(other, Hedgehog):
-                xvars = set(shared) - set([other.cvar])
+                xvars = shared - set([other.cvar])
+
                 if other.cvar in self.variables and len(xvars) >= 2:
                     return Hedgehog(other.cvar,xvars)
                 else:
@@ -172,20 +173,20 @@ class Cluster(Variable, metaclass=abc.ABCMeta):
                 else:
                     return None
             elif isinstance(other, Hedgehog):
-                xvars = set(shared) - set([other.cvar])
+                xvars = shared - set([other.cvar])
                 if other.cvar in self.variables and len(xvars) >= 2:
                     return Hedgehog(other.cvar,xvars)
                 else:
                     return None
         elif isinstance(self, Hedgehog):
             if isinstance(other, Rigid) or isinstance(other, Balloon):
-                xvars = set(shared) - set([self.cvar])
+                xvars = shared - set([self.cvar])
                 if self.cvar in other.variables and len(xvars) >= 2:
                     return Hedgehog(self.cvar,xvars)
                 else:
                     return None
             elif isinstance(other, Hedgehog):
-                xvars = set(self.xvars).intersection(other.xvars)
+                xvars = self.xvars & other.xvars
                 if self.cvar == other.cvar and len(xvars) >= 2:
                     return Hedgehog(self.cvar,xvars)
                 else:
@@ -264,7 +265,7 @@ class Balloon(Cluster):
 def over_constraints(c1, c2):
     """returns the over-constraints (duplicate distances and angles) for
        a pair of clusters (rigid, angle or scalable)."""
-    return over_distances(c1,c2).union(over_angles(c1,c2))
+    return over_distances(c1, c2) | over_angles(c1, c2)
 
 def over_angles(c1, c2):
     if isinstance(c1,Rigid) and isinstance(c2,Rigid):
@@ -292,108 +293,59 @@ def over_distances(c1, c2):
     """determine set of distances in c1 and c2"""
     if not (isinstance(c1, Rigid) and isinstance(c2, Rigid)):
         return set()
-    else:
-        shared = list(set(c1.variables).intersection(c2.variables))
-        overdists = set()
-        for i in range(len(shared)):
-            for j in range(i):
-                v1 = shared[i]
-                v2 = shared[j]
-                overdists.add(Distance(v1,v2))
-        return overdists
+
+    shared = c1.variables & c2.variables
+    overdists = set()
+
+    for v1 in shared:
+        for v2 in shared:
+            overdists.add(Distance(v1, v2))
+
+    return overdists
 
 def over_angles_hh(hog1, hog2):
     # determine duplicate angles
-    shared = list(set(hog1.xvars).intersection(hog2.xvars))
+    shared = hog1.xvars & hog2.xvars
+    overangles = set()
+
     if not hog1.cvar == hog2.cvar:
         return set()
-    overangles = set()
-    for i in range(len(shared)):
-        for j in range(i):
-            v1 = shared[i]
-            v2 = shared[j]
-            overangles.add(Angle(v1,hog1.cvar,v2))
-    return overangles
 
-def over_angles_bb(b1, b2):
-    # determine duplicate angles
-    shared = list(set(b1.variables).intersection(b2.variables))
-    overangles = set()
-    for i in range(len(shared)):
-        for j in range(i+1, len(shared)):
-            for k in range(j+1, len(shared)):
-                v1 = shared[i]
-                v2 = shared[j]
-                v3 = shared[k]
-                overangles.add(Angle(v1,v2,v3))
-                overangles.add(Angle(v2,v3,v1))
-                overangles.add(Angle(v3,v1,v2))
+    for v1 in shared:
+        for v2 in shared:
+            overangles.add(Angle(v1, hog1.cvar, v2))
+
     return overangles
 
 def over_angles_cb(cluster, balloon):
     # determine duplicate angles
-    # note: identical to over_angles_bb and (non-existent) over_angles_cc
-    shared = list(set(cluster.variables).intersection(balloon.variables))
+    shared = cluster.variables & balloon.variables
     overangles = set()
-    for i in range(len(shared)):
-        for j in range(i+1, len(shared)):
-            for k in range(j+1, len(shared)):
-                v1 = shared[i]
-                v2 = shared[j]
-                v3 = shared[k]
-                overangles.add(Angle(v1,v2,v3))
-                overangles.add(Angle(v2,v3,v1))
-                overangles.add(Angle(v3,v1,v2))
+
+    # generate combinations of three from shared variables
+    for v1, v2, v3 in itertools.combinations(shared, 3):
+        # add clockwise angles
+        overangles.add(Angle(v1, v2, v3))
+        overangles.add(Angle(v2, v3, v1))
+        overangles.add(Angle(v3, v1, v2))
+
     return overangles
 
-def over_angles_bh(balloon, hog):
-    # determine duplicate angles
-    shared = list(set(balloon.variables).intersection(hog.xvars))
-    if hog.cvar not in balloon.variables:
-        return set()
-    overangles = set()
-    for i in range(len(shared)):
-        for j in range(i+1,len(shared)):
-            v1 = shared[i]
-            v2 = shared[j]
-            overangles.add(Angle(v1,hog.cvar,v2))
-    return overangles
+def over_angles_bb(b1, b2):
+    return over_angles_cb(b1, b2)
 
 def over_angles_ch(cluster, hog):
     # determine duplicate angles
-    shared = list(set(cluster.variables).intersection(hog.xvars))
+    shared = cluster.variables & hog.xvars
+    overangles = set()
+
     if hog.cvar not in cluster.variables:
         return set()
-    overangles = set()
-    for i in range(len(shared)):
-        for j in range(i+1,len(shared)):
-            v1 = shared[i]
-            v2 = shared[j]
-            overangles.add(Angle(v1,hog.cvar,v2))
+
+    for v1, v2 in itertools.combinations(shared, 2):
+        overangles.add(Angle(v1, hog.cvar, v2))
+
     return overangles
 
-def binomial(n,k):
-    p = 1
-    for j in range(0,k):
-        p = p*(n - j)/(j + 1)
-    return p
-
-def num_constraints(cluster):
-    return num_distances(cluster)+num_angles(cluster)
-
-def num_distances(cluster):
-    if isinstance(cluster, Rigid):
-        n = len(cluster.variables)
-        return binomial(n,2)
-    else:
-        return 0
-
-def num_angles(cluster):
-    if isinstance(cluster, Balloon) or isinstance(cluster, Rigid):
-        n = len(cluster.variables)
-        return binomial(n,3) * 3
-    elif isinstance(cluster, Hedgehog):
-        n = len(cluster.xvars)
-        return binomial(n,2)
-
-    return 0
+def over_angles_bh(balloon, hog):
+    return over_angles_ch(balloon, hog)
