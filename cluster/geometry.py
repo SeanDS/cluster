@@ -188,7 +188,7 @@ def cc_int(p1, r1, p2, r2):
     # check if d <= 0 within tolerance
     if tol_le(d, 0):
         # no solutions
-        return []
+        return
 
     u = ((r1*r1 - r2*r2) / d + d) / 2
 
@@ -198,7 +198,7 @@ def cc_int(p1, r1, p2, r2):
     # check that a < b within tolerance
     # FIXME: what's going on here?  elif block seems to repeat earlier check
     if tol_lt(a, b):
-        return []
+        return
     elif a < b:
         v = 0.0
     else:
@@ -207,23 +207,17 @@ def cc_int(p1, r1, p2, r2):
     s = (p2 - p1) * u / d
 
     if tol_zero(s.length):
-        p3a = p1 + Vector([p2.y - p1.y, p1.x - p2.x]) * r1 / d
+        yield p1 + Vector([p2.y - p1.y, p1.x - p2.x]) * r1 / d
 
-        if tol_zero(r1 / d):
-            return [p3a]
-        else:
-            p3b = p1 + Vector([p1.y - p2.y, p2.x - p1.x]) * r1/d
-
-            return [p3a, p3b]
+        if not tol_zero(r1 / d):
+            # second solution
+            yield p1 + Vector([p1.y - p2.y, p2.x - p1.x]) * r1/d
     else:
-        p3a = p1 + s + Vector([s.y, -s.x]) * v / s.length
+        yield p1 + s + Vector([s.y, -s.x]) * v / s.length
 
-        if tol_zero(v / s.length):
-            return [p3a]
-        else:
-            p3b = p1 + s + Vector([-s.y, s.x]) * v / s.length
-
-            return [p3a, p3b]
+        if not tol_zero(v / s.length):
+            # second solution
+            yield p1 + s + Vector([-s.y, s.x]) * v / s.length
 
 def cl_int(p1, r, p2, v):
     """Intersect circle (p1, r) with line (p2, v)
@@ -241,7 +235,7 @@ def cl_int(p1, r, p2, v):
     """
     LOGGER.debug(f"intersecting circle ({p1}, r={r}) with line ({p2}, dir={v})")
 
-    # distance between centre of circle and start of line
+    # vector between centre of circle and start of line
     p = p2 - p1
 
     # squared length of line
@@ -253,19 +247,21 @@ def cl_int(p1, r, p2, v):
     # check that d2 and E are both > 0 within tolerance
     if tol_gt(d2, 0) and tol_gt(E, 0):
         sE = np.sqrt(E)
+
         x1 = p1.x + (D * v.y + np.sign(v.y) * v.x * sE) / d2
-        x2 = p1.x + (D * v.y - np.sign(v.y) * v.x * sE) / d2
         y1 = p1.y + (-D * v.x + np.abs(v.y) * sE) / d2
+
+        yield Vector([x1, y1])
+
+        x2 = p1.x + (D * v.y - np.sign(v.y) * v.x * sE) / d2
         y2 = p1.y + (-D * v.x - np.abs(v.y) * sE) / d2
 
-        return [Vector([x1, y1]), Vector([x2, y2])]
+        yield Vector([x2, y2])
     elif tol_zero(E):
         x1 = p1.x + D * v.y / d2
         y1 = p1.y + -D * v.x / d2
 
-        return [Vector([x1, y1])]
-    else:
-        return []
+        yield Vector([x1, y1])
 
 def cr_int(p1, r, p2, v):
     """Intersect a circle (p1, r) with ray (p2, v) (a half-line)
@@ -283,15 +279,11 @@ def cr_int(p1, r, p2, v):
     """
     LOGGER.debug(f"intersecting circle ({p1}, r={r}) with ray ({p2}, dir={v})")
 
-    solutions = []
-
     # loop over solutions of the circle and line intercept
     for s in cl_int(p1, r, p2, v):
         # check if a is >= 0 within tolerance
         if tol_ge(np.dot(s - p2, v), 0):
-            solutions.append(s)
-
-    return solutions
+            yield s
 
 def ll_int(p1, v1, p2, v2):
     """Intersect two lines
@@ -311,17 +303,18 @@ def ll_int(p1, v1, p2, v2):
 
     if tol_zero(v1.x * v2.y - v1.y * v2.x):
         # lines don't intersect
-        return []
-    elif not tol_zero(v2.y):
-        d = p2 - p1
+        return
+
+    d = p2 - p1
+
+    if tol_zero(v2.y):
+        t1 = d.y / v1.y
+    else:
         r2 = -v2.x / v2.y
         f = v1.x + v1.y * r2
         t1 = (d.x + d.y * r2) / f
-    else:
-        d = p2-p1
-        t1 = d.y / v1.y
 
-    return [p1 + v1 * t1]
+    yield p1 + v1 * t1
 
 def lr_int(p1, v1, p2, v2):
     """Intersect line with ray
@@ -340,14 +333,10 @@ def lr_int(p1, v1, p2, v2):
     LOGGER.debug(f"intersecting line ({p1}, dir={v1}) with ray ({p2}, dir={v2})")
 
     # assume ray is a line and get intersection with line
-    s = ll_int(p1, v1, p2, v2)
-
-    # check if s > 0 and a >= 0 within tolerance
-    if len(s) > 0 and tol_ge(np.dot(s[0] - p2, v2), 0):
-        return s
-    else:
-        # lines intersect behind ray
-        return []
+    for s in ll_int(p1, v1, p2, v2):
+        # check if s > 0 and a >= 0 within tolerance
+        if tol_ge(np.dot(s - p2, v2), 0):
+            yield s
 
 def rr_int(p1, v1, p2, v2):
     """Intersect ray with ray
@@ -366,17 +355,13 @@ def rr_int(p1, v1, p2, v2):
     LOGGER.debug(f"intersecting rays ({p1}, dir={v1}) and ({p2}, dir={v2})")
 
     # assume rays are lines and get intersection
-    s = ll_int(p1, v1, p2, v2)
+    for s in ll_int(p1, v1, p2, v2):
+        a1 = np.dot(s - p1, v1)
+        a2 = np.dot(s - p2, v2)
 
-    a1 = np.dot(s[0] - p1, v1)
-    a2 = np.dot(s[0] - p2, v2)
-
-    # check len(s) > 0 and a1 >= 0 and a2 >= 0 within tolerance
-    if len(s) > 0 and tol_ge(a1, 0) and tol_ge(a2, 0):
-        return s
-    else:
-        # lines intersect behind rays
-        return []
+        # check len(s) > 0 and a1 >= 0 and a2 >= 0 within tolerance
+        if tol_ge(a1, 0) and tol_ge(a2, 0):
+            yield s
 
 def is_clockwise(p1, p2, p3):
     """Calculates whether or not triangle p1, p2, p3 is orientated clockwise
