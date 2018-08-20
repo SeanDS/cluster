@@ -6,7 +6,7 @@ import abc
 import logging
 import itertools
 
-from ..method import Variable
+from .methods import Variable
 
 LOGGER = logging.getLogger(__name__)
 

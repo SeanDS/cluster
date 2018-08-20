@@ -1,10 +1,9 @@
 import logging
 
-from ..geometry import Vector
-from ..event import Observable, Observer, Event, UnknownEventException
-from ..constraint import ConstraintGraph
+from .geometry import Vector
+from .event import Observable, Observer, Event, UnknownEventException
 from .constraints import (DistanceConstraint, AngleConstraint, FixConstraint, ParametricConstraint,
-                          SelectionConstraint)
+                          SelectionConstraint, ConstraintGraph)
 
 LOGGER = logging.getLogger(__name__)
 

@@ -2,14 +2,14 @@ import logging
 import copy
 import numpy as np
 
-from ..event import Observable, Observer, UnknownEventException
-from ..graph import Graph
-from ..geometry import Vector
-from ..method import Method, Variable, MethodGraph, PrototypeMethod
-from ..method.merges import (Merge, MergeRRR, MergeRRH, MergeRHR, MergePR, MergeRR, MergeRH,
+from .event import Observable, Observer, UnknownEventException
+from .graph import Graph
+from .geometry import Vector
+from .methods import Method, Variable, MethodGraph, PrototypeMethod
+from .methods.merges import (Merge, MergeRRR, MergeRRH, MergeRHR, MergePR, MergeRR, MergeRH,
                              MergeBH, BalloonFromHogs, BalloonMerge, BalloonRigidMerge, MergeHogs)
-from ..method.derives import SubHog, RigidToHog, BalloonToHog
-from ..configuration import Configuration
+from .methods.derives import SubHog, RigidToHog, BalloonToHog
+from .configuration import Configuration
 from .decomposition import Decomposition
 from .clusters import Distance, Angle, Rigid, Hedgehog, Balloon, over_constraints
 from .constraints import DistanceConstraint, AngleConstraint, FixConstraint

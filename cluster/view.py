@@ -1,7 +1,7 @@
 import sys
 from PyQt5 import Qt, QtGui, QtCore, QtWidgets
 
-from .geometric import DistanceConstraint
+from .constraints import DistanceConstraint
 
 def solution_viewer(problem, solution):
     window = Example()

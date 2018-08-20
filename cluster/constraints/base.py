@@ -64,42 +64,6 @@ class Constraint(metaclass=abc.ABCMeta):
     def __hash__(self):
         return hash((self.NAME, tuple(self.variables)))
 
-class ParametricConstraint(Constraint, Observable, metaclass=abc.ABCMeta):
-    """A constraint with a parameter and notification when parameter changes"""
-
-    NAME = "ParametricConstraint"
-
-    def __init__(self, value=None, *args, **kwargs):
-        """initialize ParametricConstraint"""
-        super().__init__(*args, **kwargs)
-
-        self._value = None
-
-        # set properties
-        self.value = value
-
-    @property
-    def value(self):
-        return self._value
-
-    @value.setter
-    def value(self, value):
-        self._value = value
-
-        # fire event
-        self.fire(Event("set_parameter", constraint=self, value=value))
-
-    @abc.abstractmethod
-    def mapped_value(self, mapping):
-        raise NotImplementedError
-
-    def satisfied(self, mapping):
-        """return True iff mapping from variable names to points satisfies constraint"""
-        return tol_eq(self.mapped_value(mapping), self.value)
-
-    def __str__(self):
-        return f"{self.NAME}(({self._variable_str}) = {self.value})"
-
 
 class PlusConstraint(Constraint):
     """Constraint for testing purposes"""
