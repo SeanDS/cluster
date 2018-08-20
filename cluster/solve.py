@@ -11,7 +11,7 @@ from .methods.merges import (Merge, MergeRRR, MergeRRH, MergeRHR, MergePR, Merge
 from .methods.derives import SubHog, RigidToHog, BalloonToHog
 from .configuration import Configuration
 from .decomposition import Decomposition
-from .clusters import Distance, Angle, Rigid, Hedgehog, Balloon, over_constraints
+from .clusters import Distance, Angle, Rigid, Hedgehog, Balloon
 from .constraints import DistanceConstraint, AngleConstraint, FixConstraint
 
 LOGGER = logging.getLogger(__name__)
@@ -1578,7 +1578,7 @@ class ClusterSolver:
     def _is_consistent_pair(self, object1, object2):
         LOGGER.debug("Checking if %s and %s are a consistent pair", object1, object2)
 
-        oc = over_constraints(object1, object2)
+        oc = object1.over_constraints(object2)
 
         if len(oc):
             LOGGER.debug(f"overconstraints of consistent pair: {oc}")
