@@ -381,7 +381,7 @@ def rr_int(p1, v1, p2, v2):
     a2 = np.dot(s[0] - p2, v2)
 
     # check len(s) > 0 and a1 >= 0 and a2 >= 0 within tolerance
-    if len(s) > 0 and tol_ge(np.dot(s[0] - p1, v1), 0) and tol_ge(np.dot(s[0] - p1, v1), 0):
+    if len(s) > 0 and tol_ge(a1, 0) and tol_ge(a2, 0):
         return s
     else:
         # lines intersect behind rays
