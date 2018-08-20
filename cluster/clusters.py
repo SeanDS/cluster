@@ -176,9 +176,9 @@ class Rigid(Cluster):
     NAME = "Rigid"
 
     def _intersect_with(self, other, shared_points):
-        if isinstance(other, Rigid):
+        if isinstance(other, self.__class__):
             if len(shared_points) >= 2:
-                return Rigid(shared_points)
+                return self.__class__(shared_points)
         elif isinstance(other, Balloon):
             if len(shared_points) >= 3:
                 return Balloon(shared_points)
@@ -187,6 +187,8 @@ class Rigid(Cluster):
 
             if other.cvar in self.variables and len(xvars) >= 2:
                 return Hedgehog(other.cvar, xvars)
+        else:
+            raise ValueError(f"unrecognised cluster '{other}'")
 
         # default
         return None
@@ -258,15 +260,20 @@ class Hedgehog(Cluster):
         return f"{self.cvar}, [{extra}]"
 
     def _intersect_with(self, other, shared_points):
-        if isinstance(other, (Rigid, Balloon)):
+        if isinstance(other, self.__class__):
+            xvars = self.xvars & other.xvars
+
+            if self.cvar == other.cvar and len(xvars) >= 2:
+                return self.__class__(self.cvar,xvars)
+        elif isinstance(other, Rigid):
+            return other._intersect_with(self)
+        elif isinstance(other, Balloon):
             xvars = shared_points - set([self.cvar])
 
             if self.cvar in other.variables and len(xvars) >= 2:
                 return Hedgehog(self.cvar,xvars)
-        elif isinstance(other, Hedgehog):
-            xvars = self.xvars & other.xvars
-            if self.cvar == other.cvar and len(xvars) >= 2:
-                return Hedgehog(self.cvar,xvars)
+        else:
+            raise ValueError(f"unrecognised cluster '{other}'")
 
         # default
         return None
@@ -294,6 +301,8 @@ class Hedgehog(Cluster):
             if self.cvar in other.variables:
                 for v1, v2 in itertools.combinations(shared, 2):
                     overangles.add(Angle(v1, self.cvar, v2))
+        else:
+            raise ValueError(f"unrecognised cluster '{other}'")
 
         return overangles
 
@@ -317,14 +326,13 @@ class Balloon(Cluster):
             raise ValueError("Balloon must have at least three variables")
 
     def _intersect_with(self, other, shared_points):
-        if isinstance(other, (Rigid, Balloon)):
+        if isinstance(other, self.__class__):
             if len(shared_points) >= 3:
-                return Balloon(shared_points)
-        elif isinstance(other, Hedgehog):
-            xvars = shared_points - set([other.cvar])
-
-            if other.cvar in self.variables and len(xvars) >= 2:
-                return Hedgehog(other.cvar,xvars)
+                return self.__class__(shared_points)
+        elif isinstance(other, (Rigid, Hedgehog)):
+            return other._intersect_with(self)
+        else:
+            raise ValueError(f"unrecognised cluster '{other}'")
 
         # default
         return None
@@ -342,9 +350,9 @@ class Balloon(Cluster):
                 overangles.add(Angle(v1, v2, v3))
                 overangles.add(Angle(v2, v3, v1))
                 overangles.add(Angle(v3, v1, v2))
-        elif isinstance(other, Rigid):
+        elif isinstance(other, (Rigid, Hedgehog)):
             return other._over_angles(self)
-        elif isinstance(other, Hedgehog):
-            return other._over_angles(self)
+        else:
+            raise ValueError(f"unrecognised cluster '{other}'")
 
         return overangles
