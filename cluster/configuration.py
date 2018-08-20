@@ -87,9 +87,10 @@ class Configuration:
 
     def merge_transform(self, other):
         """returns a new configurations which is this one plus the given other configuration transformed, such that common points will overlap (if possible)."""
+        shared = set(self.variables) & other.variables
 
-        shared = set(self.variables).intersection(other.variables)
         underconstrained = self.underconstrained or other.underconstrained
+
         if len(shared) == 0:
             underconstrained = True
             cs1 = make_hcs(Vector.origin(), Vector([1.0, 0.0]))
@@ -97,6 +98,7 @@ class Configuration:
         elif len(shared) == 1:
             if len(self.variables) > 1 and len(other.variables) > 1:
                 underconstrained = True
+
             v1 = list(shared)[0]
             p11 = self.mapping[v1]
             p21 = other.mapping[v1]
@@ -107,29 +109,33 @@ class Configuration:
             v2 = list(shared)[1]
             p11 = self.mapping[v1]
             p12 = self.mapping[v2]
-            if tol_zero((p12 - p11).length):
+
+            if tol_zero(p11.distance_to(p12)):
                 underconstrained = True
                 cs1 = make_hcs(p11, p11 + Vector([1.0, 0.0]))
             else:
                 cs1 = make_hcs(p11, p12)
+
             p21 = other.mapping[v1]
             p22 = other.mapping[v2]
-            if tol_zero((p22 - p21).length):
+
+            if tol_zero(p21.distance_to(p22)):
                 underconstrained = True
                 cs2 = make_hcs(p21, p21 + Vector([1.0, 0.0]))
             else:
                 cs2 = make_hcs(p21, p22)
-        # in any case
+
         t = cs_transform_matrix(cs2, cs1)
+
         return t, underconstrained
 
-    def merge_scale(self, other, vars=[]):
+    def merge_scale(self, other, shared=None):
         """returns a new configurations which is this one plus the given other configuration transformed, such that common points will overlap (if possible)."""
-        if len(vars) == 0:
-            shared = set(self.variables).intersection(other.variables)
-        else:
-            shared = vars
+        if shared is None:
+            shared = set(self.variables) & other.variables
+
         underconstrained = self.underconstrained or other.underconstrained
+
         if len(shared) < 2:
             raise ValueError("must have >=2 shared point vars")
 
@@ -137,46 +143,56 @@ class Configuration:
         v2 = list(shared)[1]
         p11 = self.mapping[v1]
         p12 = self.mapping[v2]
-        if tol_zero((p12 - p11).length):
+
+        if tol_zero(p11.distance_to(p12)):
             underconstrained = True
             cs1 = make_hcs_scaled(p11, p11 + Vector([1.0, 0.0]))
         else:
             cs1 = make_hcs_scaled(p11, p12)
+
         p21 = other.mapping[v1]
         p22 = other.mapping[v2]
-        if tol_zero((p22 - p21).length):
+
+        if tol_zero(p21.distance_to(p22)):
             underconstrained = True
             cs2 = make_hcs_scaled(p21, p21 + Vector([1.0, 0.0]))
         else:
             cs2 = make_hcs_scaled(p21, p22)
+
         t = cs_transform_matrix(cs2, cs1)
         othert = other.transform(t)
         result = self.add(othert)
+
         return result, underconstrained
 
     def __eq__(self, other):
         """two configurations are equal if they map onto eachother modulo rotation and translation"""
         if hash(self) != hash(other):
             return False
-        elif len(self.mapping) != len(other.mapping):
+
+        if len(self.mapping) != len(other.mapping):
             return False
-        else:
-            if not isinstance(other, Configuration):
+
+        if not isinstance(other, Configuration):
+            return False
+
+        for var in self.mapping:
+            if var not in other.mapping:
                 return False
-            for var in self.mapping:
-                if var not in other.mapping:
-                    return False
-            # determine a rotation-translation transformation
-            # to transform other onto self
-            t, _ = self.merge_transform(other)
-            othertransformed = other.transform(t)
-            # test if point map onto eachother (distance metric tolerance)
-            for var in self.mapping:
-                d = othertransformed.position(var).distance_to(self.position(var))
-                # check that d is greater than 0 within tolerance
-                if not tol_gt(d, 0):
-                    return False
-            return True
+
+        # determine a rotation-translation transformation
+        # to transform other onto self
+        t, _ = self.merge_transform(other)
+        othertransformed = other.transform(t)
+
+        # test if point map onto eachother (distance metric tolerance)
+        for var in self.mapping:
+            d = othertransformed.position(var).distance_to(self.position(var))
+            # check that d is greater than 0 within tolerance
+            if not tol_gt(d, 0):
+                return False
+
+        return True
 
     def __hash__(self):
         # hash the configuration's points
