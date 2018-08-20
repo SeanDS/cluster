@@ -56,8 +56,14 @@ class Vector(np.ndarray):
     @classmethod
     def origin(cls):
         """The coordinates of the origin"""
-
         return cls([0, 0])
+
+    def to_projective(self):
+        return ProjectiveVector([self.x, self.y, 1])
+
+    @classmethod
+    def from_projective(cls, vector):
+        return cls([vector[0] / vector[2], vector[1] / vector[2]])
 
     def unit(self):
         """Unit vector"""
@@ -165,6 +171,31 @@ class Vector(np.ndarray):
 
     def tol_zero(self):
         return tol_zero(self)
+
+
+class ProjectiveVector(Vector):
+    @property
+    def scale(self):
+        return self[2]
+
+    @property
+    def x(self):
+        # Cartesian x
+        return super().x / self.scale
+
+    @property
+    def y(self):
+        # Cartesian y
+        return super().y / self.scale
+
+    @classmethod
+    def origin(cls):
+        """The coordinates of the origin"""
+        return cls([0, 0, 1])
+
+    def to_euclidian(self):
+        return Vector([self.x, self.y])
+
 
 def cc_int(p1, r1, p2, r2):
     """Intersect circle (p1, r1) with circle (p2, r2)

@@ -21,8 +21,8 @@ class Configuration:
         {v0: p0, v1: p1, v2: p2}, note that points are objects of class \
         :class:`Vector`
         """
-        # dictionary mapping variable names to point values
-        self.mapping = dict(mapping)
+        # map of variables to points
+        self.mapping = mapping
 
         # flag indicating an underconstrained merge (i.e. not a unique solution)
         self.underconstrained = False
@@ -38,7 +38,7 @@ class Configuration:
     @property
     def variables(self):
         """return list of variables"""
-        return list(self.mapping.keys())
+        return self.mapping.keys()
 
     def position(self, var):
         """return position of point var"""
@@ -46,38 +46,43 @@ class Configuration:
 
     def transform(self, t):
         """returns a new configuration, which is this one transformed by matrix t"""
-        newmap = {}
-        for v in self.mapping:
-            ph = np.dot(t, np.array([self.mapping[v].x, self.mapping[v].y, 1.0]))
+        new_map = {}
 
-            # FIXME: make method in Vector to convert from homogeneous coordinates to regular
-            newmap[v] = Vector([ph[0] / ph[2], ph[1] / ph[2]])
-        return Configuration(newmap)
+        for v in self.mapping:
+            # transform in projective space
+            new_map[v] = Vector.from_projective(np.dot(t, self.mapping[v].to_projective()))
+
+        return Configuration(new_map)
 
     def add(self, c):
         """return a new configuration which is this configuration extended with all points in c not in this configuration"""
-        newmap = {}
+        new_map = {}
+
         for v in self.mapping:
-            newmap[v] = self.mapping[v]
+            new_map[v] = self.mapping[v]
+
         for v in c.mapping:
-            if v not in newmap:
-                newmap[v] = c.mapping[v]
-        return Configuration(newmap)
+            if v not in new_map:
+                new_map[v] = c.mapping[v]
+
+        return Configuration(new_map)
 
     def select(self, vars):
         """return a new configuration that is a subconfiguration of this configuration, containing only the selected variables"""
-        newmap = {}
+        new_map = {}
+
         for v in vars:
-            newmap[v] = self.mapping[v]
-        return Configuration(newmap)
+            new_map[v] = self.mapping[v]
+
+        return Configuration(new_map)
 
     def merge(self, other):
         """returns a new configurations which is this one plus the given other configuration transformed, such that common points will overlap (if possible)."""
+        LOGGER.debug(f"merging '{self}' with '{other}'")
 
-        LOGGER.debug("Merging %s with %s", self, other)
         t, underconstrained = self.merge_transform(other)
-        othertransformed = other.transform(t)
-        result = self.add(othertransformed)
+        result = self.add(other.transform(t))
+
         return result, underconstrained
 
     def merge_transform(self, other):
