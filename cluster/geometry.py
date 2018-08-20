@@ -180,8 +180,7 @@ def cc_int(p1, r1, p2, r2):
     :returns: list of zero, one or two solution points
     :rtype: list
     """
-
-    LOGGER.debug("cc_int %s %s %s %s", p1, r1, p2, r2)
+    LOGGER.debug(f"intersecting circles ({p1}, r={r1}) and ({p2}, r={r2})")
 
     # distance between circle centres
     d = (p2-p1).length
@@ -240,9 +239,7 @@ def cl_int(p1, r, p2, v):
     :returns: list of zero, one or two solution points
     :rtype: list
     """
-
-    LOGGER.debug("cl_int %s %s %s %s", p1, r, p2, \
-    v)
+    LOGGER.debug(f"intersecting circle ({p1}, r={r}) with line ({p2}, dir={v})")
 
     # distance between centre of circle and start of line
     p = p2 - p1
@@ -284,9 +281,7 @@ def cr_int(p1, r, p2, v):
     :returns: list of zero, one or two solution points
     :rtype: list
     """
-
-    LOGGER.debug("cr_int %s %s %s %s", p1, r, p2, \
-    v)
+    LOGGER.debug(f"intersecting circle ({p1}, r={r}) with ray ({p2}, dir={v})")
 
     solutions = []
 
@@ -312,9 +307,7 @@ def ll_int(p1, v1, p2, v2):
     :returns: list of zero or one solution points
     :rtype: list
     """
-
-    LOGGER.debug("ll_int %s %s %s %s", p1, v1, p2, \
-    v2)
+    LOGGER.debug(f"intersecting lines ({p1}, dir={v1}) and ({p2}, dir={v2})")
 
     if tol_zero(v1.x * v2.y - v1.y * v2.x):
         # lines don't intersect
@@ -344,8 +337,7 @@ def lr_int(p1, v1, p2, v2):
     :returns: list of zero or one solution points
     :rtype: list
     """
-
-    LOGGER.debug("lr_int %s %s %s %s", p1, v1, p2, v2)
+    LOGGER.debug(f"intersecting line ({p1}, dir={v1}) with ray ({p2}, dir={v2})")
 
     # assume ray is a line and get intersection with line
     s = ll_int(p1, v1, p2, v2)
@@ -371,8 +363,7 @@ def rr_int(p1, v1, p2, v2):
     :returns: list of zero or one solution points
     :rtype: list
     """
-
-    LOGGER.debug("rr_int %s %s %s %s", p1, v1, p2, v2)
+    LOGGER.debug(f"intersecting rays ({p1}, dir={v1}) and ({p2}, dir={v2})")
 
     # assume rays are lines and get intersection
     s = ll_int(p1, v1, p2, v2)
