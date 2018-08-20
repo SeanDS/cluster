@@ -1,5 +1,6 @@
 import logging
 
+from ..geometry import Vector
 from ..event import Observable, Observer, Event, UnknownEventException
 from ..constraint import ConstraintGraph
 from .constraints import (DistanceConstraint, AngleConstraint, FixConstraint, ParametricConstraint,
@@ -36,8 +37,12 @@ class GeometricProblem(Observable, Observer):
         self.prototype = {}
         self.constraint_graph = ConstraintGraph()
 
-    def add_point(self, point, position):
+    def add_point(self, point, position=None):
         """add a point variable with a prototype position"""
+        if position is None:
+            # default to origin
+            position = Vector.origin()
+
         if point in self.prototype:
             raise ValueError(f"point '{point}' already in problem")
 

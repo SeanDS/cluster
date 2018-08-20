@@ -14,13 +14,13 @@ from cluster.view import solution_viewer
 
 problem = GeometricProblem()
 
-problem.add_point('l1', Vector.origin())
-problem.add_point('m1', Vector.origin())
-problem.add_point('bs1', Vector.origin())
-problem.add_point('m2', Vector.origin())
-problem.add_point('m3', Vector.origin())
-problem.add_point('m4', Vector.origin())
-problem.add_point('m5', Vector.origin())
+problem.add_point('l1')
+problem.add_point('m1')
+problem.add_point('bs1')
+problem.add_point('m2')
+problem.add_point('m3')
+problem.add_point('m4')
+problem.add_point('m5')
 
 problem.add_constraint(DistanceConstraint('l1', 'm1', 50))
 problem.add_constraint(DistanceConstraint('m1', 'bs1', 100))
