@@ -2,7 +2,9 @@ import abc
 import numpy as np
 
 from ..event import Observable, Event
-from ..geometry import tol_eq
+from ..geometry import Vector, tol_eq
+from ..configuration import Configuration
+from ..clusters import Rigid, Hedgehog
 from .base import Constraint
 
 class ParametricConstraint(Constraint, Observable, metaclass=abc.ABCMeta):
@@ -34,6 +36,14 @@ class ParametricConstraint(Constraint, Observable, metaclass=abc.ABCMeta):
     def mapped_value(self, mapping):
         raise NotImplementedError
 
+    @abc.abstractmethod
+    def default_config(self, problem):
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def default_cluster(self):
+        raise NotImplementedError
+
     def satisfied(self, mapping):
         """return True iff mapping from variable names to points satisfies constraint"""
         return tol_eq(self.mapped_value(mapping), self.value)
@@ -55,6 +65,12 @@ class FixConstraint(ParametricConstraint):
             pos    - the position parameter
         """
         super().__init__(variables=[variable], value=position)
+
+    def default_config(self, problem):
+        raise NotImplementedError
+
+    def default_cluster(self):
+        raise NotImplementedError
 
     def mapped_value(self, mapping):
         return mapping[self.point]
@@ -85,6 +101,13 @@ class DistanceConstraint(ParametricConstraint):
             dist - the distance parameter value
         """
         super().__init__(variables=[point_a, point_b], value=distance)
+
+    def default_config(self, problem):
+        return Configuration({self.point_a: Vector.origin(),
+                              self.point_b: Vector([self.distance, 0])})
+
+    def default_cluster(self):
+        return Rigid([self.point_a, self.point_b])
 
     def mapped_value(self, mapping):
         point_a = mapping[self.point_a]
@@ -122,6 +145,16 @@ class AngleConstraint(ParametricConstraint):
             ang  - the angle parameter value
         """
         super().__init__(variables=[point_a, point_b, point_c], value=angle)
+
+    def default_config(self, problem):
+        return Configuration({self.point_a: Vector([1.0, 0.0]),
+                              self.point_b: Vector.origin(),
+                              self.point_c: Vector([np.cos(self.angle), np.sin(self.angle)])})
+
+    def default_cluster(self):
+        # hedgehog with second point of constraint as the central point and the
+        # other points specified with respect to it
+        return Hedgehog(self.point_b, [self.point_a, self.point_c])
 
     def mapped_value(self, mapping):
         point_a = mapping[self.point_a]

@@ -226,43 +226,27 @@ class GeometricSolver(Observer, Observable):
 
             del(self.mapping[var])
 
-    def _add_constraint(self, con):
-        LOGGER.debug("Adding constraint %s", con)
+    def _add_constraint(self, constraint):
+        LOGGER.debug(f"adding constraint '{constraint}'")
 
-        if isinstance(con, AngleConstraint):
-            # map to hedgehog
-            vars = con.variables
+        if isinstance(constraint, (DistanceConstraint, AngleConstraint)):
+            cluster = constraint.default_cluster()
 
-            # hedgehog with 2nd point of constraint as the main point, and the
-            # other points specified w.r.t. it
-            hog = Hedgehog(vars[1], [vars[0], vars[2]])
+            # map constraint to cluster
+            self.mapping[constraint] = cluster
+            self.mapping[cluster] = constraint
 
-            self.mapping[con] = hog
-            self.mapping[hog] = con
-
-            self.solver.add(hog)
+            self.solver.add(cluster)
 
             # set configuration
-            self._update_constraint(con)
-        elif isinstance(con, DistanceConstraint):
-            # map to rigid
-            vars = con.variables
-
-            rig = Rigid([vars[0], vars[1]])
-
-            self.mapping[con] = rig
-            self.mapping[rig] = con
-
-            self.solver.add(rig)
-
-            # set configuration
-            self._update_constraint(con)
-        elif isinstance(con, FixConstraint):
+            self._update_constraint(constraint)
+        elif isinstance(constraint, FixConstraint):
             if self.fixcluster != None:
+                # remove existing fix cluster
                 self.solver.remove(self.fixcluster)
                 self.fixcluster = None
 
-            self.fixvars.append(con.variables[0])
+            self.fixvars.extend(constraint.variables)
 
             # check if there are more fixed variables than dimensions
             if len(self.fixvars) >= 2:
@@ -273,7 +257,7 @@ class GeometricSolver(Observer, Observable):
 
             self._update_fix()
         else:
-            pass
+            raise ValueError(f"unrecognised constraint '{constraint}'")
 
     def _remove_constraint(self, con):
         LOGGER.debug("GeometricSolver._remove_constraint")
@@ -298,59 +282,26 @@ class GeometricSolver(Observer, Observable):
             self.solver.remove(self.mapping[con])
             del(self.mapping[con])
 
-    def _update_constraint(self, con):
-        if isinstance(con, AngleConstraint):
-            # set configuration
-
-            # the hog was added to the map for this constraint by _add_constraint,
-            # which calls this method
-            hog = self.mapping[con]
-
-            # get variables associated with constraint
-            variables = con.variables
-
-            v0 = variables[0]
-            v1 = variables[1]
-            v2 = variables[2]
-
-            # get the constraint's specified angle
-            angle = con.value
-
-            # create points representing the constraint
-            p0 = Vector([1.0, 0.0])
-            p1 = Vector.origin()
-            p2 = Vector([np.cos(angle), np.sin(angle)])
-
-            # create configuration
-            conf = Configuration({v0: p0, v1: p1, v2: p2})
-
-            # set the hedgehog's configuration in the solver
-            self.solver.set_configurations(hog, [conf])
-
-            assert con.satisfied(conf.mapping)
-        elif isinstance(con, DistanceConstraint):
-            # set configuration
-            rig = self.mapping[con]
-
-            variables = con.variables
-
-            v0 = variables[0]
-            v1 = variables[1]
-
-            dist = con.value
-
-            p0 = Vector.origin()
-            p1 = Vector([dist, 0.0])
-
-            conf = Configuration({v0: p0, v1: p1})
-
-            self.solver.set_configurations(rig, [conf])
-
-            assert con.satisfied(conf.mapping)
-        elif isinstance(con, FixConstraint):
+    def _update_constraint(self, constraint):
+        if isinstance(constraint, FixConstraint):
             self._update_fix()
         else:
-            raise Exception("unknown constraint type")
+            cluster = self.mapping[constraint]
+            configuration = constraint.default_config(self.problem)
+
+            self.solver.set_configurations(cluster, [configuration])
+
+        assert constraint.satisfied(configuration.mapping)
+
+    def _update_fix(self):
+        if not self.fixcluster:
+            LOGGER.info("no fix cluster to update")
+            return
+
+        mapping = {variable: self.problem.get_fix(variable).value for variable in self.fixcluster.variables}
+        conf = Configuration(mapping)
+
+        self.solver.set_configurations(self.fixcluster, [conf])
 
     def _update_variable(self, variable):
         LOGGER.debug("Updating variable %s", variable)
@@ -361,23 +312,6 @@ class GeometricSolver(Observer, Observable):
         conf = Configuration({variable: proto})
 
         self.solver.set_configurations(cluster, [conf])
-
-    def _update_fix(self):
-        if not self.fixcluster:
-            LOGGER.warning("No fix cluster to update")
-
-            return
-
-        variables = self.fixcluster.variables
-
-        mapping = {}
-
-        for variable in variables:
-            mapping[variable] = self.problem.get_fix(variable).value
-
-        conf = Configuration(mapping)
-
-        self.solver.set_configurations(self.fixcluster, [conf])
 
     def __str__(self):
         return f"GeometricSolver({self.problem})"
