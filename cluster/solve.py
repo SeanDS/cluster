@@ -206,25 +206,27 @@ class GeometricSolver(Observer, Observable):
             raise UnknownEventException(event)
 
     def _add_variable(self, variable):
+        if variable in self.mapping:
+            raise ValueError(f"variable '{variable}' already in problem")
+
+        LOGGER.debug(f"adding variable '{variable}")
+
+        rigid = Rigid([variable])
+
+        self.mapping[variable] = rigid
+        self.mapping[rigid] = variable
+
+        self.solver.add(rigid)
+
+        self._update_variable(variable)
+
+    def _remove_variable(self, variable):
         if variable not in self.mapping:
-            LOGGER.debug("Adding variable %s", variable)
+            raise ValueError(f"variable '{variable}' not in problem")
 
-            rigid = Rigid([variable])
-
-            self.mapping[variable] = rigid
-            self.mapping[rigid] = variable
-
-            self.solver.add(rigid)
-
-            self._update_variable(variable)
-
-    def _remove_variable(self, var):
-        LOGGER.debug("GeometricSolver._remove_variable")
-
-        if var in self.mapping:
-            self.solver.remove(self.mapping[var])
-
-            del(self.mapping[var])
+        LOGGER.debug(f"removing variable '{variable}'")
+        self.solver.remove(self.mapping[variable])
+        del(self.mapping[variable])
 
     def _add_constraint(self, constraint):
         LOGGER.debug(f"adding constraint '{constraint}'")
@@ -259,14 +261,14 @@ class GeometricSolver(Observer, Observable):
         else:
             raise ValueError(f"unrecognised constraint '{constraint}'")
 
-    def _remove_constraint(self, con):
-        LOGGER.debug("GeometricSolver._remove_constraint")
+    def _remove_constraint(self, constraint):
+        LOGGER.debug(f"removing constraint '{constraint}'")
 
-        if isinstance(con, FixConstraint):
+        if isinstance(constraint, FixConstraint):
             if self.fixcluster != None:
                 self.solver.remove(self.fixcluster)
 
-            var = self.solver.get_configurations(con.variables[0])
+            var = self.solver.get_configurations(constraint.variables[0])
 
             if var in self.fixvars:
                 self.fixvars.remove(var)
@@ -278,9 +280,11 @@ class GeometricSolver(Observer, Observable):
                 self.fixcluster = Rigid(self.fixvars)
                 self.solver.add(self.fixcluster)
                 self.solver.set_root(self.fixcluster)
-        elif con in self.mapping:
-            self.solver.remove(self.mapping[con])
-            del(self.mapping[con])
+        elif constraint in self.mapping:
+            self.solver.remove(self.mapping[constraint])
+            del(self.mapping[constraint])
+        else:
+            raise ValueError(f"constraint '{constraint}' not in problem")
 
     def _update_constraint(self, constraint):
         if isinstance(constraint, FixConstraint):
@@ -304,7 +308,7 @@ class GeometricSolver(Observer, Observable):
         self.solver.set_configurations(self.fixcluster, [conf])
 
     def _update_variable(self, variable):
-        LOGGER.debug("Updating variable %s", variable)
+        LOGGER.debug(f"updating variable '{variable}'")
 
         cluster = self.mapping[variable]
         proto = self.problem.get_point(variable)
@@ -315,6 +319,7 @@ class GeometricSolver(Observer, Observable):
 
     def __str__(self):
         return f"GeometricSolver({self.problem})"
+
 
 class ClusterSolver:
     """A generic 2D geometric constraint solver
