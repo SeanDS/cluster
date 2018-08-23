@@ -57,13 +57,16 @@ class FixConstraint(ParametricConstraint):
 
     NAME = "FixConstraint"
 
-    def __init__(self, variable, position):
+    def __init__(self, variable, position=None):
         """Create a new DistanceConstraint instance
 
            keyword args:
             var    - a point variable name
             pos    - the position parameter
         """
+        if position is None:
+            position = Vector.origin()
+
         super().__init__(variables=[variable], value=position)
 
     def default_config(self, problem):
@@ -82,6 +85,10 @@ class FixConstraint(ParametricConstraint):
     @property
     def position(self):
         return self.value
+
+    @position.setter
+    def position(self, position):
+        self.value = position
 
     def __str__(self):
         return f"{self.NAME}({self.point} = {self.position})"
