@@ -40,8 +40,11 @@ class GeometricSolver(Observer, Observable):
         # solver
         self.solver = ClusterSolver()
 
-        # map
-        self.mapping = {}
+        # map from variables to their associated rigid, single-variable point clusters
+        self._variable_point_map = {}
+
+        # map from constraints to their associated clusters
+        self._constraint_cluster_map = {}
 
         # register listeners
         self.constraint_graph.add_observer(self)
@@ -58,13 +61,12 @@ class GeometricSolver(Observer, Observable):
         # list of constraints from graph
         constraints = self.constraint_graph.constraints
 
-        # add fixed constraints first (avoids problems with invalid solutions)
+        # add fixed constraints first (keeps fixed points where they are; keeps solutions valid)
         for constraint in constraints:
             if isinstance(constraint, FixConstraint):
                 self._add_constraint(constraint)
 
-        # add distances next (doing this before angles results in nicer
-        # decompositions)
+        # add distances next (doing this before angles results in simpler and faster decompositions)
         for constraint in constraints:
             if isinstance(constraint, DistanceConstraint):
                 self._add_constraint(constraint)
@@ -184,6 +186,14 @@ class GeometricSolver(Observer, Observable):
 
         return result
 
+    @property
+    def variables(self):
+        return self._variable_point_map.keys()
+
+    @property
+    def constraints(self):
+        return self._constraint_cluster_map.keys()
+
     def _handle_event(self, event):
         """Take notice of changes in constraint graph"""
         # constraint graph events
@@ -206,27 +216,25 @@ class GeometricSolver(Observer, Observable):
             raise UnknownEventException(event)
 
     def _add_variable(self, variable):
-        if variable in self.mapping:
+        if variable in self.variables:
             raise ValueError(f"variable '{variable}' already in problem")
 
         LOGGER.debug(f"adding variable '{variable}")
 
         rigid = Rigid([variable])
 
-        self.mapping[variable] = rigid
-        self.mapping[rigid] = variable
-
+        self._variable_point_map[variable] = rigid
         self.solver.add(rigid)
 
         self._update_variable(variable)
 
     def _remove_variable(self, variable):
-        if variable not in self.mapping:
+        if variable not in self.variables:
             raise ValueError(f"variable '{variable}' not in problem")
 
         LOGGER.debug(f"removing variable '{variable}'")
-        self.solver.remove(self.mapping[variable])
-        del(self.mapping[variable])
+        self.solver.remove(self._variable_point_map[variable])
+        del(self._variable_point_map[variable])
 
     def _add_constraint(self, constraint):
         LOGGER.debug(f"adding constraint '{constraint}'")
@@ -235,15 +243,14 @@ class GeometricSolver(Observer, Observable):
             cluster = constraint.default_cluster()
 
             # map constraint to cluster
-            self.mapping[constraint] = cluster
-            self.mapping[cluster] = constraint
+            self._constraint_cluster_map[constraint] = cluster
 
             self.solver.add(cluster)
 
             # set configuration
             self._update_constraint(constraint)
         elif isinstance(constraint, FixConstraint):
-            if self.fixcluster != None:
+            if self.fixcluster is not None:
                 # remove existing fix cluster
                 self.solver.remove(self.fixcluster)
                 self.fixcluster = None
@@ -265,13 +272,13 @@ class GeometricSolver(Observer, Observable):
         LOGGER.debug(f"removing constraint '{constraint}'")
 
         if isinstance(constraint, FixConstraint):
-            if self.fixcluster != None:
+            if self.fixcluster is not None:
                 self.solver.remove(self.fixcluster)
 
-            var = self.solver.get_configurations(constraint.variables[0])
+            fixed_point = self.solver.get_configurations(constraint.point)
 
-            if var in self.fixvars:
-                self.fixvars.remove(var)
+            if fixed_point in self.fixvars:
+                self.fixvars.remove(fixed_point)
 
             # check if there are less fixed variables than dimensions
             if len(self.fixvars) < 2:
@@ -280,9 +287,9 @@ class GeometricSolver(Observer, Observable):
                 self.fixcluster = Rigid(self.fixvars)
                 self.solver.add(self.fixcluster)
                 self.solver.set_root(self.fixcluster)
-        elif constraint in self.mapping:
-            self.solver.remove(self.mapping[constraint])
-            del(self.mapping[constraint])
+        elif constraint in self.constraints:
+            self.solver.remove(self._constraint_cluster_map[constraint])
+            del(self._constraint_cluster_map[constraint])
         else:
             raise ValueError(f"constraint '{constraint}' not in problem")
 
@@ -290,12 +297,12 @@ class GeometricSolver(Observer, Observable):
         if isinstance(constraint, FixConstraint):
             self._update_fix()
         else:
-            cluster = self.mapping[constraint]
+            cluster = self._constraint_cluster_map[constraint]
             configuration = constraint.default_config(self.problem)
 
             self.solver.set_configurations(cluster, [configuration])
 
-        assert constraint.satisfied(configuration.mapping)
+            assert constraint.satisfied(configuration.mapping)
 
     def _update_fix(self):
         if not self.fixcluster:
@@ -310,12 +317,15 @@ class GeometricSolver(Observer, Observable):
     def _update_variable(self, variable):
         LOGGER.debug(f"updating variable '{variable}'")
 
-        cluster = self.mapping[variable]
+        # point cluster
+        point = self._variable_point_map[variable]
+
+        # prototype point
         proto = self.problem.get_point(variable)
 
         conf = Configuration({variable: proto})
 
-        self.solver.set_configurations(cluster, [conf])
+        self.solver.set_configurations(point, [conf])
 
     def __str__(self):
         return f"GeometricSolver({self.problem})"
