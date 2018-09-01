@@ -133,6 +133,10 @@ class DistanceConstraint(ParametricConstraint):
     def distance(self):
         return self.value
 
+    @distance.setter
+    def distance(self, distance):
+        self.value = distance
+
     def __str__(self):
         return f"{self.NAME}(|{self._variable_str}| = {self.distance:.3f})"
 

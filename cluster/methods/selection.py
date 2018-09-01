@@ -38,7 +38,7 @@ class PrototypeMethod(Method):
 
             assert len(conf.variables) == 1
 
-            var = conf.variables[0]
+            var = list(conf.variables)[0]
             selmap[var] = conf.mapping[var]
 
         selconf = Configuration(selmap)
