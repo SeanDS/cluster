@@ -201,7 +201,7 @@ class Rigid(Cluster):
         shared = self.variables & other.variables
 
         return set([Distance(v1, v2) for v1, v2
-                    in itertools.combinations_with_replacement(shared, 2)])
+                    in itertools.combinations(shared, 2)])
 
     def _over_angles(self, other):
         overangles = set()

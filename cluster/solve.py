@@ -1548,7 +1548,7 @@ class ClusterSolver:
         return consistent
 
     def _consistent_overconstraint_in_pair(self, overconstraint, object1, object2):
-        LOGGER.debug(f"checking if '{object1}' and '{object2}' have consistent overconstraint"
+        LOGGER.debug(f"checking if '{object1}' and '{object2}' have consistent overconstraint "
                      f"'{overconstraint}'")
 
         # get sources for constraint in given clusters
