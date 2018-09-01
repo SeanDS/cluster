@@ -1293,6 +1293,9 @@ class ClusterSolver:
     def _merge_point_rigid(self, point, rigid):
         LOGGER.debug("Merging point %s with rigid %s", point, rigid)
 
+        # HACK: merge as rigids for now, but see updated GeoSolver code for better structure
+        return self._merge_rigid_pair(point, rigid)
+
         # get variables from point and rigid
         variables = set(point.variables).union(rigid.variables)
 
