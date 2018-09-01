@@ -207,7 +207,7 @@ class GeometricSolver(Observer, Observable):
             self._remove_variable(event.data["variable"])
         # problem events
         elif event.message == "set_point":
-            self._update_variable(event.data["variable"])
+            self._update_variable(event.data["point"])
         elif event.message == "set_parameter":
             if "constraint" in event.data:
                 # a constraint's parameter has been changed
