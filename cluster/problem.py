@@ -96,7 +96,7 @@ class GeometricProblem(Notifier, Listener):
         prototypevector = Vector(prototype)
         if variable in self.prototype:
             self.prototype[variable] = prototypevector
-            self.send_notify(("set_prototype", (variable,prototypevector)))
+            self.send_notify(("set_point", (variable, prototypevector)))
         else:
             raise Exception("unknown variable variable")
 
@@ -114,8 +114,8 @@ class GeometricProblem(Notifier, Listener):
         LOGGER.debug(f"adding constraint '{con}'")
         # check that variables in problem
         for var in con.variables:
-                if var not in self.prototype:
-                    raise Exception("variable %s not in problem"%(var))
+            if var not in self.prototype:
+                raise Exception("variable %s not in problem"%(var))
         # check that constraint not already in problem
         if isinstance(con, DistanceConstraint):
             if self.get_distance(con.variables[0],con.variables[1]):
@@ -137,8 +137,7 @@ class GeometricProblem(Notifier, Listener):
         else:
             raise Exception("unsupported constraint type")
         # passed tests, add to poblem
-        if isinstance(self, ParametricConstraint):
-            con.add_listener(self)
+        con.add_listener(self)
         self.cg.add_constraint(con)
 
     def get_distance(self, a, b):
@@ -241,6 +240,8 @@ class GeometricProblem(Notifier, Listener):
             self.cg.rem_constraint(con)
         else:
             raise Exception("no constraint "+str(con)+" in problem.")
+
+        con.rem_listener(self)
 
     def receive_notify(self, object, notify):
         """When notified of changed constraint parameters, pass on to listeners"""
