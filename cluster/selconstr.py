@@ -1,6 +1,5 @@
 from .constraint import Constraint
 from .tolerance import tol_eq
-from .intersections import *
 
 
 class SelectionConstraint(Constraint):
