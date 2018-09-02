@@ -9,7 +9,6 @@ from .selconstr import *
 from .intersections import *
 from .configuration import Configuration
 from .cluster import *
-from .map import Map
 from . import incremental
 
 
@@ -546,10 +545,10 @@ class CheckAR(ClusterMethod):
             return []
         for h in hogs:
             for r in rigids:
-                m = Map({
+                m = {
                     "$h": h,
                     "$r": r,
-                })
+                }
                 matches.append(m)
         return matches;
     handcoded_match = staticmethod(_handcoded_match)
