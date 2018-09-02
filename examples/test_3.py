@@ -15,12 +15,12 @@ from cluster.view import solution_viewer
 problem = GeometricProblem()
 
 # Fig 1
-problem.add_point('a')
-problem.add_point('b')
-problem.add_point('c')
-problem.add_point('d')
-problem.add_point('e')
-problem.add_point('f')
+problem.add_variable('a')
+problem.add_variable('b')
+problem.add_variable('c')
+problem.add_variable('d')
+problem.add_variable('e')
+problem.add_variable('f')
 
 problem.add_constraint(AngleConstraint('a', 'b', 'c', np.radians(70)))
 problem.add_constraint(AngleConstraint('a', 'd', 'c', np.radians(-70)))

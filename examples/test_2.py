@@ -14,13 +14,13 @@ from cluster.view import solution_viewer
 
 problem = GeometricProblem()
 
-problem.add_point('l1')
-problem.add_point('m1')
-problem.add_point('bs1')
-problem.add_point('m2')
-problem.add_point('m3')
-problem.add_point('m4')
-problem.add_point('m5')
+problem.add_variable('l1')
+problem.add_variable('m1')
+problem.add_variable('bs1')
+problem.add_variable('m2')
+problem.add_variable('m3')
+problem.add_variable('m4')
+problem.add_variable('m5')
 
 # \/ laser
 # \       m3  /--\ m2    / m5

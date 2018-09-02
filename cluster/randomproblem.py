@@ -105,7 +105,7 @@ def random_problem_2D(numpoints, radius=10.0, roundoff=0.0, angleratio=0.5):
                 unique = False
                 break
         if unique:
-                problem.add_point(aname, apoint)
+                problem.add_variable(aname, apoint)
                 group[aname] = apoint
                 i = i + 1
     #next
@@ -122,9 +122,9 @@ def add_random_constraint(problem, ratio):
         v1 = pointvars[0]
         v2 = pointvars[1]
         v3 = pointvars[2]
-        p1 = problem.get_point(v1)
-        p2 = problem.get_point(v2)
-        p3 = problem.get_point(v3)
+        p1 = problem.get_prototype(v1)
+        p2 = problem.get_prototype(v2)
+        p3 = problem.get_prototype(v3)
         angle = angle_3p(p1,p2,p3)
         con = AngleConstraint(v1,v2,v3,angle)
         problem.add_constraint(con)
@@ -134,8 +134,8 @@ def add_random_constraint(problem, ratio):
         random.shuffle(pointvars)
         v1 = pointvars[0]
         v2 = pointvars[1]
-        p1 = problem.get_point(v1)
-        p2 = problem.get_point(v2)
+        p1 = problem.get_prototype(v1)
+        p2 = problem.get_prototype(v2)
         dist = distance_2p(p1,p2)
         con = DistanceConstraint(v1,v2,dist)
         problem.add_constraint(con)
@@ -197,7 +197,7 @@ def randomize_hedgehogs(problem):
             v3 = varlist[i]
             # ADD CONSTRAINT
             problem.add_constraint(AngleConstraint(v1,v2,v3,
-                angle_3p(problem.get_point(v1), problem.get_point(v2), problem.get_point(v3))
+                angle_3p(problem.get_prototype(v1), problem.get_prototype(v2), problem.get_prototype(v3))
             ))
 
     return problem
@@ -259,10 +259,10 @@ def randomize_balloons(problem):
             lvars = vars[i-2:i+1]
             random.shuffle(lvars)
             problem.add_constraint(AngleConstraint(lvars[0],lvars[1],lvars[2],
-                angle_3p(problem.get_point(lvars[0]), problem.get_point(lvars[1]), problem.get_point(lvars[2]))
+                angle_3p(problem.get_prototype(lvars[0]), problem.get_prototype(lvars[1]), problem.get_prototype(lvars[2]))
             ))
             problem.add_constraint(AngleConstraint(lvars[1],lvars[2],lvars[0],
-                angle_3p(problem.get_point(lvars[1]), problem.get_point(lvars[2]), problem.get_point(lvars[0]))
+                angle_3p(problem.get_prototype(lvars[1]), problem.get_prototype(lvars[2]), problem.get_prototype(lvars[0]))
             ))
 
     return problem

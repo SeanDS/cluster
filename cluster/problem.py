@@ -59,8 +59,13 @@ class GeometricProblem(Notifier, Listener):
 
     # ---------------- variables -----------
 
-    def add_variable(self, variable, prototype):
+    def add_variable(self, variable, prototype=None):
         """add a variable with a prototype"""
+
+        if prototype is None:
+            # assume at origin
+            prototype = Vector.origin()
+
         prototypevector = Vector(prototype)
         # check dimension of prototype
         if isinstance(variable, Point):
@@ -101,23 +106,6 @@ class GeometricProblem(Notifier, Listener):
             return self.prototype[variable]
         else:
             raise Exception("unknown variable "+str(variable))
-
-    # --------------- points - depricated  -------------
-    def add_point(self, variable, prototype):
-        """depricated - use add_variable"""
-        return self.add_variable(variable, prototype)
-
-    def has_point(self, variable):
-        """depricated - use has_variable"""
-        return self.has_variable(variable)
-
-    def set_point(self, variable, prototype):
-        """depricated - use set_prototype"""
-        return self.set_prototype(variable, prototype)
-
-    def get_point(self, variable):
-        """depricated - use get_prototype"""
-        return self.get_prototype(variable)
 
     # ----------- constraints --------
 
