@@ -86,7 +86,7 @@ class GeometricSolver (Listener):
         for con in toadd:
             self._add_constraint(con)
 
-    def get_decomposition(self):
+    def decomposition(self):
         """Returns a GeometricDecomposition (the root of a tree of clusters),
          describing the solutions and the decomposition of the problem."""
         # several drcluster can maps to a single geoclusters
@@ -169,7 +169,7 @@ class GeometricSolver (Listener):
     def get_solutions(self):
         """Returns a list of Configurations, which will be empty if the
            problem has no solutions. Note: this method is
-           cheaper but less informative than get_decomposition.
+           cheaper but less informative than decomposition.
         """
         #"""The list and the configurations should not be changed (since they are
         #references to objects in the solver)."""
@@ -224,7 +224,7 @@ class GeometricSolver (Listener):
             GeometricDecomposition.EMPTY,
             GeometricDecomposition.INCONSISTENT,
             GeometricDecomposition.DEGENERATE.
-           Note: this method is cheaper but less informative than get_decomposition.
+           Note: this method is cheaper but less informative than decomposition.
         """
         rigids = [c for c in self.dr.top_level() if isinstance(c, Rigid)]
         if len(rigids) == 0:
