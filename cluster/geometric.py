@@ -7,7 +7,7 @@ from .geometry import Vector
 from .clsolver import PrototypeMethod, SelectionMethod
 from .clsolver2D import ClusterSolver2D
 from .cluster import *
-from .selconstr import SelectionConstraint
+from .selconstr import SelectionConstraint, fnot
 from .configuration import Configuration
 from .diagnostic import diag_print
 from .constraint import Constraint, ConstraintGraph
@@ -29,7 +29,6 @@ class GeometricProblem (Notifier, Listener):
        Prototypes are of type vector
        A point prototype must have length equal to the dimensionality as the problem (D).
        A line prototype must have length 2*D: it represents two points though which the line passes
-       A plane prototype must have length 3*D: it represents three points though which the plane passes
 
        Supported constraints are instances of ParametricConstraint, FixConstraint, SelectionConstraint, etc.
 
@@ -69,8 +68,6 @@ class GeometricProblem (Notifier, Listener):
             assert len(prototypevector) == 2
         elif isinstance(variable, Line):
             assert len(prototypevector) == 4
-        elif isinstance(variable, Plane):
-            assert len(prototypevector) == 6
         else:
             # assume point
             assert len(prototypevector) == 2
@@ -353,18 +350,6 @@ class GeometricSolver (Listener):
         for con in toadd:
             self._add_constraint(con)
 
-    def get_constrainedness(self):
-        """Depricated. Use get_status instead"""
-        return self.get_status()
-
-    def get_result(self):
-        """Depricated. Use get_decomposition."""
-        return self.get_decomposition()
-
-    def get_cluster(self):
-        """Depricated. Use get_decomposition."""
-        return self.get_decomposition()
-
     def get_decomposition(self):
         """Returns a GeometricDecomposition (the root of a tree of clusters),
          describing the solutions and the decomposition of the problem."""
@@ -405,7 +390,7 @@ class GeometricSolver (Listener):
             elif len(geocluster.solutions) == 0:
                 geocluster.flag = GeometricDecomposition.INCONSISTENT
             elif underconstrained:
-                geocluster.flag = GeometricDecomposition.DEGENERTE
+                geocluster.flag = GeometricDecomposition.DEGENERATE
             else:
                 geocluster.flag = GeometricDecomposition.OK
 
@@ -501,7 +486,7 @@ class GeometricSolver (Listener):
             GeometricDecomposition.UNSOLVED,
             GeometricDecomposition.EMPTY,
             GeometricDecomposition.INCONSISTENT,
-            GeometricDecomposition.DEGENERTE.
+            GeometricDecomposition.DEGENERATE.
            Note: this method is cheaper but less informative than get_decomposition.
         """
         rigids = [c for c in self.dr.top_level() if isinstance(c, Rigid)]
@@ -522,7 +507,7 @@ class GeometricSolver (Listener):
             elif len(solutions) == 0:
                 return GeometricDecomposition.INCONSISTENT
             elif underconstrained:
-                return GeometricDecomposition.DEGENERTE
+                return GeometricDecomposition.DEGENERATE
             else:
                 return GeometricDecomposition.OK
         else:
@@ -571,8 +556,6 @@ class GeometricSolver (Listener):
             self._add_point(var)
         elif isinstance(var, Line):
             self._add_line(var)
-        elif isinstance(var, Plane):
-            self._add_plane(var)
         else:
             # assume point - depricated
             self._add_point(var)
@@ -746,7 +729,7 @@ class GeometricSolver (Listener):
             # add directly to clustersolver
             self.dr.add_selection_constraint(con)
         elif isinstance(con, CoincidenceConstraint):
-            # re-map lines, planes, etc
+            # re-map lines, etc
             lines = [var for var in con.variables() if isinstance(var,Line)]
             points = [var for var in con.variables() if isinstance(var,Point)]
             if len(lines)==1 and len(points)==1:
@@ -869,8 +852,6 @@ class GeometricSolver (Listener):
             self._update_point(var)
         elif isinstance(var, Line):
             self._update_line(var)
-        elif isinstance(var, Plane):
-            self._update_plane(var)
         else:
             # assume point - depricated
             self._update_point(var)
@@ -940,7 +921,7 @@ class GeometricDecomposition:
             flag            - value                 meaning
                               OK                    well constrained
                               INCONSISTENT                incicental over-constrained
-                              DEGENERTE               incidental under-constrained
+                              DEGENERATE               incidental under-constrained
                               OVERCONSTRAINED                structural overconstrained
                               UNDERCONSTRAINED               structural underconstrained
                               UNSOLVED              unsolved (no input values)
@@ -954,11 +935,6 @@ class GeometricDecomposition:
     UNDERCONSTRAINED = "under-constrained"
     INCONSISTENT = "inconsistent"
     DEGENERATE = "degenerate"
-    # old, depricated terms
-    I_OVER = "inconsistent"
-    I_UNDER = "degenerate"
-    S_OVER = "over-constrained"
-    S_UNDER = "under-constrained"
 
     def __init__(self, variables):
         """initialise an empty new cluster"""
@@ -1038,13 +1014,6 @@ class Line(GeometricVariable):
 
     def __str__(self):
         return "Line("+str(self.name)+")"
-
-class Plane(GeometricVariable):
-    def __init__(self, name):
-        self.name = name
-
-    def __str__(self):
-        return "Plane("+str(self.name)+")"
 
 # --------------------- constraint types --------------------
 
@@ -1270,15 +1239,6 @@ class CoincidenceConstraint(Constraint):
                 diag_print("not satisfied "+ str(self)+" distance="+str(d),"CoincidenceConstraint")
                 print("distance="+str(d),"CoincidenceConstraint")
             return tol_eq(d,0)
-
-
-        elif isinstance(self._geometry, Plane):
-            p = mapping[self._point]
-            l = mapping[self._geometry]
-            p1 = l[0:3]
-            p2 = l[3:6]
-            p2 = l[6:9]
-            return tol_eq(distance_point_plane(p, p1, p2, p3),0)
         else:
             raise Exception("unknown geometry type""")
 

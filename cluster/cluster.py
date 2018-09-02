@@ -9,13 +9,13 @@ class Distance:
 
     def __init__(self, a, b):
         """Create a new Distance
-        
+
            keyword args:
             a - point variable
             b - point variable
         """
         self.vars = (a,b)
-    
+
     def __str__(self):
         return "dist("\
             +str(self.vars[0])+","\
@@ -36,7 +36,7 @@ class Angle:
 
     def __init__(self, a, b, c):
         """Create a new Angle
-        
+
            keyword args:
             a - point variable
             b - point variable
@@ -62,17 +62,17 @@ class Angle:
 
 
 class Cluster(MultiVariable):
-    """A cluster represents a set of Configurations on the same set point variables. 
-       Subtypes of Cluster (e.g. Rigid, Balloon and Hedgehog) 
-       define a specific combination of distance and angle constraints on those points. 
+    """A cluster represents a set of Configurations on the same set point variables.
+       Subtypes of Cluster (e.g. Rigid, Balloon and Hedgehog)
+       define a specific combination of distance and angle constraints on those points.
        The configurations specify the values of those distances and angles.
-   
+
        Instance attributes:
-        Cluster.vars is a frozenset of point variables     
+        Cluster.vars is a frozenset of point variables
         Cluster.creationtime is a uniue integer
         Cluster.overconstrained is a boolean
     """
-    
+
     staticcounter = 0
 
     def __init__(self, variables):
@@ -83,11 +83,11 @@ class Cluster(MultiVariable):
 
     def intersection(self, other):
         shared = set(self.vars).intersection(other.vars)
-        # note, a one point cluster is never returned 
+        # note, a one point cluster is never returned
         #because it is not a constraint
-        if len(shared) < 2:   
+        if len(shared) < 2:
             return None
-        elif isinstance(self, Rigid): 
+        elif isinstance(self, Rigid):
             if isinstance(other, Rigid):
                 if len(shared) >= 2:
                     return Rigid(shared)
@@ -129,23 +129,19 @@ class Cluster(MultiVariable):
                     return Hedgehog(self.cvar,xvars)
                 else:
                     return None
-        elif isinstance(self, Glueable):
-            return Glueable([]) 
-        elif isinstance(self, Flexible):
-            return Flexibles([]) 
         # if all fails
         raise Exception("intersection of unknown Cluster types")
 
- 
+
 class Rigid(Cluster):
-    """A Rigid (or RigidCluster) represent a cluster of point variables 
+    """A Rigid (or RigidCluster) represent a cluster of point variables
        that forms a rigid body."""
 
     def __init__(self, vars):
         """Create a new cluster
-        
+
            keyword args:
-            vars - list of variables 
+            vars - list of variables
         """
         Cluster.__init__(self, vars)
 
@@ -160,23 +156,23 @@ class Rigid(Cluster):
         new.overconstrained = self.overconstrained
         return new
 
-           
+
 
 class Hedgehog(Cluster):
-    """An Hedgehog (or AngleCluster) represents a set of points (M,X1...XN) 
-       where all angles a(Xi,M,Xj) are known. 
-    
+    """An Hedgehog (or AngleCluster) represents a set of points (M,X1...XN)
+       where all angles a(Xi,M,Xj) are known.
+
        Instance attributes:
         cvar - center point variable
         xvars - list of other point variables
     """
     def __init__(self, cvar, xvars):
         """Create a new hedgehog
-        
+
            keyword args:
-            cvar - center variable 
+            cvar - center variable
             xvars - list of variables
-        """ 
+        """
         self.cvar = cvar
         self.xvars = frozenset(xvars)
         Cluster.__init__(self, self.xvars.union([self.cvar]))
@@ -196,12 +192,12 @@ class Hedgehog(Cluster):
 
 
 class Balloon(Cluster):
-    """A Balloon (or ScalableCluster) is set of points that is 
+    """A Balloon (or ScalableCluster) is set of points that is
        invariant to rotation, translation and scaling.
     """
     def __init__(self, variables):
         """Create a new balloon
-        
+
            keyword args:
             variables - collection of PointVar's
         """
@@ -220,58 +216,14 @@ class Balloon(Cluster):
         new.overconstrained = self.overconstrained
         return new
 
-class Glueable(Cluster):
-    """Defines an ordered set of points, used for orthogonal transformations""" 
-
-    def __init__(self, vars):
-        """Create a new cluster
-        
-           keyword args:
-            vars - list of variables 
-        """
-        Cluster.__init__(self, vars)
-        self.order = list(vars)
-
-    def __str__(self):
-        s = "glue#"+str(id(self))+"("+str(list(map(str, self.vars)))+")"
-        if self.overconstrained:
-            s = "!" + s
-        return s
-
-    def copy(self):
-        new = Glueable(self.vars)
-        new.overconstrained = self.overconstrained
-        return new
-
-class Flexible(Cluster):
-    """Defines an orderless set of points, used for best-fit transformations""" 
-
-    def __init__(self, vars):
-        """Create a new cluster
-        
-           keyword args:
-            vars - list of variables 
-        """
-        Cluster.__init__(self, vars)
-
-    def __str__(self):
-        s = "orderless#"+str(id(self))+"("+str(list(map(str, self.vars)))+")"
-        if self.overconstrained:
-            s = "!" + s
-        return s
-
-    def copy(self):
-        new = Flexible(self.vars)
-        new.overconstrained = self.overconstrained
-        return new
 
 # ----- function to determine overconstraints -----
 
 def over_constraints(c1, c2):
     """returns the over-constraints (duplicate distances and angles) for
        a pair of clusters."""
-    return over_distances(c1,c2).union(over_angles(c1,c2))    
-    
+    return over_distances(c1,c2).union(over_angles(c1,c2))
+
 def over_angles(c1, c2):
     """determine set of angles in c1 and c2"""
     if isinstance(c1,Rigid) and isinstance(c2,Rigid):
@@ -292,11 +244,9 @@ def over_angles(c1, c2):
         return over_angles_bh(c1,c2)
     elif isinstance(c1,Hedgehog) and isinstance(c2,Balloon):
         return over_angles_bh(c2,c1)
-    elif isinstance(c1,Glueable) or isinstance(c2,Glueable):
-        return set()
     else:
         raise Exception("unexpected case")
-    
+
 def over_distances(c1, c2):
         """determine set of distances in c1 and c2"""
         if not (isinstance(c1, Rigid) and isinstance(c2, Rigid)):

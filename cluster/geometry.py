@@ -430,7 +430,7 @@ def angle_3p(p1, p2, p3):
     d23 = p3.distance_to(p2)
     if tol_eq(d21,0) or tol_eq(d23,0):
         # degenerate, indeterminate angle
-        return None
+        raise DegenerateError("triangle is degenerate")
     v21 = (p1 - p2) / d21
     v23 = (p3 - p2) / d23
     t = np.dot(v21, v23) # / (d21 * d23)
