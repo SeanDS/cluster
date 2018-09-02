@@ -1,23 +1,4 @@
-
-__all__ = [
-    "clsolver2D",
-    "clsolver",
-    "cluster",
-    "configuration",
-    "constraint",
-    "diagnostic",
-    "geometric",
-    "gmatch",
-    "graph",
-    "map",
-    "method",
-    "multimethod",
-    "notify",
-    "randomproblem",
-    "selconstr"
-]
-
-from .problem import Problem
+from .problem import GeometricProblem
 from .geometric import GeometricSolver
 from .geometric import GeometricDecomposition
 from .geometric import DistanceConstraint
@@ -32,4 +13,3 @@ from .geometric import CounterClockwiseConstraint
 from .geometric import ClockwiseConstraint
 from .geometric import NotCounterClockwiseConstraint
 from .geometric import NotClockwiseConstraint
-

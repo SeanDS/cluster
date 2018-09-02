@@ -16,7 +16,7 @@ from .geometric import (Point, Line, DistanceConstraint, AngleConstraint, RigidC
 LOGGER = logging.getLogger(__name__)
 
 
-class Problem (Notifier, Listener):
+class GeometricProblem(Notifier, Listener):
     """A geometric constraint problem with a prototpe.
 
        A problem consists of geometric variables (just variables for short), a prototype

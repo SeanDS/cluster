@@ -21,7 +21,7 @@ LOGGER = logging.getLogger(__name__)
 # ---------- GeometricSolver --------------
 
 class GeometricSolver (Listener):
-    """The GeometricSolver monitors changes in a Problem and
+    """The GeometricSolver monitors changes in a GeometricProblem and
        maps any changes to corresponding changes in a GeometricDecomposition
     """
 
@@ -30,7 +30,7 @@ class GeometricSolver (Listener):
         """Create a new GeometricSolver instance
 
            keyword args
-            problem        - the Problem instance to be monitored for changes
+            problem        - the GeometricProblem instance to be monitored for changes
         """
         # init superclasses
         Listener.__init__(self)
@@ -630,7 +630,7 @@ class GeometricSolver (Listener):
 # ------------ GeometricDecomposition -------------
 
 class GeometricDecomposition:
-    """Represents the result of solving a Problem. A cluster is a list of
+    """Represents the result of solving a GeometricProblem. A cluster is a list of
        point variable names and a list of solutions for
        those variables. A solution is a dictionary mapping variable names to
        points. The cluster also keeps a list of sub-clusters (GeometricDecomposition)
