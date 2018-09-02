@@ -49,7 +49,7 @@ class GeometricProblem (Notifier, Listener):
         Listener.__init__(self)
         self.prototype = {}             # mapping from variables to prototypes
         self.cg = ConstraintGraph()     # constraint graph
-        self.use_prototype = use_prototype;     # whether to use prototype for solution selection
+        self.use_prototype = use_prototype     # whether to use prototype for solution selection
 
     # ----------- prototype --------
 
@@ -145,9 +145,6 @@ class GeometricProblem (Notifier, Listener):
         elif isinstance(con, RigidConstraint):
             if self.get_rigid(con.variables()):
                 raise Exception("rigid already in problem")
-        elif isinstance(con, MateConstraint):
-            if self.get_mate(con.variables()):
-                raise Exception("mate constraint already in problem")
         elif isinstance(con, SelectionConstraint):
             pass
         elif isinstance(con, FixConstraint):
@@ -225,9 +222,6 @@ class GeometricProblem (Notifier, Listener):
 
     def get_rigid(self, variables):
         return self.get_unique_constraint(RigidConstraint, variables)
-
-    def get_mate(self, variables):
-        return self.get_unique_constraint(MateConstraint, variables)
 
     def get_coincident_points(self, geometry):
         coincidences = self.get_constraints_with_type_on_variables(CoincidenceConstraint, [geometry])
@@ -743,15 +737,6 @@ class GeometricSolver (Listener):
             self.dr.add(rig)
             # set configuration
             self._update_constraint(con)
-        elif isinstance(con, MateConstraint):
-            # map to glueable cluster
-            vars = list(con.variables());
-            glue = Glueable(vars)
-            self._map[con] = glue
-            self._map[glue] = con
-            self.dr.add(glue)
-            # set configuration
-            self._update_constraint(con)
         elif isinstance(con, FixConstraint):
             if self.fixcluster != None:
                 self.dr.remove(self.fixcluster)
@@ -1258,45 +1243,6 @@ class NotLeftHandedConstraint (SelectionConstraint):
     """A selection constraint for 4 points to not have a left-handed orientation, i.e. right-handed or co-planar"""
     def __init__(self, v1, v2, v3, v4):
         SelectionConstraint.__init__(self, fnot(is_left_handed), [v1,v2,v3,v4])
-
-
-class MateConstraint(ParametricConstraint):
-    """A constraint to mate two (rigid) objects.
-       Defines two coordinate systems. Coordinate system 2 is a transformed version of coordinate system 1, using the the
-       given 4x4 transformation matrix.
-       o1, x1, y1 are point variables of object1, which is positioned relative to coordinate system 1.
-       o2, x2, y2 are point variables of object2. which is positioned relative to coordinate system 2.
-       point o1 coincides with the origin of the coordinate system for object 1
-       point x1 is on the x-axis.
-       point y1 is on the y-axis, or as close as possible
-       The same for object 2.
-    """
-
-    def __init__(self, o1, x1, y1,o2, x2, y2, trans):
-        """Create a new DistanceConstraint instance
-
-           keyword args:
-            conf    - a Configuration
-        """
-        ParametricConstraint.__init__(self)
-        self._variables = [o1, x1, y1, o2, x2, y2]
-        #assert isinstance(trans, Mat)
-        self.set_parameter(trans)
-
-    def satisfied(self, mapping):
-        """return True iff mapping from variable names to points satisfies constraint"""
-        # determine coordinate system 1
-        vo1, vx1, vy1, vo2, vx2, vy2 = self._variables
-        po1, px1, py1, po2, px2, py2 = [mapping[v] for v in self._variables]
-        trans = self.get_parameter()
-        cs1 = make_hcs_3d(po1, px1, py1)
-        cs2 = make_hcs_3d(po2, px2, py2)
-        cs1trans = cs1.mmul(trans)
-        return bool(cs1trans == cs2)
-
-    def __str__(self):
-        return "MateConstraint("+str(self._variables)+")"
-
 
 class CoincidenceConstraint(Constraint):
     """defines a coincidence between a point and another geometricvariable (i.e. point, line, plane)"""

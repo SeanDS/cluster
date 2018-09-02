@@ -27,7 +27,6 @@ from .geometric import GeometricDecomposition
 from .geometric import DistanceConstraint
 from .geometric import AngleConstraint
 from .geometric import RigidConstraint
-from .geometric import MateConstraint
 from .geometric import FixConstraint
 from .geometric import LeftHandedConstraint
 from .geometric import RightHandedConstraint
