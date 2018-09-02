@@ -49,8 +49,6 @@ class ClusterSolver(Notifier):
         self._incremental_methods = [m for m in self._methodclasses if hasattr(m,"incremental_matcher")]
         # init instance vars
         self._graph = Graph()
-        #self._graph.add_vertex("_root")
-        # self._graph.add_vertex("_toplevel")
         self._graph.add_vertex("_variables")
         self._graph.add_vertex("_clusters")
         self._graph.add_vertex("_methods")
@@ -174,7 +172,10 @@ class ClusterSolver(Notifier):
     # --- dependencies and groups
 
     def _add_dependency(self, on, dependend):
-        """Add a dependence for second object on first object"""
+        """Add a dependence for second object on first object
+
+        Used to delete dependent nodes when another node is deleted.
+        """
         self._graph.add_edge(on, dependend, "dependency")
 
     def _add_to_group(self, group, object):
