@@ -20,7 +20,7 @@ LOGGER = logging.getLogger(__name__)
 
 # ---------- GeometricSolver --------------
 
-class GeometricSolver (Listener):
+class GeometricSolver(Listener):
     """The GeometricSolver monitors changes in a GeometricProblem and
        maps any changes to corresponding changes in a GeometricDecomposition
     """
@@ -52,6 +52,7 @@ class GeometricSolver (Listener):
         # register
         self.cg.add_listener(self)
         self.dr.add_listener(self)
+        self.problem.add_listener(self)
 
         # create an initial fix cluster
         self.fixvars = []
