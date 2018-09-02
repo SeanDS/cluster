@@ -7,12 +7,11 @@ logger = logging.getLogger("cluster")
 logger.addHandler(handler)
 logger.setLevel(logging.DEBUG)
 
-from cluster import (GeometricProblem, GeometricSolver, DistanceConstraint, AngleConstraint,
-                     FixConstraint)
+from cluster import (Problem, GeometricSolver, DistanceConstraint, AngleConstraint, FixConstraint)
 from cluster.geometry import Vector
 from cluster.view import solution_viewer
 
-problem = GeometricProblem()
+problem = Problem()
 
 # Advanced LIGO optical layout, D0902838-v5
 

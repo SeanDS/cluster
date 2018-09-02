@@ -17,7 +17,7 @@ __all__ = [
     "selconstr"
 ]
 
-from .geometric import GeometricProblem
+from .problem import Problem
 from .geometric import GeometricSolver
 from .geometric import GeometricDecomposition
 from .geometric import DistanceConstraint

@@ -1,7 +1,8 @@
 #----------- random problem generation ----------------
 
 import random
-from .geometric import GeometricProblem, DistanceConstraint, AngleConstraint
+from .problem import Problem
+from .geometric import DistanceConstraint, AngleConstraint
 from .geometry import Vector, distance_2p, angle_3p, tol_eq
 
 def _constraint_group(problem, group, dependend, angleratio):
@@ -89,7 +90,7 @@ def random_problem_2D(numpoints, radius=10.0, roundoff=0.0, angleratio=0.5):
        value for the prototype points, a radius for the cloud of prototype points
        and a ratio of angle constraints over distance constraints"""
     group = {}
-    problem = GeometricProblem()
+    problem = Problem()
     i = 0
     while i < numpoints:
         aname = 'p'+str(i)
