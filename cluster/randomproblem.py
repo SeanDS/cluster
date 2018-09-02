@@ -160,7 +160,7 @@ def randomize_hedgehogs(problem):
         hog = (vars[1],frozenset([vars[0],vars[2]]))
         hogs.add(hog)
         # REMOVE CONSTRAINT
-        problem.rem_constraint(angle)
+        problem.remove_constraint(angle)
 
     # combine hogs
     queue = list(hogs)
@@ -226,7 +226,7 @@ def randomize_balloons(problem):
 
     # remove constraints
     for con in toremove:
-        problem.rem_constraint(con)
+        problem.remove_constraint(con)
 
     print("initial balloons", balloons)
 
