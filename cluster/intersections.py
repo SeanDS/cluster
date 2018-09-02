@@ -28,26 +28,26 @@ def sign2(x):
 
 
 def sss_int(p1, r1, p2, r2, p3, r3):
-    """Intersect three spheres, centered in p1, p2, p3 with radius r1,r2,r3 respectively. 
+    """Intersect three spheres, centered in p1, p2, p3 with radius r1,r2,r3 respectively.
        Returns a list of zero, one or two solution points.
     """
     solutions = []
     # intersect circles in plane
-    cp1 = vector.vector([0.0,0.0]) 
+    cp1 = vector.vector([0.0,0.0])
     cp2 = vector.vector([vector.norm(p2-p1), 0.0])
     cpxs = cc_int(cp1, r1, cp2, r2)
     if len(cpxs) == 0:
         return []
     # determine normal of plane though p1, p2, p3
     n = vector.cross(p2-p1, p3-p1)
-    if not tol_eq(vector.norm(n),0.0):  
+    if not tol_eq(vector.norm(n),0.0):
         n = n / vector.norm(n)
     else:
         # traingle p1, p2, p3 is degenerate
         # check for 2d solutions
         if len(cpxs) == 0:
             return []
-        # project cpxs back to 3d and check radius r3 
+        # project cpxs back to 3d and check radius r3
         cp4 = cpxs[0]
         u = normalised(p2-p1)
         v,w = perp_3d(u)
@@ -56,7 +56,7 @@ def sss_int(p1, r1, p2, r2, p3, r3):
             return [p4]
         else:
             return []
-    # px, rx, nx is circle 
+    # px, rx, nx is circle
     px = p1 + (p2-p1) * cpxs[0][0] / vector.norm(p2-p1)
     rx = abs(cpxs[0][1])
     nx = p2-p1
@@ -68,16 +68,16 @@ def sss_int(p1, r1, p2, r2, p3, r3):
         return []
     # ry is radius of circle in py
     if tol_eq(r3,0.0):
-        ry = 0.0 
-    else:   
+        ry = 0.0
+    else:
         ry = math.sin(math.acos(min(1.0,abs(dy3/r3))))*r3
-    # determine intersection of circle px, rx and circle py, ry, projected relative to line py-px 
-    cpx = vector.vector([0.0,0.0]) 
+    # determine intersection of circle px, rx and circle py, ry, projected relative to line py-px
+    cpx = vector.vector([0.0,0.0])
     cpy = vector.vector([vector.norm(py-px), 0.0])
     cp4s = cc_int(cpx, rx, cpy, ry)
     for cp4 in cp4s:
-        p4 = px + (py-px) * cp4[0] / vector.norm(py-px) + n * cp4[1] 
-        solutions.append(p4)  
+        p4 = px + (py-px) * cp4[0] / vector.norm(py-px) + n * cp4[1]
+        solutions.append(p4)
     return solutions
 
 # ------- 2D intersections ----------------
@@ -98,7 +98,9 @@ def cc_int(p1, r1, p2, r2):
         v = 0.0
     else:
         v = math.sqrt(r1*r1 - u*u)
-    s = (p2-p1) * u / d
+    # HACK because / doesn't work for vector and float
+    zzz = 1 / d
+    s = (p2-p1) * u * zzz
     if tol_eq(vector.norm(s),0):
         p3a = p1+vector.vector([p2[1]-p1[1],p1[0]-p2[0]])*r1/d
         if tol_eq(r1/d,0):
@@ -107,11 +109,15 @@ def cc_int(p1, r1, p2, r2):
             p3b = p1+vector.vector([p1[1]-p2[1],p2[0]-p1[0]])*r1/d
             return [p3a,p3b]
     else:
-        p3a = p1 + s + vector.vector([s[1], -s[0]]) * v / vector.norm(s) 
+        # HACK because / doesn't work for vector and float
+        zzz = 1 / vector.norm(s)
+        p3a = p1 + s + vector.vector([s[1], -s[0]]) * v * zzz
         if tol_eq(v / vector.norm(s),0):
             return [p3a]
         else:
-            p3b = p1 + s + vector.vector([-s[1], s[0]]) * v / vector.norm(s)
+            # HACK because / doesn't work for vector and float
+            zzz = 1 / vector.norm(s)
+            p3b = p1 + s + vector.vector([-s[1], s[0]]) * v * zzz
             return [p3a,p3b]
 
 
@@ -126,7 +132,7 @@ def cl_int(p1,r,p2,v):
     D = p[0]*v[1] - v[0]*p[1]
     E = r*r*d2 - D*D
     if tol_gt(d2, 0) and tol_gt(E, 0):
-        sE = math.sqrt(E) 
+        sE = math.sqrt(E)
         x1 = p1[0] + (D * v[1] + sign2(v[1])*v[0]*sE) / d2
         x2 = p1[0] + (D * v[1] - sign2(v[1])*v[0]*sE) / d2
         y1 = p1[1] + (-D * v[0] + abs(v[1])*sE) / d2
@@ -147,8 +153,8 @@ def cr_int(p1,r,p2,v):
     """
     sols = []
     all = cl_int(p1,r,p2,v)
-    for s in all: 
-        if tol_gte(vector.dot(s-p2,v), 0):          
+    for s in all:
+        if tol_gte(vector.dot(s-p2,v), 0):
             sols.append(s)
     return sols
 
@@ -168,7 +174,7 @@ def ll_int(p1, v1, p2, v2):
         d = p2-p1
         t1 = d[1]/v1[1]
     return [p1 + v1*t1]
-    
+
 def lr_int(p1, v1, p2, v2):
     """Intersect line though p1 direction v1 with ray through p2 direction v2.
        Returns a list of zero or one solutions
@@ -179,7 +185,7 @@ def lr_int(p1, v1, p2, v2):
         return s
     else:
         return []
- 
+
 def rr_int(p1, v1, p2, v2):
     """Intersect ray though p1 direction v1 with ray through p2 direction v2.
        Returns a list of zero or one solutions
@@ -191,7 +197,7 @@ def rr_int(p1, v1, p2, v2):
     else:
         return []
 
-# ----- Geometric properties ------- 
+# ----- Geometric properties -------
 
 def angle_3p(p1, p2, p3):
     """Returns the angle, in radians, rotating vector p2p1 to vector p2p3.
@@ -209,8 +215,9 @@ def angle_3p(p1, p2, p3):
     if tol_eq(d21,0) or tol_eq(d23,0):
         # degenerate, indeterminate angle
         return None
-    v21 = (p1-p2) / d21
-    v23 = (p3-p2) / d23
+    # HACK
+    v21 = (p1-p2) * (1/d21)
+    v23 = (p3-p2) * (1/d23)
     t = vector.dot(v21,v23) # / (d21 * d23)
     if t > 1.0:             # check for floating point error
         t = 1.0
@@ -251,7 +258,7 @@ def is_clockwise(p1,p2,p3):
     """ returns True iff triangle p1,p2,p3 is clockwise oriented"""
     assert len(p1)==2
     assert len(p1)==len(p2)
-    assert len(p2)==len(p3)   
+    assert len(p2)==len(p3)
     u = p2 - p1
     v = p3 - p2
     perp_u = vector.vector([-u[1], u[0]])
@@ -261,7 +268,7 @@ def is_counterclockwise(p1,p2,p3):
     """ returns True iff triangle p1,p2,p3 is counterclockwise oriented"""
     assert len(p1)==2
     assert len(p1)==len(p2)
-    assert len(p2)==len(p3)   
+    assert len(p2)==len(p3)
     u = p2 - p1
     v = p3 - p2;
     perp_u = vector.vector([-u[1], u[0]])
@@ -271,8 +278,8 @@ def is_colinear(p1,p2,p3):
     """ returns True iff triangle p1,p2,p3 is colinear (neither clockwise of counterclockwise oriented)"""
     assert len(p1)==2
     assert len(p1)==len(p2)
-    assert len(p2)==len(p3)   
- 
+    assert len(p2)==len(p3)
+
     u = p2 - p1
     v = p3 - p2;
     perp_u = vector.vector([-u[1], u[0]])
@@ -305,8 +312,8 @@ def is_left_handed(p1,p2,p3,p4):
     v = p3-p1
     uv = vector.cross(u,v)
     w = p4-p1
-    #return vector.dot(uv,w) < 0 
-    return tol_lt(vector.dot(uv,w), 0) 
+    #return vector.dot(uv,w) < 0
+    return tol_lt(vector.dot(uv,w), 0)
 
 def is_right_handed(p1,p2,p3,p4):
     """return True if tetrahedron p1 p2 p3 p4 is right handed"""
@@ -314,8 +321,8 @@ def is_right_handed(p1,p2,p3,p4):
     v = p3-p1
     uv = vector.cross(u,v)
     w = p4-p1
-    #return vector.dot(uv,w) > 0 
-    return tol_gt(vector.dot(uv,w), 0) 
+    #return vector.dot(uv,w) > 0
+    return tol_gt(vector.dot(uv,w), 0)
 
 def is_coplanar(p1,p2,p3,p4):
     """return True if tetrahedron p1 p2 p3 p4 is co-planar (not left- or right-handed)"""
@@ -323,8 +330,8 @@ def is_coplanar(p1,p2,p3,p4):
     v = p3-p1
     uv = vector.cross(u,v)
     w = p4-p1
-    #return vector.dot(uv,w) == 0 
-    return tol_eq(vector.dot(uv,w), 0) 
+    #return vector.dot(uv,w) == 0
+    return tol_eq(vector.dot(uv,w), 0)
 
 
 # --------- coordinate tranformations -------
@@ -332,7 +339,7 @@ def is_coplanar(p1,p2,p3,p4):
 def make_hcs_3d (a, b, c, righthanded=True):
     """build a 3D homogeneous coordiate system from three points. The origin is point a. The x-axis is
     b-a, the y axis is c-a, or as close as possible after orthogonormalisation."""
-    # create orthonormal basis 
+    # create orthonormal basis
     u = normalised(b-a)
     v = normalised(c-a)
     nu = vector.norm(u)
@@ -357,16 +364,16 @@ def make_hcs_3d (a, b, c, righthanded=True):
     if righthanded==False:
         w = -w
     # create matix with basis vectors + translation as columns
-    hcs = Mat([ 
-        [u[0],v[0], w[0], a[0]], 
+    hcs = Mat([
+        [u[0],v[0], w[0], a[0]],
         [u[1],v[1], w[1], a[1]],
-        [u[2],v[2], w[2], a[2]], 
+        [u[2],v[2], w[2], a[2]],
         [0.0, 0.0, 0.0, 1.0]    ])
-    return hcs 
+    return hcs
 
 def make_hcs_3d_scaled (a, b, c):
     """build a 3D homogeneus coordiate system from three points, and derive scale from distance between points"""
-     # create orthonormal basis 
+     # create orthonormal basis
     u = normalised(b-a)
     v = normalised(c-a)
     nu = vector.norm(u)
@@ -391,12 +398,12 @@ def make_hcs_3d_scaled (a, b, c):
         v = v / vector.norm(c-a)
     # note: w is not scaled
     # create matix with basis vectors + translation as columns
-    hcs = Mat([ 
-        [u[0],v[0], w[0], a[0]], 
+    hcs = Mat([
+        [u[0],v[0], w[0], a[0]],
         [u[1],v[1], w[1], a[1]],
-        [u[2],v[2], w[2], a[2]], 
+        [u[2],v[2], w[2], a[2]],
         [0.0, 0.0, 0.0, 1.0]    ])
-    return hcs 
+    return hcs
 
 def make_hcs_2d (a, b):
     """build a 2D homogeneus coordiate system from two points"""
@@ -404,21 +411,23 @@ def make_hcs_2d (a, b):
     if tol_eq(vector.norm(u), 0.0):
         u = vector.vector([0.0,0.0])
     else:
-        u = u / vector.norm(u)
+        # HACK because / doesn't work for vector and float
+        zzz = 1 / vector.norm(u)
+        u = u * zzz
     v = vector.vector([-u[1], u[0]])
     hcs = Mat([ [u[0],v[0],a[0]] , [u[1],v[1],a[1]] , [0.0, 0.0, 1.0] ] )
-    return hcs 
+    return hcs
 
 def make_hcs_2d_scaled (a, b):
     """build a 2D homogeneus coordiate system from two points, but scale with distance between input point"""
     u = b-a
-    if tol_eq(vector.norm(u), 0.0):     
+    if tol_eq(vector.norm(u), 0.0):
         u = vector.vector([1.0,0.0])
     #else:
     #    u = u / vector.norm(u)
     v = vector.vector([-u[1], u[0]])
     hcs = Mat([ [u[0],v[0],a[0]] , [u[1],v[1],a[1]] , [0.0, 0.0, 1.0] ] )
-    return hcs 
+    return hcs
 
 def cs_transform_matrix(from_cs, to_cs):
     """returns a transform matrix from from_cs to to_cs"""
@@ -437,9 +446,9 @@ def id_transform_2D():
     return eye(3)
 
 def translate_2D(dx,dy):
-    mat = Mat([ 
-        [1.0, 0.0, dx] , 
-        [0.0, 1.0, dy] , 
+    mat = Mat([
+        [1.0, 0.0, dx] ,
+        [0.0, 1.0, dy] ,
         [0.0, 0.0, 1.0] ] )
     return mat
 
@@ -447,9 +456,9 @@ def rotate_2D(angle):
     """rotation matrix for rotation in 2d with homogeneous coordinates"""
     cosa = math.cos(angle)
     sina = math.sin(angle)
-    mat = Mat([ 
-        [cosa,-sina,0.0], 
-        [sina,cosa,0.0], 
+    mat = Mat([
+        [cosa,-sina,0.0],
+        [sina,cosa,0.0],
         [0.0, 0.0, 1.0] ])
     return mat
 
@@ -462,9 +471,9 @@ def rotate_3D_z(angle):
     """rotation matrix for rotation in 3d over z-axis with homogeneous coordinates"""
     cosa = math.cos(angle)
     sina = math.sin(angle)
-    mat = Mat([ 
-        [cosa,-sina,0.0, 0.0], 
-        [sina,cosa, 0.0, 0.0],   
+    mat = Mat([
+        [cosa,-sina,0.0, 0.0],
+        [sina,cosa, 0.0, 0.0],
         [0.0, 0.0, 1.0, 0.0],
         [0.0, 0.0, 0.0, 1.0] ] )
     return mat
@@ -473,10 +482,10 @@ def rotate_3D_y(angle):
     """rotation matrix for rotation in 3d over y-axis with homogeneous coordinates"""
     cosa = math.cos(angle)
     sina = math.sin(angle)
-    mat = Mat([ 
-        [cosa,0.0,sina, 0.0], 
+    mat = Mat([
+        [cosa,0.0,sina, 0.0],
         [0.0, 1.0, 0.0, 0.0],
-        [-sina,0.0,cosa, 0.0], 
+        [-sina,0.0,cosa, 0.0],
         [0.0, 0.0, 0.0, 1.0] ] )
     return mat
 
@@ -484,34 +493,34 @@ def rotate_3D_x(angle):
     """rotation matrix for rotation in 3d over x-axis with homogeneous coordinates"""
     cosa = math.cos(angle)
     sina = math.sin(angle)
-    mat = Mat([ 
-        [1.0, 0.0,0.0, 0.0], 
+    mat = Mat([
+        [1.0, 0.0,0.0, 0.0],
         [0.0, cosa, -sina, 0.0],
-        [0.0, sina, cosa, 0.0], 
+        [0.0, sina, cosa, 0.0],
         [0.0, 0.0, 0.0, 1.0] ] )
     return mat
 
 def translate_3D(dx,dy,dz):
-    mat = Mat([ 
-    [1.0, 0.0, 0.0, dx] , 
-    [0.0, 1.0, 0.0, dy] , 
-    [0.0, 0.0, 1.0, dz] , 
+    mat = Mat([
+    [1.0, 0.0, 0.0, dx] ,
+    [0.0, 1.0, 0.0, dy] ,
+    [0.0, 0.0, 1.0, dz] ,
     [0.0, 0.0, 0.0, 1.0] ] )
     return mat
 
 def scale_3D(sx, sy, sz):
-    mat = Mat([ 
-    [sx, 0.0, 0.0, 0.0] , 
-    [0.0, sy, 0.0, 0.0] , 
-    [0.0, 0.0, sz, 0.0] , 
+    mat = Mat([
+    [sx, 0.0, 0.0, 0.0] ,
+    [0.0, sy, 0.0, 0.0] ,
+    [0.0, 0.0, sz, 0.0] ,
     [0.0, 0.0, 0.0, 1.0] ] )
     return mat
 
 def uniform_scale_3D(scale):
-    mat = Mat([ 
-    [scale, 0.0, 0.0, 0.0] , 
-    [0.0, scale, 0.0, 0.0] , 
-    [0.0, 0.0, scale, 0.0] , 
+    mat = Mat([
+    [scale, 0.0, 0.0, 0.0] ,
+    [0.0, scale, 0.0, 0.0] ,
+    [0.0, 0.0, scale, 0.0] ,
     [0.0, 0.0, 0.0, 1.0] ] )
     return mat
 
@@ -561,19 +570,19 @@ def normalised(v):
 
 def test_ll_int():
     """test random line-line intersection. returns True iff succesful"""
-    # generate tree points A,B,C an two lines AC, BC. 
+    # generate tree points A,B,C an two lines AC, BC.
     # then calculate the intersection of the two lines
     # and check that it equals C
     p_a = vector.randvec(2, 0.0, 10.0,1.0)
     p_b = vector.randvec(2, 0.0, 10.0,1.0)
     p_c = vector.randvec(2, 0.0, 10.0,1.0)
     # print p_a, p_b, p_c
-    if tol_eq(vector.norm(p_c - p_a),0) or tol_eq(vector.norm(p_c - p_b),0): 
+    if tol_eq(vector.norm(p_c - p_a),0) or tol_eq(vector.norm(p_c - p_b),0):
         return True # ignore this case
     v_ac = (p_c - p_a) / vector.norm(p_c - p_a)
     v_bc = (p_c - p_b) / vector.norm(p_c - p_b)
     s = ll_int(p_a, v_ac, p_b, v_bc)
-    if tol_eq(math.fabs(vector.dot(v_ac, v_bc)),1.0): 
+    if tol_eq(math.fabs(vector.dot(v_ac, v_bc)),1.0):
         return len(s) == 0
     else:
         if len(s) > 0:
@@ -584,19 +593,19 @@ def test_ll_int():
 
 def test_rr_int():
     """test random ray-ray intersection. returns True iff succesful"""
-    # generate tree points A,B,C an two rays AC, BC. 
+    # generate tree points A,B,C an two rays AC, BC.
     # then calculate the intersection of the two rays
     # and check that it equals C
     p_a = vector.randvec(2, 0.0, 10.0,1.0)
     p_b = vector.randvec(2, 0.0, 10.0,1.0)
     p_c = vector.randvec(2, 0.0, 10.0,1.0)
     # print p_a, p_b, p_c
-    if tol_eq(vector.norm(p_c - p_a),0) or tol_eq(vector.norm(p_c - p_b),0): 
+    if tol_eq(vector.norm(p_c - p_a),0) or tol_eq(vector.norm(p_c - p_b),0):
         return True # ignore this case
     v_ac = (p_c - p_a) / vector.norm(p_c - p_a)
     v_bc = (p_c - p_b) / vector.norm(p_c - p_b)
     s = rr_int(p_a, v_ac, p_b, v_bc)
-    if tol_eq(math.fabs(vector.dot(v_ac, v_bc)),1.0): 
+    if tol_eq(math.fabs(vector.dot(v_ac, v_bc)),1.0):
         return len(s) == 0
     else:
         if len(s) > 0:
@@ -632,8 +641,8 @@ def test_sss_int():
 
 def test_cc_int():
     """Generates two random circles, computes the intersection,
-       and verifies that the number of intersections and the 
-       positions of the intersections are correct. 
+       and verifies that the number of intersections and the
+       positions of the intersections are correct.
        Returns True or False"""
     # gen two random circles p1,r2 and p2, r2
     p1 = vector.randvec(2, 0.0, 10.0,1.0)
@@ -643,7 +652,7 @@ def test_cc_int():
     # 33% change that r2=abs(r1-|p1-p2|)
     if random.random() < 0.33:
         r2 = abs(r1-vector.norm(p1-p2))
-    # do interesection 
+    # do interesection
     diag_print("problem:"+str(p1)+","+str(r1)+","+str(p2)+","+str(r2),"test_cc_int")
     sols = cc_int(p1, r1, p2, r2)
     diag_print("solutions:"+str(list(map(str, sols))),"test_cc_int")
@@ -652,7 +661,7 @@ def test_cc_int():
         if not tol_gt(vector.norm(p2-p1),r1 + r2) and not tol_lt(vector.norm(p2-p1),abs(r1 - r2)) and not tol_eq(vector.norm(p1-p2),0):
             diag_print("number of solutions 0 is wrong","test_cc_int")
             return False
-    elif len(sols) == 1: 
+    elif len(sols) == 1:
         if not tol_eq(vector.norm(p2-p1),r1 + r2) and not tol_eq(vector.norm(p2-p1),abs(r1-r2)):
             diag_print("number of solutions 1 is wrong","test_cc_int")
             return False
@@ -678,8 +687,8 @@ def test_cc_int():
 
 def test_cl_int():
     """Generates random circle and line, computes the intersection,
-       and verifies that the number of intersections and the 
-       positions of the intersections are correct. 
+       and verifies that the number of intersections and the
+       positions of the intersections are correct.
        Returns True or False"""
     # 3 random points
     p1 = vector.randvec(2, 0.0, 10.0,1.0)
@@ -701,17 +710,17 @@ def test_cl_int():
     elif case==2:
         r = random.random() * r0   # should have no ints (unless r0=0)
     elif case==3:
-        r = r0 + random.random() * r0 # should have 2 ints (unless r0=0) 
-    # do interesection 
+        r = r0 + random.random() * r0 # should have 2 ints (unless r0=0)
+    # do interesection
     diag_print("problem:"+str(c)+","+str(r)+","+str(o)+","+str(v),"test_cl_int")
     sols = cl_int(c,r,o,v)
     diag_print("solutions:"+str(list(map(str, sols))),"test_cl_int")
     # distance from point on line closest to circle center
     l = vector.dot(c-o, v) / vector.norm(v)
-    p = o + v * l / vector.norm(v)  
+    p = o + v * l / vector.norm(v)
     d = vector.norm(p-c)
     diag_print("distance center to line="+str(d),"test_cl_int")
-    # test number of intersections 
+    # test number of intersections
     if len(sols) == 0:
         if not tol_gt(d, r):
             diag_print("wrong number of solutions: 0", "test_cl_int")
@@ -727,7 +736,7 @@ def test_cl_int():
     else:
             diag_print("wrong number of solutions: >2", "test_cl_int")
 
-    # test coordinates of intersection 
+    # test coordinates of intersection
     for s in sols:
         # s on line (o,v)
         if not is_colinear(s, o, o+v):
@@ -745,9 +754,9 @@ def test_intersections():
     sat = True
     for i in range(0,100):
         sat = sat and test_ll_int()
-        if not sat: 
+        if not sat:
             print("ll_int() failed")
-            return 
+            return
     if sat:
         print("ll_int() passed")
     else:
@@ -756,9 +765,9 @@ def test_intersections():
     sat = True
     for i in range(0,100):
         sat = sat and test_rr_int()
-        if not sat: 
+        if not sat:
             print("rr_int() failed")
-            return 
+            return
     if sat:
         print("rr_int() passed")
     else:
@@ -790,22 +799,22 @@ def test_intersections():
     print("Note: did not test degenerate cases for sss_int")
 
 def test_angles():
-    print("2D angles") 
+    print("2D angles")
     for i in range(9):
         a = i * 45 * math.pi / 180
         p1 = vector.vector([1.0,0.0])
         p2 = vector.vector([0.0,0.0])
         p3 = vector.vector([math.cos(a),math.sin(a)])
         print(p3, angle_3p(p1,p2,p3) * 180 / math.pi, "flip", angle_3p(p3,p2,p1) * 180 / math.pi)
-    
-    print("3D angles") 
+
+    print("3D angles")
     for i in range(9):
-        a = i * 45 * math.pi / 180    
+        a = i * 45 * math.pi / 180
         p1 = vector.vector([1.0,0.0,0.0])
         p2 = vector.vector([0.0,0.0,0.0])
         p3 = vector.vector([math.cos(a),math.sin(a),0.0])
         print(p3, angle_3p(p1,p2,p3) * 180 / math.pi, "flip", angle_3p(p3,p2,p1) * 180 / math.pi)
-    
+
 
 def test_perp_3d():
     for i in range(10):
@@ -814,9 +823,9 @@ def test_perp_3d():
         print(u, vector.norm(u))
         print(v, vector.norm(v))
         print(w, vector.norm(w))
-        print(tol_eq(vector.dot(u,v),0.0)) 
-        print(tol_eq(vector.dot(v,w),0.0)) 
-        print(tol_eq(vector.dot(w,u),0.0)) 
+        print(tol_eq(vector.dot(u,v),0.0))
+        print(tol_eq(vector.dot(v,w),0.0))
+        print(tol_eq(vector.dot(w,u),0.0))
 
 def test_sss_degen():
     p1 = vector.vector([0.0, 0.0, 0.0])
@@ -832,8 +841,8 @@ def test_hcs_degen():
     p2 = vector.vector([1.0, 0.0, 0.0])
     p3 = vector.vector([1.0, 0.0, 0.0])
     print(make_hcs_3d(p1,p2,p3))
-        
-if __name__ == '__main__': 
+
+if __name__ == '__main__':
     #diag_select("test_cc_int")
     #diag_select("test_cl_int")
     #diag_select(".*")

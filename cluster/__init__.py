@@ -1,7 +1,6 @@
 
 __all__ = [
     "clsolver2D",
-    "clsolver3D",
     "clsolver",
     "cluster",
     "configuration",

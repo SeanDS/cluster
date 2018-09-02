@@ -131,8 +131,18 @@ class MergeRR(ClusterMethod):
         toplevel = solver.top_level()
         rigids = Rigids(solver)
         connectedpairs = ConnectedPairs1(solver, rigids)
-        twoconnectedpairs = incremental.Filter(lambda r1_r2: len(r1_r2[0].vars.intersection(r1_r2[1].vars))==2, connectedpairs)
-        matcher = incremental.Map(lambda r1_r21: MergeRR({"$r1":r1_r21[0], "$r2":r1_r21[1]}), twoconnectedpairs)
+
+        def zz1(r1_r2):
+            r1_r2 = list(r1_r2)
+            return len(r1_r2[0].vars.intersection(r1_r2[1].vars)) == 2
+
+        twoconnectedpairs = incremental.Filter(zz1, connectedpairs)
+
+        def zz2(r1_r21):
+            r1_r21 = list(r1_r21)
+            return MergeRR({"$r1":r1_r21[0], "$r2":r1_r21[1]})
+
+        matcher = incremental.Map(zz2, twoconnectedpairs)
         return matcher
 
     incremental_matcher = staticmethod(_incremental_matcher)

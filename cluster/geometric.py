@@ -4,11 +4,10 @@ problems incrementally."""
 from . import vector
 import math
 from .clsolver import PrototypeMethod, SelectionMethod
-from .clsolver3D import ClusterSolver3D 
-from .clsolver2D import ClusterSolver2D 
+from .clsolver2D import ClusterSolver2D
 from .cluster import *
 from .selconstr import SelectionConstraint
-from .configuration import Configuration 
+from .configuration import Configuration
 from .diagnostic import diag_print
 from .constraint import Constraint, ConstraintGraph
 from .notify import Notifier, Listener
@@ -16,7 +15,7 @@ from .tolerance import tol_eq
 from .intersections import angle_3p, distance_2p
 from .intersections import distance_point_line
 from .intersections import is_left_handed, is_right_handed
-from .intersections import is_clockwise, is_counterclockwise 
+from .intersections import is_clockwise, is_counterclockwise
 from .intersections import transform_point, make_hcs_3d
 from .intersections import perp_2d, perp_3d
 
@@ -24,31 +23,30 @@ from .intersections import perp_2d, perp_3d
 
 class GeometricProblem (Notifier, Listener):
     """A geometric constraint problem with a prototpe.
-    
+
        A problem consists of geometric variables (just variables for short), a prototype
        for each variable and constraints.
 
        Variables are of type Point, Line, etc. Alternatively, variables of any other hashable type
         (e.g. strings) are assumed to be points. (Depricated - used for backwards compatibility)
-       
-       Prototypes are of type vector 
+
+       Prototypes are of type vector
        A point prototype must have length equal to the dimensionality as the problem (D).
-       A line prototype must have length 2*D: it represents two points though which the line passes 
-       A plane prototype must have length 3*D: it represents three points though which the plane passes 
-       
+       A line prototype must have length 2*D: it represents two points though which the line passes
+       A plane prototype must have length 3*D: it represents three points though which the plane passes
+
        Supported constraints are instances of ParametricConstraint, FixConstraint, SelectionConstraint, etc.
-       
+
        GeometricProblem listens for changes in constraint parameters and passes
-       these changes, and changes in the system of constraints and the prototype, 
-       to any other listerers (e.g. GeometricSolver) 
+       these changes, and changes in the system of constraints and the prototype,
+       to any other listerers (e.g. GeometricSolver)
     """
-    
-    def __init__(self, dimension, use_prototype=True):
-        """Initialize a new problem. Must specify dimensionality of the problem (i.e. dimension of points) and 
+
+    def __init__(self, use_prototype=True):
+        """Initialize a new problem. Must specify dimensionality of the problem (i.e. dimension of points) and
             wheter to use the prototype for solution selection."""
         Notifier.__init__(self)
         Listener.__init__(self)
-        self.dimension = dimension      # dimensionality of points
         self.prototype = {}             # mapping from variables to prototypes
         self.cg = ConstraintGraph()     # constraint graph
         self.use_prototype = use_prototype;     # whether to use prototype for solution selection
@@ -72,14 +70,14 @@ class GeometricProblem (Notifier, Listener):
         prototypevector = vector.vector(prototype)
         # check dimension of prototype
         if isinstance(variable, Point):
-            assert len(prototypevector) == self.dimension
+            assert len(prototypevector) == 2
         elif isinstance(variable, Line):
-            assert len(prototypevector) == 2 * self.dimension
+            assert len(prototypevector) == 4
         elif isinstance(variable, Plane):
-            assert len(prototypevector) == 3 * self.dimension
+            assert len(prototypevector) == 6
         else:
             # assume point
-            assert len(prototypevector) == self.dimension
+            assert len(prototypevector) == 2
         if variable not in self.prototype:
             self.prototype[variable] = prototypevector
             self.cg.add_variable(variable)
@@ -93,8 +91,8 @@ class GeometricProblem (Notifier, Listener):
     def rem_variable(self, variable):
         """remove a variable (and all constraints incident imposed on it)"""
         if variable in self.prototype:
-            del self.prototype[variable] 
-            self.cg.rem_variable(variable) 
+            del self.prototype[variable]
+            self.cg.rem_variable(variable)
 
     def set_prototype(self, variable, prototype):
         """set prototype of variable"""
@@ -118,7 +116,7 @@ class GeometricProblem (Notifier, Listener):
         return self.add_variable(variable, prototype)
 
     def has_point(self, variable):
-        """depricated - use has_variable""" 
+        """depricated - use has_variable"""
         return self.has_variable(variable)
 
     def set_point(self, variable, prototype):
@@ -128,9 +126,9 @@ class GeometricProblem (Notifier, Listener):
     def get_point(self, variable):
         """depricated - use get_prototype"""
         return self.get_prototype(variable)
-    
+
     # ----------- constraints --------
- 
+
     def add_constraint(self, con):
         """add a constraint"""
         # check that variables in problem
@@ -177,7 +175,7 @@ class GeometricProblem (Notifier, Listener):
             return distances[0]
         else:
             return None
- 
+
     def get_angle(self, a, b, c):
         """return the angle constraint on given points, or None"""
         on_a = self.cg.get_constraints_on(a)
@@ -209,7 +207,7 @@ class GeometricProblem (Notifier, Listener):
         for var in variables:
             if candidates == None:
                 candidates = set([c for c in self.cg.get_constraints_on(var) if isinstance(c,constrainttype)])
-            else:    
+            else:
                 candidates.intersection_update([c for c in self.cg.get_constraints_on(var) if isinstance(c,constrainttype)])
         return candidates
 
@@ -221,7 +219,7 @@ class GeometricProblem (Notifier, Listener):
             return list(candidates)[0]
         else: # >= 1
             raise Exception("multiple constraints found")
-        
+
     def get_coincidence(self, p, g):
         return self.get_unique_constraint(CoincidenceConstraint, [p,g])
 
@@ -239,7 +237,7 @@ class GeometricProblem (Notifier, Listener):
         return points
 
     def verify(self, solution):
-        """returns true iff all constraints satisfied by given solution. 
+        """returns true iff all constraints satisfied by given solution.
            solution is a dictionary mapping variables (names) to values (points)"""
         if solution == None:
             sat = False
@@ -258,7 +256,7 @@ class GeometricProblem (Notifier, Listener):
                     diag_print(str(con)+" not satisfied", "GeometricProblem.verify")
                     sat = False
         return sat
-       
+
     def rem_point(self, var):
         """remove a point variable from the constraint system"""
         if var in self.prototype:
@@ -266,11 +264,11 @@ class GeometricProblem (Notifier, Listener):
             del self.prototype[var]
         else:
             raise Exception("variable "+str(var)+" not in problem.")
-            
+
     def rem_constraint(self, con):
         """remove a constraint from the constraint system"""
         if con in self.cg.constraints():
-            if isinstance(con, SelectionConstraint): 
+            if isinstance(con, SelectionConstraint):
                 self.send_notify(("rem_selection_constraint", con))
             self.cg.rem_constraint(con)
         else:
@@ -293,21 +291,21 @@ class GeometricProblem (Notifier, Listener):
             s += str(con) + "\n"
         s+= "prototype-based selection = " + str(self.use_prototype)
         return s
- 
+
 #class GeometricProblem
 
 
 # ---------- GeometricSolver --------------
 
 class GeometricSolver (Listener):
-    """The GeometricSolver monitors changes in a GeometricProblem and 
+    """The GeometricSolver monitors changes in a GeometricProblem and
        maps any changes to corresponding changes in a GeometricDecomposition
     """
 
     # public methods
     def __init__(self, problem):
         """Create a new GeometricSolver instance
-        
+
            keyword args
             problem        - the GeometricProblem instance to be monitored for changes
         """
@@ -315,27 +313,20 @@ class GeometricSolver (Listener):
         Listener.__init__(self)
 
         # init variables
-        # the problem on which this solver works 
+        # the problem on which this solver works
         self.problem = problem
-        # shortcut to the dimension of the problem
-        self.dimension = problem.dimension
         # shortcut to the constraint graph of the problem
-        self.cg = problem.cg  
-        # the cluster-solver (or dr for decomposition-recombination) 
-        if self.problem.dimension == 2:
-            self.dr = ClusterSolver2D()
-        elif self.problem.dimension == 3:
-            self.dr = ClusterSolver3D()
-        else:
-            raise Exception("Sorry, can't solve problems of dimension < 2 or > 3.")
-        
+        self.cg = problem.cg
+        # the cluster-solver (or dr for decomposition-recombination)
+        self.dr = ClusterSolver2D()
+
         # a map from problem variables and constraints to clusters, and vice versa
         self._map = {}
-        
+
         # enable prototype based selection by default
         self._set_prototype_selection(problem.get_prototype_selection())
 
-        # register 
+        # register
         self.cg.add_listener(self)
         self.dr.add_listener(self)
 
@@ -346,29 +337,29 @@ class GeometricSolver (Listener):
         # add variables
         for var in self.cg.variables():
             self._add_variable(var)
-       
+
         # add constraints
         toadd = set(self.cg.constraints())
 
-        # add coincidences first. Prevents re-mapping of primitves and re-solving of problem 
+        # add coincidences first. Prevents re-mapping of primitves and re-solving of problem
         for con in list(toadd):
-            if isinstance(con, CoincidenceConstraint): 
+            if isinstance(con, CoincidenceConstraint):
                 self._add_constraint(con)
                 toadd.remove(con)
 
-        # add selection constraints first. Prevents re-evaluation 
+        # add selection constraints first. Prevents re-evaluation
         for con in list(toadd):
-            if isinstance(con, SelectionConstraint): 
+            if isinstance(con, SelectionConstraint):
                 self._add_constraint(con)
                 toadd.remove(con)
 
         # add distances first. Nicer decomposition in Rigids
         for con in list(toadd):
-            if isinstance(con, DistanceConstraint): 
+            if isinstance(con, DistanceConstraint):
                 self._add_constraint(con)
                 toadd.remove(con)
 
-        # add other constraints. 
+        # add other constraints.
         for con in toadd:
             self._add_constraint(con)
 
@@ -378,17 +369,17 @@ class GeometricSolver (Listener):
 
     def get_result(self):
         """Depricated. Use get_decomposition."""
-        return self.get_decomposition()  
+        return self.get_decomposition()
 
     def get_cluster(self):
         """Depricated. Use get_decomposition."""
-        return self.get_decomposition()  
-    
+        return self.get_decomposition()
+
     def get_decomposition(self):
         """Returns a GeometricDecomposition (the root of a tree of clusters),
          describing the solutions and the decomposition of the problem."""
-        # several drcluster can maps to a single geoclusters 
-        map = {}   
+        # several drcluster can maps to a single geoclusters
+        map = {}
         geoclusters = []
         # map dr clusters
         for drcluster in [c for c in self.dr.clusters() if isinstance(c, Rigid)]:
@@ -402,9 +393,9 @@ class GeometricSolver (Listener):
                 geocluster = map[map[geocluster][0]]
                 map[drcluster] = geocluster
                 map[geocluster].append(drcluster)
-            
+
         for geocluster in geoclusters:
-            # pick newest drcluster 
+            # pick newest drcluster
             drclusters = map[geocluster]
             drcluster = max(drclusters, key=lambda c: c.creationtime)
             # determine solutions
@@ -440,8 +431,8 @@ class GeometricSolver (Listener):
                                 sub = map[inp]
                                 if sub != parent and sub not in parent.subs:
                                     parent.subs.append(sub)
-        
-        # determine result from top-level clusters 
+
+        # determine result from top-level clusters
         top = self.dr.top_level()
         rigids = [c for c in top if isinstance(c, Rigid)]
         if len(top) > 1:
@@ -461,26 +452,26 @@ class GeometricSolver (Listener):
                 result.subs = []
                 result.solutions = []
                 result.flags = GeometricDecomposition.UNSOLVED
-        return result 
+        return result
 
-    
+
     def get_solutions(self):
         """Returns a list of Configurations, which will be empty if the
            problem has no solutions. Note: this method is
-           cheaper but less informative than get_decomposition. 
+           cheaper but less informative than get_decomposition.
         """
         #"""The list and the configurations should not be changed (since they are
         #references to objects in the solver)."""
         # find top level rigid and all its configurations
         rigids = [c for c in self.dr.top_level() if isinstance(c, Rigid)]
-        if len(rigids) != 0:   
+        if len(rigids) != 0:
             solutions = self._map_cluster_solutions(drcluster)
         else:
             solutions = []
         return solutions
 
     def _map_cluster_solutions(self, drcluster):
-        # map dr-cluster configurations to solutions, i.e. a map from problem variables to values           
+        # map dr-cluster configurations to solutions, i.e. a map from problem variables to values
         configurations = self.dr.get(drcluster)
         solutions = []
         diag_print("mapping cluster "+str(drcluster)+" #configurations="+str(len(configurations)),"GeometricSolver")
@@ -494,27 +485,13 @@ class GeometricSolver (Listener):
                         solution[var] = configuration[point]
                 elif isinstance(var, Line):
                     line_rigid = self._map[var]
-                    if self.dimension == 2:
-                        line_vertex = line_rigid.vertex 
-                        line_normal = line_rigid.normal
-                        if line_vertex in configuration and line_normal in configuration:
-                            p1 = configuration[line_vertex]
-                            n = configuration[line_normal]
-                            p2 = p1 + perp_2d(n-p1)
-                            solution[var] = p1.concatonated(p2)
-                        #endif in config
-                    elif self.dimension == 3:
-                        line_vertex = line_rigid.vertex 
-                        line_normal1 = line_rigid.normal1
-                        line_normal2 = line_rigid.normal2
-                        if line_vertex in configuration and line_normal1 in configuration and line_normal2 in configuration:
-                            p1 = configuration[line_vertex]
-                            n1 = configuration[line_normal1]
-                            n2 = configuration[line_normal2]
-                            p2 = p1 + vector.cross(n1-p1, n2-p1)
-                            solution[var] = p1.concatonated(p2)
-                        #endif in config
-                    #endif dimension 
+                    line_vertex = line_rigid.vertex
+                    line_normal = line_rigid.normal
+                    if line_vertex in configuration and line_normal in configuration:
+                        p1 = configuration[line_vertex]
+                        n = configuration[line_normal]
+                        p2 = p1 + perp_2d(n-p1)
+                        solution[var] = p1.concatonated(p2)
                 else:
                     # assume point - depricated
                     assert len(self._map[var].vars) == 1
@@ -523,22 +500,22 @@ class GeometricSolver (Listener):
                         solution[var] = configuration[point]
             #for
             solutions.append(solution)
-        #for    
+        #for
         return solutions
 
     def get_status(self):
         """Returns a symbolic flag, one of:
-            GeometricDecomposition.UNDERCONSTRAINED, 
+            GeometricDecomposition.UNDERCONSTRAINED,
             GeometricDecomposition.OVERCONSTRAINED,
             GeometricDecomposition.OK,
             GeometricDecomposition.UNSOLVED,
             GeometricDecomposition.EMPTY,
             GeometricDecomposition.INCONSISTENT,
             GeometricDecomposition.DEGENERTE.
-           Note: this method is cheaper but less informative than get_decomposition. 
+           Note: this method is cheaper but less informative than get_decomposition.
         """
         rigids = [c for c in self.dr.top_level() if isinstance(c, Rigid)]
-        if len(rigids) == 0:            
+        if len(rigids) == 0:
             return GeometricDecomposition.EMPTY
         elif len(rigids) == 1:
             drcluster = rigids[0]
@@ -560,7 +537,7 @@ class GeometricSolver (Listener):
                 return GeometricDecomposition.OK
         else:
             return GeometricDecomposition.UNDERCONSTRAINED
-   
+
 
     def receive_notify(self, object, message):
         """Take notice of changes in constraint problem"""
@@ -582,7 +559,7 @@ class GeometricSolver (Listener):
             (type, data) = message
             if type == "set_point":
                 (variable, point) = data
-                self._update_variable(variable) 
+                self._update_variable(variable)
             elif type == "set_parameter":
                 (constraint, value) = data
                 self._update_constraint(constraint)
@@ -592,7 +569,7 @@ class GeometricSolver (Listener):
             pass
         else:
             raise Exception("message from unknown source"+str((object, message)))
-    
+
     # --------------- internal methods ------------------
 
     def _set_prototype_selection(self, enabled):
@@ -617,96 +594,91 @@ class GeometricSolver (Listener):
             self._map[rigid] = var
             self.dr.add(rigid)
             self._update_variable(var)
-    
+
     def _add_line(self, var):
         diag_print("add line "+str(var),"GeometricSolver")
         # find coincident points
         points = list(self.problem.get_coincident_points(var))
         diag_print("on "+str(points),"GeometricSolver")
-        if self.dimension == 2:
-            if len(points) == 0:
-                self._map_line_distance(var)
-            elif len(points) >= 1:
-                self._map_line_point_distance(var, points[0])
-        elif self.dimension == 3:
-            if len(points) == 0:
-                self._map_line_3d_distance(var)
-            elif len(points) >= 1:
-                self._map_line_3d_point_distance(var, points[0])
+
+        if len(points) == 0:
+            self._map_line_distance(var)
+        elif len(points) >= 1:
+            self._map_line_point_distance(var, points[0])
 
     def _map_line_distance(self,line):
         # map a line (coincident with no points) to a distance cluster (on two new point variables)
         v = str(line)+"_vertex"
         n = str(line)+"_normal"
         dist = Rigid([v,n])
-        # add add-hoc attributes to rigid, so we can distinguish vertex and normal! 
+        # add add-hoc attributes to rigid, so we can distinguish vertex and normal!
         dist.vertex = v
         dist.normal = n
         # add rigids for created points, needed for prototypes
-        # NOTE: adding non-problem variables to mapping! 
+        # NOTE: adding non-problem variables to mapping!
         # TODO: clean up after removal of line
         vertex_rigid = Rigid([dist.vertex])
         self.dr.add(vertex_rigid)
-        self._map[dist.vertex] = vertex_rigid 
+        self._map[dist.vertex] = vertex_rigid
         normal_rigid = Rigid([dist.normal])
         self.dr.add(normal_rigid)
-        self._map[dist.normal] = normal_rigid 
+        self._map[dist.normal] = normal_rigid
         # add line to mapping
         self._map[line] = dist
         self._map[dist] = line
         self.dr.add(dist)
-        diag_print("mapped "+str(line)+" to "+str(dist),"GeometricSolver")   
+        diag_print("mapped "+str(line)+" to "+str(dist),"GeometricSolver")
         # update configurations
         self._update_variable(line)
- 
+
     def _map_line_point_distance(self,line, point):
         # map a line coincident with one point to a distance clusters (and one new point variable)
         v = list(self._map[point].vars)[0]
         n = str(line)+"_normal"
         dist = Rigid([v,n])
-        # add add-hoc attributes to rigid, so we can distinguish vertex and normal! 
+        # add add-hoc attributes to rigid, so we can distinguish vertex and normal!
         dist.vertex = v
-        dist.normal = n 
+        dist.normal = n
         # add rigids for created points, needed for prototypes
-        # NOTE: adding non-problem variables to mapping! 
+        # NOTE: adding non-problem variables to mapping!
         # TODO: clean up after removal of line
         normal_rigid = Rigid([dist.normal])
         self.dr.add(normal_rigid)
-        self._map[dist.normal] = normal_rigid 
-        # add to mapping 
+        self._map[dist.normal] = normal_rigid
+        # add to mapping
         self._map[line] = dist
         self._map[dist] = line
         self.dr.add(dist)
-        diag_print("mapped "+str(line)+" to "+str(dist),"GeometricSolver")   
+        diag_print("mapped "+str(line)+" to "+str(dist),"GeometricSolver")
         self._update_variable(line)
- 
+
     def _map_line_3d_distance(self,line):
         # map a line (coincident with no points) to a distance cluster (on two new point variables)
         v = str(line)+"_vertex"
         n1 = str(line)+"_normal1"
         n2 = str(line)+"_normal2"
         dist = Rigid([v,n1, n2])
-        # add add-hoc attributes to rigid, so we can distinguish vertex and normal! 
+        # add add-hoc attributes to rigid, so we can distinguish vertex and normal!
         dist.vertex = v
         dist.normal1 = n1
         dist.normal2 = n2
         # add rigids for created points, needed for prototypes
-        # NOTE: adding non-problem variables to mapping! 
+        # NOTE: adding non-problem variables to mapping!
         # TODO: clean up after removal of line
         vertex_rigid = Rigid([dist.vertex])
         self.dr.add(vertex_rigid)
-        self._map[dist.vertex] = vertex_rigid 
+        self._map[dist.vertex] = vertex_rigid
         normal1_rigid = Rigid([dist.normal1])
         self.dr.add(normal1_rigid)
-        self._map[dist.normal1] = normal1_rigid 
+        self._map[dist.normal1] = normal1_rigid
         normal2_rigid = Rigid([dist.normal2])
         self.dr.add(normal2_rigid)
-        self._map[dist.normal2] = normal2_rigid 
+        self._map[dist.normal2] = normal2_rigid
         # add line to mapping
         self._map[line] = dist
         self._map[dist] = line
         self.dr.add(dist)
-        diag_print("mapped "+str(line)+" to "+str(dist),"GeometricSolver")   
+        diag_print("mapped "+str(line)+" to "+str(dist),"GeometricSolver")
         # update configurations
         self._update_variable(line)
 
@@ -716,30 +688,30 @@ class GeometricSolver (Listener):
         n1 = str(line)+"_normal1"
         n2 = str(line)+"_normal2"
         dist = Rigid([v,n1, n2])
-        # add add-hoc attributes to rigid, so we can distinguish vertex and normal! 
+        # add add-hoc attributes to rigid, so we can distinguish vertex and normal!
         dist.vertex = v
-        dist.normal1 = n1 
-        dist.normal2 = n2 
+        dist.normal1 = n1
+        dist.normal2 = n2
         # add rigids for created points, needed for prototypes
-        # NOTE: adding non-problem variables to mapping! 
+        # NOTE: adding non-problem variables to mapping!
         # TODO: clean up after removal of line
         normal1_rigid = Rigid([dist.normal1])
         self.dr.add(normal1_rigid)
-        self._map[dist.normal1] = normal1_rigid 
+        self._map[dist.normal1] = normal1_rigid
         normal2_rigid = Rigid([dist.normal2])
         self.dr.add(normal2_rigid)
-        self._map[dist.normal2] = normal2_rigid 
-        # add to mapping 
+        self._map[dist.normal2] = normal2_rigid
+        # add to mapping
         self._map[line] = dist
         self._map[dist] = line
         self.dr.add(dist)
-        diag_print("mapped "+str(line)+" to "+str(dist),"GeometricSolver")   
+        diag_print("mapped "+str(line)+" to "+str(dist),"GeometricSolver")
         self._update_variable(line)
 
     def _rem_variable(self, var):
         diag_print("GeometricSolver._rem_variable","GeometricSolver")
         if var in self._map:
-            self.dr.remove(self._map[var])      
+            self.dr.remove(self._map[var])
             # Note: CLSolver automatically removes variables with no dependent clusters
             del self._map[var]
 
@@ -785,7 +757,6 @@ class GeometricSolver (Listener):
                 self.dr.remove(self.fixcluster)
             self.fixvars.append(con.variables()[0])
             if len(self.fixvars) >= 1:
-            #if len(self.fixvars) >= self.problem.dimension:
                 self.fixcluster = Rigid(self.fixvars)
                 self.dr.add(self.fixcluster)
                 self.dr.set_root(self.fixcluster)
@@ -808,32 +779,18 @@ class GeometricSolver (Listener):
                 point_rigid = self._map[point]
                 point_vertex = next(iter(point_rigid.vars))
                 if point_vertex not in line_rigid.vars:
-                    if self.dimension==2:
-                        line_vertex = line_rigid.vertex
-                        line_normal = line_rigid.normal  
-                        angle_hog = Hedgehog(line_vertex,[line_normal, point_vertex])
-                        self._map[con] = angle_hog 
-                        self._map[angle_hog] = con
-                        self.dr.add(angle_hog)
-                        diag_print("mapped "+str(con)+" to "+str(angle_hog),"GeometricSolver")   
-                        self._update_constraint(con)
-                    elif self.dimension==3:
-                        line_vertex = line_rigid.vertex
-                        line_normal1 = line_rigid.normal1  
-                        line_normal2 = line_rigid.normal2  
-                        angle_hog = Hedgehog(line_vertex,[line_normal1, line_normal2, point_vertex])
-                        self._map[con] = angle_hog 
-                        self._map[angle_hog] = con
-                        self.dr.add(angle_hog)
-                        diag_print("mapped "+str(con)+" to "+str(angle_hog),"GeometricSolver")   
-                        self._update_constraint(con)
-                    #endif dimension
-                #endif point_vertex
-            #endif co(line,point)
+                    line_vertex = line_rigid.vertex
+                    line_normal = line_rigid.normal
+                    angle_hog = Hedgehog(line_vertex,[line_normal, point_vertex])
+                    self._map[con] = angle_hog
+                    self._map[angle_hog] = con
+                    self.dr.add(angle_hog)
+                    diag_print("mapped "+str(con)+" to "+str(angle_hog),"GeometricSolver")
+                    self._update_constraint(con)
         else:
             raise Exception("unknown constraint type")
             pass
-         
+
     def _rem_constraint(self, con):
         diag_print("GeometricSolver._rem_constraint","GeometricSolver")
         if isinstance(con,FixConstraint):
@@ -842,7 +799,6 @@ class GeometricSolver (Listener):
             var = con.variables()[0]
             if var in self.fixvars:
                 self.fixvars.remove(var)
-            #if len(self.fixvars) < self.problem.dimension:
             if len(self.fixvars) == 0:
                 self.fixcluster = None
             else:
@@ -855,7 +811,7 @@ class GeometricSolver (Listener):
         elif con in self._map:
             self.dr.remove(self._map[con])
             del self._map[con]
-  
+
     # update methods: set the value of the variables in the constraint graph
 
     def _update_constraint(self, con):
@@ -870,11 +826,6 @@ class GeometricSolver (Listener):
             p0 = vector.vector([1.0,0.0])
             p1 = vector.vector([0.0,0.0])
             p2 = vector.vector([math.cos(angle), math.sin(angle)])
-            # pad vectors to right dimension
-            if self.dimension == 3:
-                p0.append(0.0)
-                p1.append(0.0)
-                p2.append(0.0)
             conf = Configuration({v0:p0,v1:p1,v2:p2})
             self.dr.set(hog, [conf])
             assert con.satisfied(conf.map)
@@ -891,42 +842,14 @@ class GeometricSolver (Listener):
             p0 = self.problem.get_prototype(v0)
             v = self.problem.get_prototype(v1) - p0
             if vector.norm(v) != 0:
-                v = v / vector.norm(v)
+                # HACK because / doesn't work for vector and float
+                v = v * (1/vector.norm(v))
             else:
-                v = vector.vector([0.0 for i in range(self.dimension)])
+                v = vector.vector([0.0, 0.0])
                 v[0] = 1.0
             p1 = p0+v*dist
             conf = Configuration({v0:p0,v1:p1})
             self.dr.set(rig, [conf])
-            assert con.satisfied(conf.map)
-        elif isinstance(con, MateConstraint):
-            # set configuration
-            if self.dimension != 3:
-                raise Exception("MateConstraint only supported in 3D")
-            glue = self._map[con]
-            vars = list(con.variables())
-            vo1 = vars[0]
-            vx1 = vars[1]
-            vy1 = vars[2]
-            vo2 = vars[3]
-            vx2 = vars[4]
-            vy2 = vars[5]
-            po1 = vector.vector([0.0,0.0,0.0])
-            px1 = vector.vector([1.0,0.0,0.0])
-            py1 = vector.vector([0.0,1.0,0.0])
-            trans = con.get_parameter()
-            po2 = transform_point(po1, trans)
-            px2 = transform_point(px1, trans)
-            py2 = transform_point(py1, trans)
-            conf = Configuration({
-                vo1:po1,
-                vx1:px1,
-                vy1:py1,
-                vo2:po2,
-                vx2:px2,
-                vy2:py2,
-            })
-            self.dr.set(glue, [conf])
             assert con.satisfied(conf.map)
         elif isinstance(con, RigidConstraint):
             # set configuration
@@ -943,44 +866,24 @@ class GeometricSolver (Listener):
             if len(lines)==1 and len(points)==1:
                 line = next(iter(lines))
                 point = next(iter(points))
-                if self.dimension == 2:
-                    line_rigid = self._map[line]
-                    point_rigid = self._map[point]
-                    point_vertex = next(iter(point_rigid.vars))
-                    print("point_vertex", point_vertex)
-                    line_vertex = line_rigid.vertex
-                    line_normal = line_rigid.normal
-                    angle_hog = self._map[con]
-                    pv = vector.vector([1.0,0.0])
-                    lv = vector.vector([0.0,0.0])
-                    ln = vector.vector([0.0,1.0])
-                    conf1 = Configuration({line_vertex:lv, line_normal:ln, point_vertex: 1.0*pv})
-                    conf2 = Configuration({line_vertex:lv, line_normal:ln, point_vertex:-1.0*pv})
-                    self.dr.set(angle_hog, [conf1,conf2])
-                    diag_print("set "+str(angle_hog)+" to "+str(conf1),"GeometricSolver")
-                    diag_print("set "+str(angle_hog)+" to "+str(conf2),"GeometricSolver")
-                elif self.dimension == 3:
-                    line_rigid = self._map[line]
-                    point_rigid = self._map[point]
-                    point_vertex = next(iter(point_rigid.vars))
-                    print("point_vertex", point_vertex)
-                    line_vertex = line_rigid.vertex
-                    line_normal1 = line_rigid.normal1
-                    line_normal2 = line_rigid.normal2
-                    angle_hog = self._map[con]
-                    lv = vector.vector([0.0,0.0,0.0])
-                    pv = vector.vector([1.0,0.0,0.0])
-                    ln1 = vector.vector([0.0,1.0,0.0])
-                    ln2 = vector.vector([0.0,0.0,1.0])
-                    conf1 = Configuration({line_vertex:lv, line_normal1:ln1, line_normal2:ln2, point_vertex: 1.0*pv})
-                    conf2 = Configuration({line_vertex:lv, line_normal1:ln1, line_normal2:ln2, point_vertex:-1.0*pv})
-                    self.dr.set(angle_hog, [conf1,conf2])
-                    diag_print("set "+str(angle_hog)+" to "+str(conf1),"GeometricSolver")
-                    diag_print("set "+str(angle_hog)+" to "+str(conf2),"GeometricSolver")
-               #endif dimension
+                line_rigid = self._map[line]
+                point_rigid = self._map[point]
+                point_vertex = next(iter(point_rigid.vars))
+                print("point_vertex", point_vertex)
+                line_vertex = line_rigid.vertex
+                line_normal = line_rigid.normal
+                angle_hog = self._map[con]
+                pv = vector.vector([1.0,0.0])
+                lv = vector.vector([0.0,0.0])
+                ln = vector.vector([0.0,1.0])
+                conf1 = Configuration({line_vertex:lv, line_normal:ln, point_vertex: 1.0*pv})
+                conf2 = Configuration({line_vertex:lv, line_normal:ln, point_vertex:-1.0*pv})
+                self.dr.set(angle_hog, [conf1,conf2])
+                diag_print("set "+str(angle_hog)+" to "+str(conf1),"GeometricSolver")
+                diag_print("set "+str(angle_hog)+" to "+str(conf2),"GeometricSolver")
         else:
             raise Exception("unknown constraint type")
-    
+
     def _update_variable(self, var):
         if isinstance(var, Point):
             self._update_point(var)
@@ -1001,63 +904,28 @@ class GeometricSolver (Listener):
     def _update_line(self, variable):
         cluster = self._map[variable]
         proto = self.problem.get_prototype(variable)
-        if self.dimension == 2:
-            line_vertex = cluster.vertex
-            line_normal = cluster.normal
-            # determine vertex and normal prototype coordinates
-            p1 = proto[0:2]
-            p2 = proto[2:4]
-            v = p1
-            n = perp_2d(p2-p1)
-            # update prototypes of created point variables
-            if line_vertex in self._map:
-                vertex_rigid = self._map[line_vertex]
-                conf = Configuration({line_vertex: v})
-                self.dr.set(vertex_rigid, [conf])
-                diag_print("set "+str(vertex_rigid)+" to "+str(conf),"GeometricSolver")
-            if line_normal in self._map:
-                normal_rigid = self._map[line_normal]
-                conf = Configuration({line_normal: n})
-                self.dr.set(normal_rigid, [conf])
-                diag_print("set "+str(normal_rigid)+" to "+str(conf),"GeometricSolver")
-            # update line configuration
-            conf = Configuration({line_vertex:v, line_normal:n})
-            self.dr.set(cluster, [conf])
-            diag_print("set "+str(cluster)+" to "+str(conf),"GeometricSolver")
-        elif self.dimension == 3:
-            line_vertex = cluster.vertex
-            line_normal1 = cluster.normal1
-            line_normal2 = cluster.normal2
-            # determine vertex and normal prototype coordinates
-            p1 = proto[0:3]
-            p2 = proto[3:6]
-            v = p1
-            n0 = p2
-            n1,n2 = perp_3d(p2-p1)
-            n1 = n1 + p1
-            n2 = n2 + p1
-            # update prototypes of created point variables
-            if line_vertex in self._map:
-                vertex_rigid = self._map[line_vertex]
-                conf = Configuration({line_vertex: v})
-                self.dr.set(vertex_rigid, [conf])
-                diag_print("set "+str(vertex_rigid)+" to "+str(conf),"GeometricSolver")
-            if line_normal1 in self._map:
-                normal1_rigid = self._map[line_normal1]
-                conf = Configuration({line_normal1: n1})
-                self.dr.set(normal1_rigid, [conf])
-                diag_print("set "+str(normal1_rigid)+" to "+str(conf),"GeometricSolver")
-            if line_normal2 in self._map:
-                normal2_rigid = self._map[line_normal2]
-                conf = Configuration({line_normal2: n2})
-                self.dr.set(normal2_rigid, [conf])
-                diag_print("set "+str(normal2_rigid)+" to "+str(conf),"GeometricSolver")
-            # update line configuration
-            conf = Configuration({line_vertex:v, line_normal1:n1, line_normal2:n2})
-            self.dr.set(cluster, [conf])
-            diag_print("set "+str(cluster)+" to "+str(conf),"GeometricSolver")
-        #endif dimension
-    #fed _update_line
+        line_vertex = cluster.vertex
+        line_normal = cluster.normal
+        # determine vertex and normal prototype coordinates
+        p1 = proto[0:2]
+        p2 = proto[2:4]
+        v = p1
+        n = perp_2d(p2-p1)
+        # update prototypes of created point variables
+        if line_vertex in self._map:
+            vertex_rigid = self._map[line_vertex]
+            conf = Configuration({line_vertex: v})
+            self.dr.set(vertex_rigid, [conf])
+            diag_print("set "+str(vertex_rigid)+" to "+str(conf),"GeometricSolver")
+        if line_normal in self._map:
+            normal_rigid = self._map[line_normal]
+            conf = Configuration({line_normal: n})
+            self.dr.set(normal_rigid, [conf])
+            diag_print("set "+str(normal_rigid)+" to "+str(conf),"GeometricSolver")
+        # update line configuration
+        conf = Configuration({line_vertex:v, line_normal:n})
+        self.dr.set(cluster, [conf])
+        diag_print("set "+str(cluster)+" to "+str(conf),"GeometricSolver")
 
     def _update_fix(self):
         if self.fixcluster:
@@ -1070,30 +938,30 @@ class GeometricSolver (Listener):
         else:
             diag_print("no fixcluster to update","geometric")
             pass
-   
+
 #class GeometricSolver
 
 
 # ------------ GeometricDecomposition -------------
 
 class GeometricDecomposition:
-    """Represents the result of solving a GeometricProblem. A cluster is a list of 
+    """Represents the result of solving a GeometricProblem. A cluster is a list of
        point variable names and a list of solutions for
        those variables. A solution is a dictionary mapping variable names to
        points. The cluster also keeps a list of sub-clusters (GeometricDecomposition)
        and a set of flags, indicating incidental/structural
        under/overconstrained
-       
+
        instance attributes:
             variables       - a list of int variable names
-            solutions       - a list of solutions. Each solution is a dictionary 
-                              mapping variable names to vectors. 
-            subs            - a list of sub-clusters 
+            solutions       - a list of solutions. Each solution is a dictionary
+                              mapping variable names to vectors.
+            subs            - a list of sub-clusters
             flag            - value                 meaning
                               OK                    well constrained
                               INCONSISTENT                incicental over-constrained
                               DEGENERTE               incidental under-constrained
-                              OVERCONSTRAINED                structural overconstrained 
+                              OVERCONSTRAINED                structural overconstrained
                               UNDERCONSTRAINED               structural underconstrained
                               UNSOLVED              unsolved (no input values)
                               EMPTY                 empty (no variables)
@@ -1107,8 +975,8 @@ class GeometricDecomposition:
     INCONSISTENT = "inconsistent"
     DEGENERATE = "degenerate"
     # old, depricated terms
-    I_OVER = "inconsistent"      
-    I_UNDER = "degenerate" 
+    I_OVER = "inconsistent"
+    I_UNDER = "degenerate"
     S_OVER = "over-constrained"
     S_UNDER = "under-constrained"
 
@@ -1120,7 +988,7 @@ class GeometricDecomposition:
         self.flag = GeometricDecomposition.OK
 
     def __eq__(self, other):
-        if isinstance(other, GeometricDecomposition): 
+        if isinstance(other, GeometricDecomposition):
             return self.variables == other.variables
         else:
             return False
@@ -1130,17 +998,17 @@ class GeometricDecomposition:
 
     def __str__(self):
         return self._str_recursive()
- 
+
     def _str_recursive(result, depth=0, done=None):
         # create indent
         spaces = ""
         for i in range(depth):
             spaces = spaces + "|"
-        
+
         # make done
         if done == None:
             done = set()
-       
+
         # recurse
         s = ""
         if result not in done:
@@ -1150,11 +1018,11 @@ class GeometricDecomposition:
             for sub in result.subs:
                 s = s + sub._str_recursive(depth+1, done)
         elif len(result.subs) > 0:
-            s = s + spaces + "|...\n" 
+            s = s + spaces + "|...\n"
 
         # pritn cluster
         s = spaces + "cluster " + str(list(result.variables)) + " " + str(result.flag) + " " + str(len(result.solutions)) + " solutions\n" + s
-        
+
         return s
     # def
 
@@ -1165,36 +1033,36 @@ class GeometricVariable:
     """Abstract base class for geometric variabes (Point, Line, etc)
         A geometric variable is identified by its name attibute and its type.
         It is hasable so it can be used in sets etc.
-    """ 
-  
+    """
+
     def __eq__(self, other):
-        return self.__class__ == other.__class__ and self.name == other.name  
- 
+        return self.__class__ == other.__class__ and self.name == other.name
+
     def __hash__(self):
         return hash(self.name)
-   
+
     def __repr__(self):
         return self.__class__.__name__+"("+repr(self.name)+")"
-    
+
 
 class Point(GeometricVariable):
     def __init__(self, name):
         self.name = name
-    
+
     def __str__(self):
         return "Point("+str(self.name)+")"
 
 class Line(GeometricVariable):
     def __init__(self, name):
         self.name = name
-    
+
     def __str__(self):
         return "Line("+str(self.name)+")"
 
 class Plane(GeometricVariable):
     def __init__(self, name):
         self.name = name
-    
+
     def __str__(self):
         return "Plane("+str(self.name)+")"
 
@@ -1203,7 +1071,7 @@ class Plane(GeometricVariable):
 
 class ParametricConstraint(Constraint, Notifier):
     """A constraint with a parameter and notification when parameter changes"""
-    
+
     def __init__(self):
         """initialize ParametricConstraint"""
         Notifier.__init__(self)
@@ -1223,9 +1091,9 @@ class FixConstraint(ParametricConstraint):
 
     def __init__(self, var, pos):
         """Create a new FixConstraint instance
-        
+
            keyword args:
-            var    - a point variable name 
+            var    - a point variable name
             pos    - the position parameter
         """
         ParametricConstraint.__init__(self)
@@ -1233,7 +1101,7 @@ class FixConstraint(ParametricConstraint):
         self.set_parameter(vector.vector(pos))
 
     def satisfied(self, mapping):
-        """return True iff mapping from variable names to points satisfies constraint""" 
+        """return True iff mapping from variable names to points satisfies constraint"""
         point = mapping[self._variables[0]]
         if len(point) != len(self._value):
             diag_print("warning: FixConstraint.satisfied: vectors of unequal length", "geometric.FixConstraint.satisfied")
@@ -1250,21 +1118,21 @@ class FixConstraint(ParametricConstraint):
 
 class DistanceConstraint(ParametricConstraint):
     """A constraint on the Euclidean distance between two points"""
-    
+
     def __init__(self, a, b, dist):
         """Create a new DistanceConstraint instance
-        
+
            keyword args:
-            a    - a point variable name 
+            a    - a point variable name
             b    - a point variable name
             dist - the distance parameter value
         """
         ParametricConstraint.__init__(self)
         self._variables = [a,b]
         self.set_parameter(dist)
-    
+
     def satisfied(self, mapping):
-        """return True iff mapping from variable names to points satisfies constraint""" 
+        """return True iff mapping from variable names to points satisfies constraint"""
         a = mapping[self._variables[0]]
         b = mapping[self._variables[1]]
         result = tol_eq(distance_2p(a,b), abs(self._value))
@@ -1278,10 +1146,10 @@ class DistanceConstraint(ParametricConstraint):
 
 class AngleConstraint(ParametricConstraint):
     """A constraint on the angle in point B of a triangle ABC"""
-    
+
     def __init__(self, a, b, c, ang):
-        """Create a new AngleConstraint instance. 
-        
+        """Create a new AngleConstraint instance.
+
            keyword args:
             a    - a point variable name
             b    - a point variable name
@@ -1293,13 +1161,13 @@ class AngleConstraint(ParametricConstraint):
         self.set_parameter(ang)
 
     def satisfied(self, mapping):
-        """return True iff mapping from variable names to points satisfies constraint""" 
+        """return True iff mapping from variable names to points satisfies constraint"""
         a = mapping[self._variables[0]]
         b = mapping[self._variables[1]]
         c = mapping[self._variables[2]]
         ang = angle_3p(a,b,c)
         if ang == None:
-            # if the angle is indeterminate, its probably ok. 
+            # if the angle is indeterminate, its probably ok.
             result = True
         else:
             # in 3d, ignore the sign of the angle
@@ -1321,19 +1189,19 @@ class AngleConstraint(ParametricConstraint):
 
 class RigidConstraint(ParametricConstraint):
     """A constraint to set the relative position of a set of points"""
-    
+
     def __init__(self, conf):
         """Create a new DistanceConstraint instance
-        
+
            keyword args:
-            conf    - a Configuration 
+            conf    - a Configuration
         """
         ParametricConstraint.__init__(self)
         self._variables = list(conf.vars())
-        self.set_parameter(conf.copy())  
-    
+        self.set_parameter(conf.copy())
+
     def satisfied(self, mapping):
-        """return True iff mapping from variable names to points satisfies constraint""" 
+        """return True iff mapping from variable names to points satisfies constraint"""
         result = True
         conf = self._value
         for index in range(1,len(self._variables)-1):
@@ -1349,7 +1217,7 @@ class RigidConstraint(ParametricConstraint):
         return result
 
     def __str__(self):
-        return "RigidConstraint("+str(self._variables)+")" 
+        return "RigidConstraint("+str(self._variables)+")"
 
 class ClockwiseConstraint (SelectionConstraint):
     """A selection constraint for 3 points to have a clockwise orientation (not co-linear!)"""
@@ -1394,40 +1262,40 @@ class NotLeftHandedConstraint (SelectionConstraint):
 
 class MateConstraint(ParametricConstraint):
     """A constraint to mate two (rigid) objects.
-       Defines two coordinate systems. Coordinate system 2 is a transformed version of coordinate system 1, using the the 
+       Defines two coordinate systems. Coordinate system 2 is a transformed version of coordinate system 1, using the the
        given 4x4 transformation matrix.
-       o1, x1, y1 are point variables of object1, which is positioned relative to coordinate system 1. 
+       o1, x1, y1 are point variables of object1, which is positioned relative to coordinate system 1.
        o2, x2, y2 are point variables of object2. which is positioned relative to coordinate system 2.
        point o1 coincides with the origin of the coordinate system for object 1
-       point x1 is on the x-axis. 
-       point y1 is on the y-axis, or as close as possible 
+       point x1 is on the x-axis.
+       point y1 is on the y-axis, or as close as possible
        The same for object 2.
     """
-    
+
     def __init__(self, o1, x1, y1,o2, x2, y2, trans):
         """Create a new DistanceConstraint instance
-        
+
            keyword args:
-            conf    - a Configuration 
+            conf    - a Configuration
         """
         ParametricConstraint.__init__(self)
         self._variables = [o1, x1, y1, o2, x2, y2]
         #assert isinstance(trans, Mat)
-        self.set_parameter(trans)  
-    
+        self.set_parameter(trans)
+
     def satisfied(self, mapping):
-        """return True iff mapping from variable names to points satisfies constraint""" 
+        """return True iff mapping from variable names to points satisfies constraint"""
         # determine coordinate system 1
         vo1, vx1, vy1, vo2, vx2, vy2 = self._variables
         po1, px1, py1, po2, px2, py2 = [mapping[v] for v in self._variables]
         trans = self.get_parameter()
         cs1 = make_hcs_3d(po1, px1, py1)
-        cs2 = make_hcs_3d(po2, px2, py2) 
+        cs2 = make_hcs_3d(po2, px2, py2)
         cs1trans = cs1.mmul(trans)
         return bool(cs1trans == cs2)
 
     def __str__(self):
-        return "MateConstraint("+str(self._variables)+")" 
+        return "MateConstraint("+str(self._variables)+")"
 
 
 class CoincidenceConstraint(Constraint):
@@ -1435,16 +1303,16 @@ class CoincidenceConstraint(Constraint):
     def __init__(self, point, geometry):
         assert isinstance(point, Point)
         assert isinstance(geometry, GeometricVariable)
-        self._point = point  
+        self._point = point
         self._geometry = geometry
         self._variables = [point, geometry]
 
     def satisfied(self, mapping):
-        """return True iff mapping from variable names to points satisfies constraint""" 
+        """return True iff mapping from variable names to points satisfies constraint"""
         if isinstance(self._geometry, Point):
             p1 = mapping[self._point]
             p2 = mapping[self._geometry]
-            return tol_eq(distance_2p(p1,p2),0)   
+            return tol_eq(distance_2p(p1,p2),0)
         elif isinstance(self._geometry, Line):
             p = mapping[self._point]
             l = mapping[self._geometry]
@@ -1453,7 +1321,7 @@ class CoincidenceConstraint(Constraint):
                 p2 = l[2:4]
             elif len(l)==6:   # 3D
                 p1 = l[0:3]
-                p2 = l[3:6]    
+                p2 = l[3:6]
             else:
                 raise Exception("line has invalid number of values")
             d =  distance_point_line(p, p1, p2)
@@ -1469,11 +1337,11 @@ class CoincidenceConstraint(Constraint):
             p1 = l[0:3]
             p2 = l[3:6]
             p2 = l[6:9]
-            return tol_eq(distance_point_plane(p, p1, p2, p3),0)   
+            return tol_eq(distance_point_plane(p, p1, p2, p3),0)
         else:
             raise Exception("unknown geometry type""")
- 
+
     def __str__(self):
-        return "CoincidenceConstraint("+str(self._point)+","+str(self._geometry)+")" 
+        return "CoincidenceConstraint("+str(self._point)+","+str(self._geometry)+")"
 
 

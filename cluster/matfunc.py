@@ -3,7 +3,7 @@
    Updates and documentation:  http://users.rcn.com/python/download/python.htm
    Revision In Use:  'File %n, Ver %v, Date %f'                             '''
 Version = 'File MATFUNC.PY, Ver 183, Date 12-Dec-2002,14:33:42'
-# Modified by Rick van der Meiden 25-1-2007: included a makehash() and __hash__ in Table. 
+# Modified by Rick van der Meiden 25-1-2007: included a makehash() and __hash__ in Table.
 # Modified by Rick van der Meiden 20090311: added normSquared
 # Modified by Rick van der Meiden 20101102: added Vec2 and Vec3 constructor functions
 
@@ -87,8 +87,8 @@ class Table(list):
     def __eq__( self, rhs ):  return (self - rhs).forall( iszero )
 
     # by Rick van der Meiden 2007-01-25
-    # Tables and it's subclasses can now be used 
-    # in sets and dictionaries, but please be 
+    # Tables and it's subclasses can now be used
+    # in sets and dictionaries, but please be
     # careful with mutations. It is possible
     # to compute a new __hash__ by calling
     # makehash()
@@ -97,7 +97,7 @@ class Table(list):
         for var in self:
             val = (hash(val) + hash(var)) % 0xFFFFFFF
         self._hashvalue = val
-    
+
     def __hash__(self):
         return self._hashvalue
 
@@ -105,7 +105,8 @@ class Vec(Table):
     def dot( self, otherVec ):  return reduce(operator.add, list(map(operator.mul, self, otherVec)), 0.0)
     def norm( self ):  return math.sqrt(abs( self.dot(self.conjugate()) ))
     def normSquared( self ):  return abs( self.dot(self.conjugate()) )
-    def normalize( self ):  return self / self.norm()
+    # HACK
+    def normalize( self ):  return self * (1/self.norm())
     def outer( self, otherVec ):  return Mat([otherVec*x for x in self])
     def cross( self, otherVec ):
         'Compute a Vector or Cross Product with another vector'
@@ -119,7 +120,8 @@ class Vec(Table):
         sigma = 1.0 - t**2
         if sigma != 0.0:
             t = v[index] = t<=0 and t-1.0 or -sigma / (t + 1.0)
-            v /= t
+            # HACK
+            v = v * (1/t)
         return v, 2.0 * t**2 / (sigma + t**2)
     def polyval( self, x ):
         'Vec([6,3,4]).polyval(5) evaluates to 6*x**2 + 3*x + 4 at x=5'

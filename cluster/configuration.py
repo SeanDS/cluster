@@ -1,4 +1,4 @@
-"""This module provides a Configuration class. 
+"""This module provides a Configuration class.
 
 A configuration is a set of named points with coordinates."""
 
@@ -13,11 +13,11 @@ def perp2D(v):
     return w
 
 class Configuration:
-    """A set of named points with coordinates of a specified dimension. 
-    
-       Immutable. Defines equality and a hash function. 
-    
-       Attributes: 
+    """A set of named points with coordinates of a specified dimension.
+
+       Immutable. Defines equality and a hash function.
+
+       Attributes:
        map - a dictionary mapping variable names to point values.
        dimension - the dimension of the space in which the configuration is embedded
        underconstrained - flag indicating an underconstrained merge (not a unique solution)
@@ -37,7 +37,7 @@ class Configuration:
         """returns a shallow copy"""
         new = Configuration(self.map)
         new.underconstrained = self.underconstrained
-        return new 
+        return new
 
     def vars(self):
         """return list of variables"""
@@ -55,7 +55,9 @@ class Configuration:
             ph = Vec(p)
             ph.append(1.0)
             ph = t.mmul(ph)
-            p = vector.vector(ph[0:-1]) / ph[-1]
+            # HACK because / doesn't work for vector and float
+            zzz = 1 / ph[-1]
+            p = vector.vector(ph[0:-1]) * zzz
             newmap[v] = p
         return Configuration(newmap)
 
@@ -75,7 +77,7 @@ class Configuration:
         for v in vars:
             newmap[v] = self.map[v]
         return Configuration(newmap)
-    
+
     def merge(self, other):
         """returns a new configurations which is this one plus the given other configuration transformed, such that common points will overlap (if possible)."""
         t = self.merge_transform(other)
@@ -91,7 +93,7 @@ class Configuration:
         result = self.add(othertransformed)
         result.underconstrained = t.underconstrained
         return result
-    
+
     # NON-PUBLIC
 
     def merge_transform(self,other):
@@ -179,7 +181,7 @@ class Configuration:
             return t
 
     def _merge_transform_3D(self, other):
-        """returns a matrix for a rigid transformation 
+        """returns a matrix for a rigid transformation
            such that points in other are mapped onto points in self
         """
         shared = set(self.vars()).intersection(other.vars())
@@ -198,7 +200,7 @@ class Configuration:
             v1 = list(shared)[0]
             p1s = self.map[v1]
             p1o = other.map[v1]
-            cs1 = make_hcs_3d(p1s, 
+            cs1 = make_hcs_3d(p1s,
                               p1s+vector.vector([1.0,0.0,0.0]),
                               p1s+vector.vector([0.0,1.0,0.0]))
             cs2 = make_hcs_3d(p1o,
@@ -291,12 +293,12 @@ class Configuration:
         elif len(self.map) != len(other.map):
             return False
         else:
-            if not isinstance(other, Configuration): 
+            if not isinstance(other, Configuration):
                 return False
             for var in self.map:
                 if var not in other.map:
                     return False
-            # determine a rotation-translation transformation 
+            # determine a rotation-translation transformation
             # to transform other onto self
             t = self.merge_transform(other)
             othertransformed = other.transform(t)
@@ -305,13 +307,13 @@ class Configuration:
                 d = distance_2p(othertransformed.get(var), self.get(var))
                 if tol_gt(d, 0.0):
                     return False
-            return True 
-    
+            return True
+
     def makehash(self):
         """the hash is based only on variable names (not values)"""
         val = 0
         for var in self.map:
-            val = val + hash(var) 
+            val = val + hash(var)
         self.hashvalue = hash(val)
 
     def checkdimension(self):

@@ -8,7 +8,7 @@ from functools import reduce
 """
 A list based vector class that supports elementwise mathematical operations
 
-In this version, the vector call inherits from list; this 
+In this version, the vector call inherits from list; this
 requires Python 2.2 or later.
 """
 
@@ -25,13 +25,13 @@ class vector(list):
                         return vector(super(vector, self).__getslice__(i,j))
                 except:
                         raise TypeError('vector::FAILURE in __getslice__')
-                
+
         def __add__(self, other):
                 return vector(list(map(lambda x,y: x+y, self, other)))
 
         def __neg__(self):
                 return vector([-x for x in self])
-        
+
         def __sub__(self, other):
                 return vector(list(map(lambda x,y: x-y, self, other)))
 
@@ -82,7 +82,7 @@ class vector(list):
                         vector([x.real for x in self]),
                         vector([x.imag for x in self]),
                         ]
-        
+
         def AbsArg(self):
                 """
                 Return modulus and phase parts
@@ -135,7 +135,7 @@ def randvec(n, lmin=0.0, lmax=1.0, roundoff=0.0):
                 else:
                         return val
         return vector([_round(random.uniform(lmin, lmax),roundoff) for x in range(n)])
-        
+
 def dot(a, b):
     """
     dot product of two vectors.
@@ -144,7 +144,7 @@ def dot(a, b):
         return reduce(lambda x, y: x+y, a*b, 0.)
     except:
         raise TypeError('vector::FAILURE in dot')
-        
+
 def cross(a, b):
     """
     cross product of two 3-vectors.
@@ -175,7 +175,7 @@ def sum(a):
         raise TypeError('vector::FAILURE in sum')
 
 # elementwise operations
-        
+
 def log10(a):
     """
     log10 of each element of a.
@@ -193,7 +193,7 @@ def log(a):
         return vector(list(map(math.log, a)))
     except:
         raise TypeError('vector::FAILURE in log')
-            
+
 def exp(a):
     """
     Elementwise exponential.
@@ -211,7 +211,7 @@ def sin(a):
         return vector(list(map(math.sin, a)))
     except:
         raise TypeError('vector::FAILURE in sin')
-            
+
 def tan(a):
     """
     Elementwise tangent.
@@ -220,7 +220,7 @@ def tan(a):
         return vector(list(map(math.tan, a)))
     except:
         raise TypeError('vector::FAILURE in tan')
-            
+
 def cos(a):
     """
     Elementwise cosine.
@@ -242,7 +242,7 @@ def asin(a):
 def atan(a):
     """
     Elementwise inverse tangent.
-    """        
+    """
     try:
         return vector(list(map(math.atan, a)))
     except:
@@ -305,17 +305,17 @@ def pow(a,b):
                 return vector(list(map(lambda x,y: x**y, a, b)))
         except:
                 raise TypeError('vector::FAILURE in pow')
-        
-def atan2(a,b):    
+
+def atan2(a,b):
     """
     Arc tangent
-    
+
     """
     try:
         return vector(list(map(math.atan2, a, b)))
     except:
         raise TypeError('vector::FAILURE in atan2')
-        
+
 
 ###############################################################################
 if __name__ == "__main__":
@@ -336,7 +336,7 @@ if __name__ == "__main__":
 
         print('len(a)=',len(a))
         print('a.size()=', a.size())
-                        
+
         b = vector([1, 2, 3, 4])
         print('a=', a)
         print('b=', b)
@@ -370,7 +370,7 @@ if __name__ == "__main__":
         print('a*b')
         c = a*b
         c.out()
-        
+
         print('a/1.2')
         c = a/1.2
         c.out()
@@ -393,7 +393,7 @@ if __name__ == "__main__":
 
         print('zeros(10)')
         c = zeros(10)
-        c.out()        
+        c.out()
 
         print('del a')
         del a
