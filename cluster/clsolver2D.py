@@ -1,5 +1,7 @@
 """A generic 2D geometric constraint solver."""
 
+import numpy as np
+
 from .clsolver import *
 from .diagnostic import diag_print, diag_select
 from .selconstr import *
@@ -597,7 +599,7 @@ def solve_dad(v1,v2,v3,d12,a123,d23):
     diag_print("solve_dad: %s %s %s %f %f %f"%(v1,v2,v3,d12,a123,d23),"clmethods")
     p2 = vector.vector([0.0, 0.0])
     p1 = vector.vector([d12, 0.0])
-    p3s = [ vector.vector([d23*math.cos(a123), d23*math.sin(a123)]) ]
+    p3s = [ vector.vector([d23 * np.cos(a123), d23 * np.sin(a123)]) ]
     solutions = []
     for p3 in p3s:
         solution = Configuration({v1:p1, v2:p2, v3:p3})
@@ -614,7 +616,7 @@ def solve_add(a,b,c, a_cab, d_ab, d_bc):
     diag_print("solve_dad: %s %s %s %f %f %f"%(a,b,c,a_cab,d_ab,d_bc),"clmethods")
     p_a = vector.vector([0.0,0.0])
     p_b = vector.vector([d_ab,0.0])
-    dir = vector.vector([math.cos(-a_cab),math.sin(-a_cab)])
+    dir = vector.vector([np.cos(-a_cab), np.sin(-a_cab)])
     solutions = cr_int(p_b, d_bc, p_a, dir)
     rval = []
     for p_c in solutions:
@@ -631,31 +633,30 @@ def solve_ada(a, b, c, a_cab, d_ab, a_abc):
     diag_print("solve_ada: %s %s %s %f %f %f"%(a,b,c,a_cab,d_ab,a_abc),"clmethods")
     p_a = vector.vector([0.0,0.0])
     p_b = vector.vector([d_ab, 0.0])
-    dir_ac = vector.vector([math.cos(-a_cab),math.sin(-a_cab)])
-    dir_bc = vector.vector([math.cos(math.pi+a_abc),math.sin(math.pi+a_abc)])
-    #used for 3D?
-    #dir_ac[1] = math.fabs(dir_ac[1])
-    #dir_bc[1] = math.fabs(dir_bc[1])
-    if tol_eq(math.sin(a_cab), 0.0) and tol_eq(math.sin(a_abc),0.0):
-                m = d_ab/2 + math.cos(-a_cab)*d_ab - math.cos(-a_abc)*d_ab
-                p_c = vector.vector([m,0.0])
-                # p_c = (p_a + p_b) / 2
-                #p_a.append(0.0)
-                #p_b.append(0.0)
-                #p_c.append(0.0)
-                map = {a:p_a, b:p_b, c:p_c}
-                cluster = _Configuration(map)
-                cluster.underconstrained = True
-                rval = [cluster]
+    dir_ac = vector.vector([np.cos(-a_cab), np.sin(-a_cab)])
+    dir_bc = vector.vector([np.cos(np.pi + a_abc), np.sin(np.pi + a_abc)])
+
+    if tol_eq(np.sin(a_cab), 0.0) and tol_eq(np.sin(a_abc),0.0):
+        m = d_ab / 2 + np.cos(-a_cab) * d_ab - np.cos(-a_abc) * d_ab
+        p_c = vector.vector([m,0.0])
+        # p_c = (p_a + p_b) / 2
+        #p_a.append(0.0)
+        #p_b.append(0.0)
+        #p_c.append(0.0)
+        map = {a:p_a, b:p_b, c:p_c}
+        cluster = _Configuration(map)
+        cluster.underconstrained = True
+        rval = [cluster]
     else:
-                solutions = rr_int(p_a,dir_ac,p_b,dir_bc)
-                #p_a.append(0.0)
-                #p_b.append(0.0)
-                rval = []
-                for p_c in solutions:
-                        #p_c.append(0.0)
-                        map = {a:p_a, b:p_b, c:p_c}
-                        rval.append(Configuration(map))
+        solutions = rr_int(p_a,dir_ac,p_b,dir_bc)
+        #p_a.append(0.0)
+        #p_b.append(0.0)
+        rval = []
+        for p_c in solutions:
+            #p_c.append(0.0)
+            map = {a:p_a, b:p_b, c:p_c}
+            rval.append(Configuration(map))
+
     return rval
 
 # -------------------------------------

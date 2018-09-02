@@ -1,8 +1,9 @@
 """Geometric constraint problem and solver. Uses ClusterSolver for solving
 problems incrementally."""
 
+import numpy as np
+
 from . import vector
-import math
 from .clsolver import PrototypeMethod, SelectionMethod
 from .clsolver2D import ClusterSolver2D
 from .cluster import *
@@ -14,10 +15,9 @@ from .notify import Notifier, Listener
 from .tolerance import tol_eq
 from .intersections import angle_3p, distance_2p
 from .intersections import distance_point_line
-from .intersections import is_left_handed, is_right_handed
 from .intersections import is_clockwise, is_counterclockwise
-from .intersections import transform_point, make_hcs_3d
-from .intersections import perp_2d, perp_3d
+from .intersections import transform_point
+from .intersections import perp_2d
 
 # ----------- GeometricProblem -------------
 
@@ -810,7 +810,7 @@ class GeometricSolver (Listener):
             angle = con.get_parameter()
             p0 = vector.vector([1.0,0.0])
             p1 = vector.vector([0.0,0.0])
-            p2 = vector.vector([math.cos(angle), math.sin(angle)])
+            p2 = vector.vector([np.cos(angle), np.sin(angle)])
             conf = Configuration({v0:p0,v1:p1,v2:p2})
             self.dr.set(hog, [conf])
             assert con.satisfied(conf.map)

@@ -7,7 +7,8 @@ Version = 'File MATFUNC.PY, Ver 183, Date 12-Dec-2002,14:33:42'
 # Modified by Rick van der Meiden 20090311: added normSquared
 # Modified by Rick van der Meiden 20101102: added Vec2 and Vec3 constructor functions
 
-import operator, math, random
+import numpy as np
+import operator, random
 from functools import reduce
 NPRE, NPOST = 0, 0                    # Disables pre and post condition checks
 
@@ -103,7 +104,7 @@ class Table(list):
 
 class Vec(Table):
     def dot( self, otherVec ):  return reduce(operator.add, list(map(operator.mul, self, otherVec)), 0.0)
-    def norm( self ):  return math.sqrt(abs( self.dot(self.conjugate()) ))
+    def norm( self ):  return np.sqrt(abs( self.dot(self.conjugate()) ))
     def normSquared( self ):  return abs( self.dot(self.conjugate()) )
     # HACK
     def normalize( self ):  return self * (1/self.norm())
@@ -295,7 +296,7 @@ def funToVec( tgtfun, low=-1, high=1, steps=40, EqualSpacing=0 ):
         xvec = [low+h/2.0+h*i for i in range(steps)]
     else:
         scale, base = (0.0+high-low)/2.0, (0.0+high+low)/2.0
-        xvec = [base+scale*math.cos(((2*steps-1-2*i)*math.pi)/(2*steps)) for i in range(steps)]
+        xvec = [base+scale*np.cos(((2*steps-1-2*i)*np.pi)/(2*steps)) for i in range(steps)]
     yvec = list(map(tgtfun, xvec))
     return Mat( [xvec, yvec] )
 
@@ -379,11 +380,11 @@ if __name__ == '__main__':
     print('\ninverse C:\n', inv, '\nC * inv(C):\n', C.mmul(inv))
     assert C.mmul(inv) == eye(3)
 
-    points = (xvec,yvec) = funToVec(lambda x: math.sin(x)+2*math.cos(.7*x+.1), low=0, high=3, EqualSpacing=1)
-    basis = [lambda x: math.sin(x), lambda x: math.exp(x), lambda x: x**2]
+    points = (xvec,yvec) = funToVec(lambda x: np.sin(x)+2*np.cos(.7*x+.1), low=0, high=3, EqualSpacing=1)
+    basis = [lambda x: np.sin(x), lambda x: np.exp(x), lambda x: x**2]
     print('Func coeffs:', funfit( points, basis ))
     print('Poly coeffs:', polyfit( points, degree=5 ))
-    points = (xvec,yvec) = funToVec(lambda x: math.sin(x)+2*math.cos(.7*x+.1), low=0, high=3)
+    points = (xvec,yvec) = funToVec(lambda x: np.sin(x)+2*np.cos(.7*x+.1), low=0, high=3)
     print('Rational coeffs:', ratfit( points ))
 
     print(polyfit(([1,2,3,4], [1,4,9,16]), 2))

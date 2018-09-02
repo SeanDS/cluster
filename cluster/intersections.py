@@ -1,6 +1,7 @@
-from . import vector
-import math
+import numpy as np
 import random
+
+from . import vector
 from .matfunc import Mat,Vec,eye
 from .tolerance import *
 from .diagnostic import *
@@ -23,63 +24,6 @@ def sign2(x):
     else:
         return -1.0
 
-
-# -------- 3D intersections ---------------
-
-
-def sss_int(p1, r1, p2, r2, p3, r3):
-    """Intersect three spheres, centered in p1, p2, p3 with radius r1,r2,r3 respectively.
-       Returns a list of zero, one or two solution points.
-    """
-    solutions = []
-    # intersect circles in plane
-    cp1 = vector.vector([0.0,0.0])
-    cp2 = vector.vector([vector.norm(p2-p1), 0.0])
-    cpxs = cc_int(cp1, r1, cp2, r2)
-    if len(cpxs) == 0:
-        return []
-    # determine normal of plane though p1, p2, p3
-    n = vector.cross(p2-p1, p3-p1)
-    if not tol_eq(vector.norm(n),0.0):
-        n = n / vector.norm(n)
-    else:
-        # traingle p1, p2, p3 is degenerate
-        # check for 2d solutions
-        if len(cpxs) == 0:
-            return []
-        # project cpxs back to 3d and check radius r3
-        cp4 = cpxs[0]
-        u = normalised(p2-p1)
-        v,w = perp_3d(u)
-        p4 = p1 + cp4[0] * u + cp4[1] * v
-        if tol_eq(vector.norm(p4-p3), r3):
-            return [p4]
-        else:
-            return []
-    # px, rx, nx is circle
-    px = p1 + (p2-p1) * cpxs[0][0] / vector.norm(p2-p1)
-    rx = abs(cpxs[0][1])
-    nx = p2-p1
-    nx = nx / vector.norm(nx)
-    # py is projection of p3 on px,nx
-    dy3 = vector.dot(p3-px, nx)
-    py = p3 - (nx * dy3)
-    if tol_gt(dy3, r3):
-        return []
-    # ry is radius of circle in py
-    if tol_eq(r3,0.0):
-        ry = 0.0
-    else:
-        ry = math.sin(math.acos(min(1.0,abs(dy3/r3))))*r3
-    # determine intersection of circle px, rx and circle py, ry, projected relative to line py-px
-    cpx = vector.vector([0.0,0.0])
-    cpy = vector.vector([vector.norm(py-px), 0.0])
-    cp4s = cc_int(cpx, rx, cpy, ry)
-    for cp4 in cp4s:
-        p4 = px + (py-px) * cp4[0] / vector.norm(py-px) + n * cp4[1]
-        solutions.append(p4)
-    return solutions
-
 # ------- 2D intersections ----------------
 
 def cc_int(p1, r1, p2, r2):
@@ -97,7 +41,7 @@ def cc_int(p1, r1, p2, r2):
     elif r1*r1 < u*u:
         v = 0.0
     else:
-        v = math.sqrt(r1*r1 - u*u)
+        v = np.sqrt(r1 * r1 - u * u)
     # HACK because / doesn't work for vector and float
     zzz = 1 / d
     s = (p2-p1) * u * zzz
@@ -132,7 +76,7 @@ def cl_int(p1,r,p2,v):
     D = p[0]*v[1] - v[0]*p[1]
     E = r*r*d2 - D*D
     if tol_gt(d2, 0) and tol_gt(E, 0):
-        sE = math.sqrt(E)
+        sE = np.sqrt(E)
         x1 = p1[0] + (D * v[1] + sign2(v[1])*v[0]*sE) / d2
         x2 = p1[0] + (D * v[1] - sign2(v[1])*v[0]*sE) / d2
         y1 = p1[1] + (-D * v[0] + abs(v[1])*sE) / d2
@@ -223,7 +167,7 @@ def angle_3p(p1, p2, p3):
         t = 1.0
     elif t < -1.0:
         t = -1.0
-    angle = math.acos(t)
+    angle = np.arccos(t)
     if len(p1) == 2:        # 2D case
         if is_counterclockwise(p1,p2,p3):
             angle = -angle
@@ -285,15 +229,13 @@ def is_colinear(p1,p2,p3):
     perp_u = vector.vector([-u[1], u[0]])
     return tol_eq(vector.dot(perp_u,v), 0)
 
-# ------ 2D or 3D ----
-
 def is_acute(p1,p2,p3):
     """returns True iff angle p1,p2,p3 is acute, i.e. less than pi/2"""
     angle = angle_3p(p1, p2, p3)
     if angle == None:
         return None
     else:
-        return tol_gt(abs(angle), math.pi / 2)
+        return tol_gt(abs(angle), np.pi / 2)
 
 
 def is_obtuse(p1,p2,p3):
@@ -302,108 +244,9 @@ def is_obtuse(p1,p2,p3):
     if angle == None:
         return None
     else:
-        return tol_gt(abs(angle), math.pi / 2)
-
-# -------- 3D ------------
-
-def is_left_handed(p1,p2,p3,p4):
-    """return True if tetrahedron p1 p2 p3 p4 is left handed"""
-    u = p2-p1
-    v = p3-p1
-    uv = vector.cross(u,v)
-    w = p4-p1
-    #return vector.dot(uv,w) < 0
-    return tol_lt(vector.dot(uv,w), 0)
-
-def is_right_handed(p1,p2,p3,p4):
-    """return True if tetrahedron p1 p2 p3 p4 is right handed"""
-    u = p2-p1
-    v = p3-p1
-    uv = vector.cross(u,v)
-    w = p4-p1
-    #return vector.dot(uv,w) > 0
-    return tol_gt(vector.dot(uv,w), 0)
-
-def is_coplanar(p1,p2,p3,p4):
-    """return True if tetrahedron p1 p2 p3 p4 is co-planar (not left- or right-handed)"""
-    u = p2-p1
-    v = p3-p1
-    uv = vector.cross(u,v)
-    w = p4-p1
-    #return vector.dot(uv,w) == 0
-    return tol_eq(vector.dot(uv,w), 0)
-
+        return tol_gt(abs(angle), np.pi / 2)
 
 # --------- coordinate tranformations -------
-
-def make_hcs_3d (a, b, c, righthanded=True):
-    """build a 3D homogeneous coordiate system from three points. The origin is point a. The x-axis is
-    b-a, the y axis is c-a, or as close as possible after orthogonormalisation."""
-    # create orthonormal basis
-    u = normalised(b-a)
-    v = normalised(c-a)
-    nu = vector.norm(u)
-    nv = vector.norm(v)
-    if tol_eq(nu,0.0) and tol_eq(nv,0.0):
-        # all points equal, no rotation
-        u = vector.vector([1.0,0.0,0.0])
-        v = vector.vector([0.0,1.0,0.0])
-    elif tol_eq(nu, 0.0):
-        # determine u perpendicular from v
-        u,dummy = perp_3d(v)
-    elif tol_eq(nv, 0.0):
-        # determine v perpendicular from u
-        dummy,v = perp_3d(u)
-    # ensure that u and v are different
-    if tol_eq(vector.norm(u-v),0.0):
-        dummy,v = perp_3d(u)
-    # make the basis vectors orthogonal
-    w = vector.cross(u,v)
-    v = vector.cross(w,u)
-    # flip basis if lefthanded desired
-    if righthanded==False:
-        w = -w
-    # create matix with basis vectors + translation as columns
-    hcs = Mat([
-        [u[0],v[0], w[0], a[0]],
-        [u[1],v[1], w[1], a[1]],
-        [u[2],v[2], w[2], a[2]],
-        [0.0, 0.0, 0.0, 1.0]    ])
-    return hcs
-
-def make_hcs_3d_scaled (a, b, c):
-    """build a 3D homogeneus coordiate system from three points, and derive scale from distance between points"""
-     # create orthonormal basis
-    u = normalised(b-a)
-    v = normalised(c-a)
-    nu = vector.norm(u)
-    nv = vector.norm(v)
-    if tol_eq(nu,0) and tol_eq(nv,0):
-        # all points equal, no rotation
-        u = vector.vector([1.0,0.0,0.0])
-        v = vector.vector([0.0,1.0,0.0])
-    elif tol_eq(nu, 0):
-        # determine u perpendicular from v
-        u,dummy = perp_3d(v)[0]
-    elif tol_eq(nv, 0):
-        # determine v perpendicular from u
-        dummy,v = perp_3d(u)[0]
-    # make the basis vectors orthogonal
-    w = vector.cross(u,v)
-    v = vector.cross(w,u)
-    # scale again
-    if not tol_eq(vector.norm(b-a),0.0):
-        u = u / vector.norm(b-a)
-    if not tol_eq(vector.norm(c-a),0.0):
-        v = v / vector.norm(c-a)
-    # note: w is not scaled
-    # create matix with basis vectors + translation as columns
-    hcs = Mat([
-        [u[0],v[0], w[0], a[0]],
-        [u[1],v[1], w[1], a[1]],
-        [u[2],v[2], w[2], a[2]],
-        [0.0, 0.0, 0.0, 1.0]    ])
-    return hcs
 
 def make_hcs_2d (a, b):
     """build a 2D homogeneus coordiate system from two points"""
@@ -454,84 +297,13 @@ def translate_2D(dx,dy):
 
 def rotate_2D(angle):
     """rotation matrix for rotation in 2d with homogeneous coordinates"""
-    cosa = math.cos(angle)
-    sina = math.sin(angle)
+    cosa = np.cos(angle)
+    sina = np.sin(angle)
     mat = Mat([
         [cosa,-sina,0.0],
         [sina,cosa,0.0],
         [0.0, 0.0, 1.0] ])
     return mat
-
-# --- 3D
-
-def id_transform_3D():
-    return eye(4)
-
-def rotate_3D_z(angle):
-    """rotation matrix for rotation in 3d over z-axis with homogeneous coordinates"""
-    cosa = math.cos(angle)
-    sina = math.sin(angle)
-    mat = Mat([
-        [cosa,-sina,0.0, 0.0],
-        [sina,cosa, 0.0, 0.0],
-        [0.0, 0.0, 1.0, 0.0],
-        [0.0, 0.0, 0.0, 1.0] ] )
-    return mat
-
-def rotate_3D_y(angle):
-    """rotation matrix for rotation in 3d over y-axis with homogeneous coordinates"""
-    cosa = math.cos(angle)
-    sina = math.sin(angle)
-    mat = Mat([
-        [cosa,0.0,sina, 0.0],
-        [0.0, 1.0, 0.0, 0.0],
-        [-sina,0.0,cosa, 0.0],
-        [0.0, 0.0, 0.0, 1.0] ] )
-    return mat
-
-def rotate_3D_x(angle):
-    """rotation matrix for rotation in 3d over x-axis with homogeneous coordinates"""
-    cosa = math.cos(angle)
-    sina = math.sin(angle)
-    mat = Mat([
-        [1.0, 0.0,0.0, 0.0],
-        [0.0, cosa, -sina, 0.0],
-        [0.0, sina, cosa, 0.0],
-        [0.0, 0.0, 0.0, 1.0] ] )
-    return mat
-
-def translate_3D(dx,dy,dz):
-    mat = Mat([
-    [1.0, 0.0, 0.0, dx] ,
-    [0.0, 1.0, 0.0, dy] ,
-    [0.0, 0.0, 1.0, dz] ,
-    [0.0, 0.0, 0.0, 1.0] ] )
-    return mat
-
-def scale_3D(sx, sy, sz):
-    mat = Mat([
-    [sx, 0.0, 0.0, 0.0] ,
-    [0.0, sy, 0.0, 0.0] ,
-    [0.0, 0.0, sz, 0.0] ,
-    [0.0, 0.0, 0.0, 1.0] ] )
-    return mat
-
-def uniform_scale_3D(scale):
-    mat = Mat([
-    [scale, 0.0, 0.0, 0.0] ,
-    [0.0, scale, 0.0, 0.0] ,
-    [0.0, 0.0, scale, 0.0] ,
-    [0.0, 0.0, 0.0, 1.0] ] )
-    return mat
-
-def pivot_scale_3D(pivot,scale):
-    x = pivot[0]
-    y = pivot[1]
-    z = pivot[2]
-    return translate_3D(x, y, z).mmul(
-            uniform_scale_3D(scale).mmul(
-                translate_3D(-x, -y, -z)))
-
 
 # ---- applyign transformations
 
@@ -548,16 +320,6 @@ def transform_point(point, transform):
 def perp_2d(v):
     """returns the orthonormal vector."""
     return normalised(vector.vector([-v[1], v[0]]))
-
-
-perp_matrix = rotate_3D_x(math.pi/2).mmul(rotate_3D_z(math.pi/2).mmul(rotate_3D_y(math.pi)))
-
-def perp_3d(u):
-    """Returns 2 orthonormal vectors."""
-    t = transform_point(u, perp_matrix)
-    v = normalised(vector.cross(u,t))
-    w = normalised(vector.cross(u,v))
-    return (v,w)
 
 def normalised(v):
     n = vector.norm(v)
@@ -582,7 +344,7 @@ def test_ll_int():
     v_ac = (p_c - p_a) / vector.norm(p_c - p_a)
     v_bc = (p_c - p_b) / vector.norm(p_c - p_b)
     s = ll_int(p_a, v_ac, p_b, v_bc)
-    if tol_eq(math.fabs(vector.dot(v_ac, v_bc)),1.0):
+    if tol_eq(np.absolute(vector.dot(v_ac, v_bc)), 1.0):
         return len(s) == 0
     else:
         if len(s) > 0:
@@ -605,7 +367,7 @@ def test_rr_int():
     v_ac = (p_c - p_a) / vector.norm(p_c - p_a)
     v_bc = (p_c - p_b) / vector.norm(p_c - p_b)
     s = rr_int(p_a, v_ac, p_b, v_bc)
-    if tol_eq(math.fabs(vector.dot(v_ac, v_bc)),1.0):
+    if tol_eq(np.absolute(vector.dot(v_ac, v_bc)), 1.0):
         return len(s) == 0
     else:
         if len(s) > 0:
@@ -801,19 +563,19 @@ def test_intersections():
 def test_angles():
     print("2D angles")
     for i in range(9):
-        a = i * 45 * math.pi / 180
+        a = i * 45 * np.pi / 180
         p1 = vector.vector([1.0,0.0])
         p2 = vector.vector([0.0,0.0])
-        p3 = vector.vector([math.cos(a),math.sin(a)])
-        print(p3, angle_3p(p1,p2,p3) * 180 / math.pi, "flip", angle_3p(p3,p2,p1) * 180 / math.pi)
+        p3 = vector.vector([np.cos(a), np.sin(a)])
+        print(p3, angle_3p(p1,p2,p3) * 180 / np.pi, "flip", angle_3p(p3,p2,p1) * 180 / np.pi)
 
     print("3D angles")
     for i in range(9):
-        a = i * 45 * math.pi / 180
+        a = i * 45 * np.pi / 180
         p1 = vector.vector([1.0,0.0,0.0])
         p2 = vector.vector([0.0,0.0,0.0])
-        p3 = vector.vector([math.cos(a),math.sin(a),0.0])
-        print(p3, angle_3p(p1,p2,p3) * 180 / math.pi, "flip", angle_3p(p3,p2,p1) * 180 / math.pi)
+        p3 = vector.vector([np.cos(a),np.sin(a),0.0])
+        print(p3, angle_3p(p1,p2,p3) * 180 / np.pi, "flip", angle_3p(p3,p2,p1) * 180 / np.pi)
 
 
 def test_perp_3d():
@@ -833,7 +595,7 @@ def test_sss_degen():
     p3 = vector.vector([1.0, 0.0, 0.0])
     r1 = 2.0
     r2 = 2.0
-    r3 = math.sqrt(3)
+    r3 = np.sqrt(3)
     print(sss_int(p1,r1,p2,r2,p3,r3))
 
 def test_hcs_degen():

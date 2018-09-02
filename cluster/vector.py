@@ -1,7 +1,7 @@
 # a python vector class
 # A. Pletzer 5 Jan 00/11 April 2002
 #
-import math
+import numpy as np
 import random
 from functools import reduce
 
@@ -89,7 +89,7 @@ class vector(list):
                 """
                 return [
                         vector([abs(x) for x in self]),
-                        vector([math.atan2(x.imag,x.real) for x in self]),
+                        vector([np.arctan2(x.imag,x.real) for x in self]),
                         ]
 
 
@@ -161,7 +161,7 @@ def norm(a):
     Computes the norm of vector a.
     """
     try:
-        return math.sqrt(abs(dot(a,a)))
+        return np.sqrt(abs(dot(a,a)))
     except:
         raise TypeError('vector::FAILURE in norm')
 
@@ -181,7 +181,7 @@ def log10(a):
     log10 of each element of a.
     """
     try:
-        return vector(list(map(math.log10, a)))
+        return vector(list(map(np.log10, a)))
     except:
         raise TypeError('vector::FAILURE in log10')
 
@@ -190,7 +190,7 @@ def log(a):
     log of each element of a.
     """
     try:
-        return vector(list(map(math.log, a)))
+        return vector(list(map(np.log, a)))
     except:
         raise TypeError('vector::FAILURE in log')
 
@@ -199,7 +199,7 @@ def exp(a):
     Elementwise exponential.
     """
     try:
-        return vector(list(map(math.exp, a)))
+        return vector(list(map(np.exp, a)))
     except:
         raise TypeError('vector::FAILURE in exp')
 
@@ -208,7 +208,7 @@ def sin(a):
     Elementwise sine.
     """
     try:
-        return vector(list(map(math.sin, a)))
+        return vector(list(map(np.sin, a)))
     except:
         raise TypeError('vector::FAILURE in sin')
 
@@ -217,7 +217,7 @@ def tan(a):
     Elementwise tangent.
     """
     try:
-        return vector(list(map(math.tan, a)))
+        return vector(list(map(np.tan, a)))
     except:
         raise TypeError('vector::FAILURE in tan')
 
@@ -226,7 +226,7 @@ def cos(a):
     Elementwise cosine.
     """
     try:
-        return vector(list(map(math.cos, a)))
+        return vector(list(map(np.cos, a)))
     except:
         raise TypeError('vector::FAILURE in cos')
 
@@ -235,7 +235,7 @@ def asin(a):
     Elementwise inverse sine.
     """
     try:
-        return vector(list(map(math.asin, a)))
+        return vector(list(map(np.asin, a)))
     except:
         raise TypeError('vector::FAILURE in asin')
 
@@ -244,7 +244,7 @@ def atan(a):
     Elementwise inverse tangent.
     """
     try:
-        return vector(list(map(math.atan, a)))
+        return vector(list(map(np.atan, a)))
     except:
         raise TypeError('vector::FAILURE in atan')
 
@@ -253,7 +253,7 @@ def acos(a):
     Elementwise inverse cosine.
     """
     try:
-        return vector(list(map(math.acos, a)))
+        return vector(list(map(np.acos, a)))
     except:
         raise TypeError('vector::FAILURE in acos')
 
@@ -262,7 +262,7 @@ def sqrt(a):
     Elementwise sqrt.
     """
     try:
-        return vector(list(map(math.sqrt, a)))
+        return vector(list(map(np.sqrt, a)))
     except:
         raise TypeError('vector::FAILURE in sqrt')
 
@@ -271,7 +271,7 @@ def sinh(a):
     Elementwise hyperbolic sine.
     """
     try:
-        return vector(list(map(math.sinh, a)))
+        return vector(list(map(np.sinh, a)))
     except:
         raise TypeError('vector::FAILURE in sinh')
 
@@ -280,7 +280,7 @@ def tanh(a):
     Elementwise hyperbolic tangent.
     """
     try:
-        return vector(list(map(math.tanh, a)))
+        return vector(list(map(np.tanh, a)))
     except:
         raise TypeError('vector::FAILURE in tanh')
 
@@ -289,7 +289,7 @@ def cosh(a):
     Elementwise hyperbolic cosine.
     """
     try:
-        return vector(list(map(math.cosh, a)))
+        return vector(list(map(np.cosh, a)))
     except:
         raise TypeError('vector::FAILURE in cosh')
 
@@ -312,7 +312,7 @@ def atan2(a,b):
 
     """
     try:
-        return vector(list(map(math.atan2, a, b)))
+        return vector(list(map(np.arctan2, a, b)))
     except:
         raise TypeError('vector::FAILURE in atan2')
 
