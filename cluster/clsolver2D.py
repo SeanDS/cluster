@@ -3,10 +3,11 @@
 import logging
 import numpy as np
 
-from .geometry import (Vector, tol_zero, tol_eq, is_clockwise, is_counterclockwise, is_acute, is_obtuse,
-                       distance_2p, angle_3p, cc_int, cr_int, rr_int)
+from .geometry import (Vector, tol_zero, tol_eq, is_clockwise, is_counterclockwise, is_acute,
+                       is_obtuse, distance_2p, angle_3p, cc_int, cr_int, rr_int)
+from .constraints import (NotAcuteConstraint, NotObtuseConstraint, NotClockwiseConstraint,
+                          NotCounterClockwiseConstraint)
 from .clsolver import *
-from .selconstr import *
 from .configuration import Configuration
 from .cluster import *
 from . import incremental
@@ -251,8 +252,8 @@ class DeriveDDD(ClusterMethod):
 
     def prototype_constraints(self):
         constraints = []
-        constraints.append(SelectionConstraint(fnot(is_clockwise),[self.a,self.b,self.c]))
-        constraints.append(SelectionConstraint(fnot(is_counterclockwise),[self.a,self.b,self.c]))
+        constraints.append(NotClockwiseConstraint(self.a, self.b, self.c))
+        constraints.append(NotCounterClockwiseConstraint(self.a, self.b, self.c))
         return constraints
 
 
@@ -434,8 +435,8 @@ class DeriveADD(ClusterMethod):
 
     def prototype_constraints(self):
         constraints = []
-        constraints.append(SelectionConstraint(fnot(is_obtuse),[self.a,self.c,self.b]))
-        constraints.append(SelectionConstraint(fnot(is_acute),[self.a,self.c,self.b]))
+        constraints.append(NotObtuseConstraint(self.a, self.c, self.b))
+        constraints.append(NotAcuteConstraint(self.a, self.c, self.b))
         return constraints
 
 class DeriveHH2S(ClusterMethod):

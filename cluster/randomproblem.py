@@ -156,7 +156,7 @@ def randomize_hedgehogs(problem):
     hogs = set()
     # make hogs from angles
     for angle in angles:
-        vars = angle.variables()
+        vars = angle.variables
         hog = (vars[1],frozenset([vars[0],vars[2]]))
         hogs.add(hog)
         # REMOVE CONSTRAINT
@@ -212,14 +212,14 @@ def randomize_balloons(problem):
     toremove = set()
     # make hogs from angles
     for angle1 in angles:
-        cvar1 = angle1.variables()[1]
+        cvar1 = angle1.variables[1]
         for angle2 in angles:
             if angle2 == angle1: continue
-            cvar2 = angle2.variables()[1]
+            cvar2 = angle2.variables[1]
             if cvar1 == cvar2: continue
-            shared = set(angle1.variables()).intersection(angle2.variables())
+            shared = set(angle1.variables).intersection(angle2.variables)
             if len(shared) == 3:
-                balloon = frozenset(angle1.variables())
+                balloon = frozenset(angle1.variables)
                 balloons.add(balloon)
                 toremove.add(angle1)
                 toremove.add(angle2)

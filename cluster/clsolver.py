@@ -275,7 +275,7 @@ class ClusterSolver(Notifier):
         constraints = merge.prototype_constraints()
         vars = set()
         for con in constraints:
-            vars.update(con.variables())
+            vars.update(con.variables)
         selclusters = []
         for var in vars:
             clusters = self._graph.outgoing_vertices(var)
@@ -308,7 +308,7 @@ class ClusterSolver(Notifier):
     def _find_selection_method(self, con):
         # find clusters containing all constraints vars
         candidates = None
-        for var in con.variables():
+        for var in con.variables:
             # find clusters
             clusters = set(self.find_dependend(var))
             if candidates == None:
@@ -327,7 +327,7 @@ class ClusterSolver(Notifier):
             return None
 
         ##slow implementation, better would be to find method via clustering information in graph
-        #convars = set(con.variables())
+        #convars = set(con.variables)
         #selmethods = filter(lambda x: isinstance(x,SelectionMethod), self.methods())
         #for method in selmethods:
         #    incluster = method.inputs()[0]
@@ -341,7 +341,7 @@ class ClusterSolver(Notifier):
         for con in self._selection_method:
             selector = self._selection_method[con]
             if selector == None:
-                convars = set(con.variables())
+                convars = set(con.variables)
                 clvars = set(incluster.vars)
                 if convars.intersection(clvars) == convars:
                     applicable.append(con)

@@ -4,14 +4,14 @@ from .geometry import Vector
 from .clsolver import PrototypeMethod, SelectionMethod
 from .clsolver2D import ClusterSolver2D
 from .cluster import *
-from .selconstr import SelectionConstraint, fnot
 from .configuration import Configuration
-from .constraint import Constraint, ConstraintGraph
+from .constraints import (DistanceConstraint, AngleConstraint, RigidConstraint, FixConstraint,
+                          CoincidenceConstraint, ParametricConstraint, SelectionConstraint,
+                          ConstraintGraph)
 from .notify import Notifier, Listener
 from .geometry import (angle_3p, distance_2p, distance_point_line, is_clockwise,
                        is_counterclockwise, perp_2d, tol_eq)
-from .geometric import (Point, Line, DistanceConstraint, AngleConstraint, RigidConstraint,
-                        FixConstraint, CoincidenceConstraint, ParametricConstraint)
+from .primitives import Point, Line
 
 LOGGER = logging.getLogger(__name__)
 
@@ -113,26 +113,26 @@ class GeometricProblem(Notifier, Listener):
         """add a constraint"""
         LOGGER.debug(f"adding constraint '{con}'")
         # check that variables in problem
-        for var in con.variables():
+        for var in con.variables:
                 if var not in self.prototype:
                     raise Exception("variable %s not in problem"%(var))
         # check that constraint not already in problem
         if isinstance(con, DistanceConstraint):
-            if self.get_distance(con.variables()[0],con.variables()[1]):
+            if self.get_distance(con.variables[0],con.variables[1]):
                 raise Exception("distance already in problem")
         elif isinstance(con, AngleConstraint):
-            if self.get_angle(con.variables()[0],con.variables()[1], con.variables()[2]):
+            if self.get_angle(con.variables[0],con.variables[1], con.variables[2]):
                 raise Exception("angle already in problem")
         elif isinstance(con, RigidConstraint):
-            if self.get_rigid(con.variables()):
+            if self.get_rigid(con.variables):
                 raise Exception("rigid already in problem")
         elif isinstance(con, SelectionConstraint):
             pass
         elif isinstance(con, FixConstraint):
-            if self.get_fix(con.variables()[0]):
+            if self.get_fix(con.variables[0]):
                 raise Exception("fix already in problem")
         elif isinstance(con, CoincidenceConstraint):
-            if self.get_coincidence(con.variables()[0], con.variables()[1]):
+            if self.get_coincidence(con.variables[0], con.variables[1]):
                 raise Exception("coincidence already in problem")
         else:
             raise Exception("unsupported constraint type")
@@ -161,7 +161,7 @@ class GeometricProblem(Notifier, Listener):
         on_c = self.cg.get_constraints_on(c)
         on_abc = [x for x in on_a if x in on_a and x in on_b and x in on_c]
         angles = [x for x in on_abc if isinstance(x, AngleConstraint)]
-        candidates = [x for x in angles if x.variables()[1] == b]
+        candidates = [x for x in angles if x.variables[1] == b]
         if len(candidates) > 1:
             raise Exception("multiple constraints found")
         elif len(candidates) == 1:
@@ -208,7 +208,7 @@ class GeometricProblem(Notifier, Listener):
         coincidences = self.get_constraints_with_type_on_variables(CoincidenceConstraint, [geometry])
         points = set()
         for constraint in coincidences:
-            points.update([var for var in constraint.variables() if isinstance(var, Point) and var != geometry])
+            points.update([var for var in constraint.variables if isinstance(var, Point) and var != geometry])
         return points
 
     def verify(self, solution):
@@ -220,7 +220,7 @@ class GeometricProblem(Notifier, Listener):
             sat = True
             for con in self.cg.constraints():
                 solved = True
-                for v in con.variables():
+                for v in con.variables:
                     if v not in solution:
                         solved = False
                         break

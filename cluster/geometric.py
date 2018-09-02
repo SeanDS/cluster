@@ -4,16 +4,16 @@ problems incrementally."""
 import logging
 import numpy as np
 
-from .geometry import Vector
 from .clsolver import PrototypeMethod, SelectionMethod
 from .clsolver2D import ClusterSolver2D
 from .cluster import *
-from .selconstr import SelectionConstraint, fnot
 from .configuration import Configuration
-from .constraint import Constraint, ConstraintGraph
 from .notify import Notifier, Listener
-from .geometry import (angle_3p, distance_2p, distance_point_line, is_clockwise,
+from .geometry import (Vector, angle_3p, distance_2p, distance_point_line, is_clockwise,
                        is_counterclockwise, perp_2d, tol_eq)
+from .constraints import (DistanceConstraint, AngleConstraint, FixConstraint, RigidConstraint,
+                          CoincidenceConstraint, SelectionConstraint)
+from .primitives import Point, Line
 
 LOGGER = logging.getLogger(__name__)
 
@@ -421,7 +421,7 @@ class GeometricSolver (Listener):
     def _add_constraint(self, con):
         if isinstance(con, AngleConstraint):
             # map to hedgdehog
-            vars = list(con.variables());
+            vars = list(con.variables)
             hog = Hedgehog(vars[1],[vars[0],vars[2]])
             self._map[con] = hog
             self._map[hog] = con
@@ -430,7 +430,7 @@ class GeometricSolver (Listener):
             self._update_constraint(con)
         elif isinstance(con, DistanceConstraint):
             # map to rigid
-            vars = list(con.variables());
+            vars = list(con.variables)
             rig = Rigid([vars[0],vars[1]])
             self._map[con] = rig
             self._map[rig] = con
@@ -439,7 +439,7 @@ class GeometricSolver (Listener):
             self._update_constraint(con)
         elif isinstance(con, RigidConstraint):
             # map to rigid
-            vars = list(con.variables());
+            vars = list(con.variables)
             rig = Rigid(vars)
             self._map[con] = rig
             self._map[rig] = con
@@ -449,7 +449,7 @@ class GeometricSolver (Listener):
         elif isinstance(con, FixConstraint):
             if self.fixcluster != None:
                 self.dr.remove(self.fixcluster)
-            self.fixvars.append(con.variables()[0])
+            self.fixvars.append(con.variables[0])
             if len(self.fixvars) >= 1:
                 self.fixcluster = Rigid(self.fixvars)
                 self.dr.add(self.fixcluster)
@@ -460,8 +460,8 @@ class GeometricSolver (Listener):
             self.dr.add_selection_constraint(con)
         elif isinstance(con, CoincidenceConstraint):
             # re-map lines, etc
-            lines = [var for var in con.variables() if isinstance(var,Line)]
-            points = [var for var in con.variables() if isinstance(var,Point)]
+            lines = [var for var in con.variables if isinstance(var,Line)]
+            points = [var for var in con.variables if isinstance(var,Point)]
             if len(lines)==1 and len(points)==1:
                 line = next(iter(lines))
                 point = next(iter(points))
@@ -489,7 +489,7 @@ class GeometricSolver (Listener):
         if isinstance(con,FixConstraint):
             if self.fixcluster != None:
                 self.dr.remove(self.fixcluster)
-            var = con.variables()[0]
+            var = con.variables[0]
             if var in self.fixvars:
                 self.fixvars.remove(var)
             if len(self.fixvars) == 0:
@@ -511,11 +511,11 @@ class GeometricSolver (Listener):
         if isinstance(con, AngleConstraint):
             # set configuration
             hog = self._map[con]
-            vars = list(con.variables())
+            vars = list(con.variables)
             v0 = vars[0]
             v1 = vars[1]
             v2 = vars[2]
-            angle = con.get_parameter()
+            angle = con.angle
             p0 = Vector([1.0,0.0])
             p1 = Vector.origin()
             p2 = Vector([np.cos(angle), np.sin(angle)])
@@ -525,10 +525,10 @@ class GeometricSolver (Listener):
         elif isinstance(con, DistanceConstraint):
             # set configuration
             rig = self._map[con]
-            vars = list(con.variables())
+            vars = list(con.variables)
             v0 = vars[0]
             v1 = vars[1]
-            dist = con.get_parameter()
+            dist = con.distance
             #p0 = Vector.origin()
             #p1 = Vector([dist,0.0])
             # use prototype to orient rigid - minimize difference solution and prototype
@@ -546,15 +546,15 @@ class GeometricSolver (Listener):
         elif isinstance(con, RigidConstraint):
             # set configuration
             rig = self._map[con]
-            vars = list(con.variables())
-            conf = con.get_parameter()
+            vars = list(con.variables)
+            conf = con.configuration
             self.dr.set(rig, [conf])
             assert con.satisfied(conf.map)
         elif isinstance(con, FixConstraint):
             self._update_fix()
         elif isinstance(con, CoincidenceConstraint):
-            lines = [var for var in con.variables() if isinstance(var,Line)]
-            points = [var for var in con.variables() if isinstance(var,Point)]
+            lines = [var for var in con.variables if isinstance(var,Line)]
+            points = [var for var in con.variables if isinstance(var,Point)]
             if len(lines)==1 and len(points)==1:
                 line = next(iter(lines))
                 point = next(iter(points))
@@ -617,7 +617,7 @@ class GeometricSolver (Listener):
             vars = self.fixcluster.vars
             map = {}
             for var in vars:
-                map[var] = self.problem.get_fix(var).get_parameter()
+                map[var] = self.problem.get_fix(var).position
             conf = Configuration(map)
             self.dr.set(self.fixcluster, [conf])
         else:
@@ -705,268 +705,3 @@ class GeometricDecomposition:
 
         return s
     # def
-
-
-# ------------------- variable type -------------
-
-class GeometricVariable:
-    """Abstract base class for geometric variabes (Point, Line, etc)
-        A geometric variable is identified by its name attibute and its type.
-        It is hasable so it can be used in sets etc.
-    """
-
-    def __eq__(self, other):
-        return self.__class__ == other.__class__ and self.name == other.name
-
-    def __hash__(self):
-        return hash(self.name)
-
-    def __repr__(self):
-        return self.__class__.__name__+"("+repr(self.name)+")"
-
-
-class Point(GeometricVariable):
-    def __init__(self, name):
-        self.name = name
-
-    def __str__(self):
-        return "Point("+str(self.name)+")"
-
-class Line(GeometricVariable):
-    def __init__(self, name):
-        self.name = name
-
-    def __str__(self):
-        return "Line("+str(self.name)+")"
-
-# --------------------- constraint types --------------------
-
-
-class ParametricConstraint(Constraint, Notifier):
-    """A constraint with a parameter and notification when parameter changes"""
-
-    def __init__(self):
-        """initialize ParametricConstraint"""
-        Notifier.__init__(self)
-        self._value = None
-
-    def get_parameter(self):
-        """get parameter value"""
-        return self._value
-
-    def set_parameter(self,value):
-        """set parameter value and notify any listeners"""
-        self._value = value
-        self.send_notify(("set_parameter", value))
-
-class FixConstraint(ParametricConstraint):
-    """A constraint to fix a point relative to the coordinate system"""
-
-    def __init__(self, var, pos):
-        """Create a new FixConstraint instance
-
-           keyword args:
-            var    - a point variable name
-            pos    - the position parameter
-        """
-        ParametricConstraint.__init__(self)
-        self._variables = [var]
-        self.set_parameter(Vector(pos))
-
-    def satisfied(self, mapping):
-        """return True iff mapping from variable names to points satisfies constraint"""
-        point = mapping[self._variables[0]]
-        if len(point) != len(self._value):
-            raise ValueError("fix constraint vectors of unequal length")
-
-        result = True
-        for i in range(len(self._value)):
-            result &= tol_eq(point[i], self._value[i])
-        return result
-
-    def __str__(self):
-        return "FixConstraint("\
-            +str(self._variables[0])+"="\
-            +str(self._value)+")"
-
-class DistanceConstraint(ParametricConstraint):
-    """A constraint on the Euclidean distance between two points"""
-
-    def __init__(self, a, b, dist):
-        """Create a new DistanceConstraint instance
-
-           keyword args:
-            a    - a point variable name
-            b    - a point variable name
-            dist - the distance parameter value
-        """
-        ParametricConstraint.__init__(self)
-        self._variables = [a,b]
-        self.set_parameter(dist)
-
-    def satisfied(self, mapping):
-        """return True iff mapping from variable names to points satisfies constraint"""
-        a = mapping[self._variables[0]]
-        b = mapping[self._variables[1]]
-        result = tol_eq(distance_2p(a,b), abs(self._value))
-        return result
-
-    def __str__(self):
-        return "DistanceConstraint("\
-            +str(self._variables[0])+","\
-            +str(self._variables[1])+"="\
-            +str(self._value)+")"
-
-class AngleConstraint(ParametricConstraint):
-    """A constraint on the angle in point B of a triangle ABC"""
-
-    def __init__(self, a, b, c, ang):
-        """Create a new AngleConstraint instance.
-
-           keyword args:
-            a    - a point variable name
-            b    - a point variable name
-            c    - a point variable name
-            ang  - the angle parameter value
-        """
-        ParametricConstraint.__init__(self)
-        self._variables = [a,b,c]
-        self.set_parameter(ang)
-
-    def satisfied(self, mapping):
-        """return True iff mapping from variable names to points satisfies constraint"""
-        a = mapping[self._variables[0]]
-        b = mapping[self._variables[1]]
-        c = mapping[self._variables[2]]
-        ang = angle_3p(a,b,c)
-        if ang == None:
-            # if the angle is indeterminate, its probably ok.
-            result = True
-        else:
-            # in 3d, ignore the sign of the angle
-            if len(a) >= 3:
-                cmp = abs(self._value)
-            else:
-                cmp = self._value
-            result = tol_eq(ang, cmp)
-
-        if result == False:
-            LOGGER.debug("measured angle: {ang}, parameter value: {cmp}")
-        return result
-
-    def __str__(self):
-        return "AngleConstraint("\
-            +str(self._variables[0])+","\
-            +str(self._variables[1])+","\
-            +str(self._variables[2])+"="\
-            +str(self._value)+")"
-
-class RigidConstraint(ParametricConstraint):
-    """A constraint to set the relative position of a set of points"""
-
-    def __init__(self, conf):
-        """Create a new DistanceConstraint instance
-
-           keyword args:
-            conf    - a Configuration
-        """
-        ParametricConstraint.__init__(self)
-        self._variables = list(conf.vars())
-        self.set_parameter(conf.copy())
-
-    def satisfied(self, mapping):
-        """return True iff mapping from variable names to points satisfies constraint"""
-        result = True
-        conf = self._value
-        for index in range(1,len(self._variables)-1):
-            p1 = mapping[self._variables[index-1]]
-            p2 = mapping[self._variables[index]]
-            p3 = mapping[self._variables[index+1]]
-            c1 = conf.map[self._variables[index-1]]
-            c2 = conf.map[self._variables[index]]
-            c3 = conf.map[self._variables[index+1]]
-            result &= tol_eq(distance_2p(p1,p2), distance_2p(c1,c2))
-            result &= tol_eq(distance_2p(p1,p3), distance_2p(c1,c3))
-            result &= tol_eq(distance_2p(p2,p3), distance_2p(c2,c3))
-        return result
-
-    def __str__(self):
-        return "RigidConstraint("+str(self._variables)+")"
-
-class ClockwiseConstraint (SelectionConstraint):
-    """A selection constraint for 3 points to have a clockwise orientation (not co-linear!)"""
-    def __init__(self, v1, v2, v3):
-        SelectionConstraint.__init__(self, is_clockwise, [v1,v2,v3])
-
-class CounterClockwiseConstraint (SelectionConstraint):
-    """A selection constraint for 3 points to have a counter-clockwise orientation (not co-linear!)"""
-    def __init__(self, v1, v2, v3):
-        SelectionConstraint.__init__(self, is_counterclockwise, [v1,v2,v3])
-
-class NotClockwiseConstraint (SelectionConstraint):
-    """A selection constraint for 3 points to not have a clockwise orientation (i.e. counter-clockwise or co-linear!)"""
-    def __init__(self, v1, v2, v3):
-        SelectionConstraint.__init__(self, fnot(is_clockwise), [v1,v2,v3])
-
-class NotCounterClockwiseConstraint (SelectionConstraint):
-    """A selection constraint for 3 points to not have a counter-clockwise orientation (i.e. clockwise or co-linear!)"""
-    def __init__(self, v1, v2, v3):
-        SelectionConstraint.__init__(self, fnot(is_counterclockwise), [v1,v2,v3])
-
-class RightHandedConstraint (SelectionConstraint):
-    """A selection constraint for 4 points to have a right-handed orientation (not co-planar!)"""
-    def __init__(self, v1, v2, v3, v4):
-        SelectionConstraint.__init__(self, is_right_handed, [v1,v2,v3,v4])
-
-class LeftHandedConstraint (SelectionConstraint):
-    """A selection constraint for 4 points to have a left-handed orientation (not co-planar!)"""
-    def __init__(self, v1, v2, v3, v4):
-        SelectionConstraint.__init__(self, is_left_handed, [v1,v2,v3,v4])
-
-class NotRightHandedConstraint (SelectionConstraint):
-    """A selection constraint for 4 points to not have a right-handed orientation, i.e. left-handed or co-planar"""
-    def __init__(self, v1, v2, v3, v4):
-        SelectionConstraint.__init__(self, fnot(is_right_handed), [v1,v2,v3,v4])
-
-class NotLeftHandedConstraint (SelectionConstraint):
-    """A selection constraint for 4 points to not have a left-handed orientation, i.e. right-handed or co-planar"""
-    def __init__(self, v1, v2, v3, v4):
-        SelectionConstraint.__init__(self, fnot(is_left_handed), [v1,v2,v3,v4])
-
-class CoincidenceConstraint(Constraint):
-    """defines a coincidence between a point and another geometricvariable (i.e. point, line, plane)"""
-    def __init__(self, point, geometry):
-        assert isinstance(point, Point)
-        assert isinstance(geometry, GeometricVariable)
-        self._point = point
-        self._geometry = geometry
-        self._variables = [point, geometry]
-
-    def satisfied(self, mapping):
-        """return True iff mapping from variable names to points satisfies constraint"""
-        if isinstance(self._geometry, Point):
-            p1 = mapping[self._point]
-            p2 = mapping[self._geometry]
-            return tol_eq(distance_2p(p1,p2),0)
-        elif isinstance(self._geometry, Line):
-            p = mapping[self._point]
-            l = mapping[self._geometry]
-            if len(l)==4:   #2D
-                p1 = l[0:2]
-                p2 = l[2:4]
-            elif len(l)==6:   # 3D
-                p1 = l[0:3]
-                p2 = l[3:6]
-            else:
-                raise Exception("line has invalid number of values")
-            d =  distance_point_line(p, p1, p2)
-            if not tol_eq(d,0):
-                LOGGER.debug(f"coincidence constraint '{self}' not satisfied, distance: {d}")
-            return tol_eq(d,0)
-        else:
-            raise Exception("unknown geometry type""")
-
-    def __str__(self):
-        return "CoincidenceConstraint("+str(self._point)+","+str(self._geometry)+")"
-
-
