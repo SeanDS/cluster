@@ -11,7 +11,7 @@ from .notify import Notifier, Listener
 from .geometry import (angle_3p, distance_2p, distance_point_line, is_clockwise,
                        is_counterclockwise, perp_2d, tol_eq)
 from .geometric import (Point, Line, DistanceConstraint, AngleConstraint, RigidConstraint,
-                        FixConstraint, ParametricConstraint)
+                        FixConstraint, CoincidenceConstraint, ParametricConstraint)
 
 LOGGER = logging.getLogger(__name__)
 
@@ -85,13 +85,13 @@ class GeometricProblem(Notifier, Listener):
         """returns True if variable in problem"""
         return variable in self.prototype
 
-    def rem_variable(self, variable):
+    def remove_variable(self, variable):
         """remove a variable (and all constraints incident imposed on it)"""
         if variable in self.prototype:
             del self.prototype[variable]
             self.cg.rem_variable(variable)
 
-    def set_prototype(self, variable, prototype):
+    def set_variable(self, variable, prototype):
         """set prototype of variable"""
         prototypevector = Vector(prototype)
         if variable in self.prototype:
@@ -111,6 +111,7 @@ class GeometricProblem(Notifier, Listener):
 
     def add_constraint(self, con):
         """add a constraint"""
+        LOGGER.debug(f"adding constraint '{con}'")
         # check that variables in problem
         for var in con.variables():
                 if var not in self.prototype:
@@ -231,16 +232,9 @@ class GeometricProblem(Notifier, Listener):
                     sat = False
         return sat
 
-    def rem_point(self, var):
-        """remove a point variable from the constraint system"""
-        if var in self.prototype:
-            self.cg.rem_variable(var)
-            del self.prototype[var]
-        else:
-            raise Exception("variable "+str(var)+" not in problem.")
-
-    def rem_constraint(self, con):
+    def remove_constraint(self, con):
         """remove a constraint from the constraint system"""
+        LOGGER.debug(f"removing constraint '{con}'")
         if con in self.cg.constraints():
             if isinstance(con, SelectionConstraint):
                 self.send_notify(("rem_selection_constraint", con))
