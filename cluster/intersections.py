@@ -2,7 +2,6 @@ import numpy as np
 import random
 
 from .geometry import Vector
-from .matfunc import Mat,Vec,eye
 from .tolerance import *
 from .diagnostic import *
 
@@ -238,71 +237,11 @@ def is_obtuse(p1,p2,p3):
     else:
         return tol_gt(abs(angle), np.pi / 2)
 
-# --------- coordinate tranformations -------
-
-def make_hcs_2d (a, b):
-    """build a 2D homogeneus coordiate system from two points"""
-    u = b-a
-    if tol_eq(u.length, 0.0):
-        u = Vector([0.0,0.0])
-    else:
-        u = u.unit()
-    v = Vector([-u[1], u[0]])
-    hcs = Mat([ [u[0],v[0],a[0]] , [u[1],v[1],a[1]] , [0.0, 0.0, 1.0] ] )
-    return hcs
-
-def make_hcs_2d_scaled (a, b):
-    """build a 2D homogeneus coordiate system from two points, but scale with distance between input point"""
-    u = b-a
-    if tol_eq(u.length, 0.0):
-        u = Vector([1.0,0.0])
-
-    v = Vector([-u[1], u[0]])
-    hcs = Mat([ [u[0],v[0],a[0]] , [u[1],v[1],a[1]] , [0.0, 0.0, 1.0] ] )
-    return hcs
-
-def cs_transform_matrix(from_cs, to_cs):
-    """returns a transform matrix from from_cs to to_cs"""
-    try:
-        transform = to_cs.mmul(from_cs.inverse())
-    except Exception as e:
-        print("from_cs=",from_cs)
-        raise Exception("from_cs is not a valid coodinate system.")
-    return transform
 
 # ------- rigid transformations ----------
 
 #--- 2D
 
-def id_transform_2D():
-    return eye(3)
-
-def translate_2D(dx,dy):
-    mat = Mat([
-        [1.0, 0.0, dx] ,
-        [0.0, 1.0, dy] ,
-        [0.0, 0.0, 1.0] ] )
-    return mat
-
-def rotate_2D(angle):
-    """rotation matrix for rotation in 2d with homogeneous coordinates"""
-    cosa = np.cos(angle)
-    sina = np.sin(angle)
-    mat = Mat([
-        [cosa,-sina,0.0],
-        [sina,cosa,0.0],
-        [0.0, 0.0, 1.0] ])
-    return mat
-
-# ---- applyign transformations
-
-def transform_point(point, transform):
-    """transform a point"""
-    hpoint = Vec(point)
-    hpoint.append(1.0)
-    hres = transform.mmul(hpoint)
-    res = Vector(hres[0:-1]) / hres[-1]
-    return res
 
 # -------- perpendicular vectors ---------
 

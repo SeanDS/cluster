@@ -11,7 +11,6 @@ __all__ = [
     "graph",
     "intersections",
     "map",
-    "matfunc",
     "method",
     "multimethod",
     "notify",

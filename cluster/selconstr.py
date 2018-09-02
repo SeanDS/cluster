@@ -10,14 +10,14 @@ class SelectionConstraint(Constraint):
         """init constraint with function and a sequence of variables"""
         self._variables = vars
         self._function = function
-        
+
     def satisfied(self, map):
-        """return True iff given solution (map) for given variables applied to function gives True""" 
+        """return True iff given solution (map) for given variables applied to function gives True"""
         values = []
         for var in self._variables:
             values.append(map[var])
         return self._function(*values)==True
- 
+
     def __str__(self):
          return "SelectionConstraint("+self._function.__name__+","+str(list(map(str, self._variables)))+")"
 

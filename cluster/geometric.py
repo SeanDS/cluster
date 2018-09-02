@@ -16,7 +16,6 @@ from .tolerance import tol_eq
 from .intersections import angle_3p, distance_2p
 from .intersections import distance_point_line
 from .intersections import is_clockwise, is_counterclockwise
-from .intersections import transform_point
 from .intersections import perp_2d
 
 # ----------- GeometricProblem -------------
