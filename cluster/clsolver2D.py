@@ -2,11 +2,11 @@
 
 import numpy as np
 
-from .geometry import Vector
+from .geometry import (Vector, tol_zero, tol_eq, is_clockwise, is_counterclockwise, is_acute, is_obtuse,
+                       distance_2p, angle_3p, cc_int, cr_int, rr_int)
 from .clsolver import *
 from .diagnostic import diag_print, diag_select
 from .selconstr import *
-from .intersections import *
 from .configuration import Configuration
 from .cluster import *
 from . import incremental
@@ -569,7 +569,7 @@ class CheckAR(ClusterMethod):
             hangle = angle_3p(hog.get(xvars[i]), hog.get(self.hog.cvar), hog.get(xvars[i+1]))
             rangle = angle_3p(rigid.get(xvars[i]), rigid.get(self.hog.cvar), rigid.get(xvars[i+1]))
             # angle check failed, return no configuration
-            if not tol_eq(hangle,rangle):
+            if not tol_eq(hangle, rangle):
                 return []
         # all checks passed, return rigid configuration
         return [rigid]
@@ -580,7 +580,7 @@ class CheckAR(ClusterMethod):
 
 def solve_ddd(v1,v2,v3,d12,d23,d31):
     diag_print("solve_ddd: %s %s %s %f %f %f"%(v1,v2,v3,d12,d23,d31),"clmethods")
-    p1 = Vector([0.0,0.0])
+    p1 = Vector.origin()
     p2 = Vector([d12,0.0])
     p3s = cc_int(p1,d31,p2,d23)
     solutions = []
@@ -597,7 +597,7 @@ def solve_dad(v1,v2,v3,d12,a123,d23):
         a<xyz>: numeric angle in radians
     """
     diag_print("solve_dad: %s %s %s %f %f %f"%(v1,v2,v3,d12,a123,d23),"clmethods")
-    p2 = Vector([0.0, 0.0])
+    p2 = Vector.origin()
     p1 = Vector([d12, 0.0])
     p3s = [ Vector([d23 * np.cos(a123), d23 * np.sin(a123)]) ]
     solutions = []
@@ -614,7 +614,7 @@ def solve_add(a,b,c, a_cab, d_ab, d_bc):
     """
 
     diag_print("solve_dad: %s %s %s %f %f %f"%(a,b,c,a_cab,d_ab,d_bc),"clmethods")
-    p_a = Vector([0.0,0.0])
+    p_a = Vector.origin()
     p_b = Vector([d_ab,0.0])
     dir = Vector([np.cos(-a_cab), np.sin(-a_cab)])
     solutions = cr_int(p_b, d_bc, p_a, dir)
@@ -631,12 +631,12 @@ def solve_ada(a, b, c, a_cab, d_ab, a_abc):
         a<xyz>: numeric angle in radians
     """
     diag_print("solve_ada: %s %s %s %f %f %f"%(a,b,c,a_cab,d_ab,a_abc),"clmethods")
-    p_a = Vector([0.0,0.0])
+    p_a = Vector.origin()
     p_b = Vector([d_ab, 0.0])
     dir_ac = Vector([np.cos(-a_cab), np.sin(-a_cab)])
     dir_bc = Vector([np.cos(np.pi + a_abc), np.sin(np.pi + a_abc)])
 
-    if tol_eq(np.sin(a_cab), 0.0) and tol_eq(np.sin(a_abc),0.0):
+    if tol_zero(np.sin(a_cab)) and tol_zero(np.sin(a_abc)):
         m = d_ab / 2 + np.cos(-a_cab) * d_ab - np.cos(-a_abc) * d_ab
         p_c = Vector([m,0.0])
         # p_c = (p_a + p_b) / 2

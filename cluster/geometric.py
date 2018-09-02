@@ -12,11 +12,8 @@ from .configuration import Configuration
 from .diagnostic import diag_print
 from .constraint import Constraint, ConstraintGraph
 from .notify import Notifier, Listener
-from .tolerance import tol_eq
-from .intersections import angle_3p, distance_2p
-from .intersections import distance_point_line
-from .intersections import is_clockwise, is_counterclockwise
-from .intersections import perp_2d
+from .geometry import (angle_3p, distance_2p, distance_point_line, is_clockwise,
+                       is_counterclockwise, perp_2d, tol_eq)
 
 # ----------- GeometricProblem -------------
 
@@ -808,7 +805,7 @@ class GeometricSolver (Listener):
             v2 = vars[2]
             angle = con.get_parameter()
             p0 = Vector([1.0,0.0])
-            p1 = Vector([0.0,0.0])
+            p1 = Vector.origin()
             p2 = Vector([np.cos(angle), np.sin(angle)])
             conf = Configuration({v0:p0,v1:p1,v2:p2})
             self.dr.set(hog, [conf])
@@ -820,7 +817,7 @@ class GeometricSolver (Listener):
             v0 = vars[0]
             v1 = vars[1]
             dist = con.get_parameter()
-            #p0 = Vector([0.0,0.0])
+            #p0 = Vector.origin()
             #p1 = Vector([dist,0.0])
             # use prototype to orient rigid - minimize difference solution and prototype
             p0 = self.problem.get_prototype(v0)
@@ -828,7 +825,7 @@ class GeometricSolver (Listener):
             if v.length != 0:
                 v = v / v.length
             else:
-                v = Vector([0.0, 0.0])
+                v = Vector.origin()
                 v[0] = 1.0
             p1 = p0+v*dist
             conf = Configuration({v0:p0,v1:p1})
@@ -857,7 +854,7 @@ class GeometricSolver (Listener):
                 line_normal = line_rigid.normal
                 angle_hog = self._map[con]
                 pv = Vector([1.0,0.0])
-                lv = Vector([0.0,0.0])
+                lv = Vector.origin()
                 ln = Vector([0.0,1.0])
                 conf1 = Configuration({line_vertex:lv, line_normal:ln, point_vertex: 1.0*pv})
                 conf2 = Configuration({line_vertex:lv, line_normal:ln, point_vertex:-1.0*pv})

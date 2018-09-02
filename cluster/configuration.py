@@ -2,9 +2,10 @@
 
 A configuration is a set of named points with coordinates."""
 
-from .geometry import Vector, make_hcs, make_hcs_scaled, cs_transform_matrix
-from .intersections import *
-from .tolerance import *
+import numpy as np
+
+from .geometry import (Vector, make_hcs, make_hcs_scaled, cs_transform_matrix, tol_eq, tol_gt,
+                       distance_2p)
 
 
 class Configuration:
@@ -93,8 +94,8 @@ class Configuration:
         underconstrained = self.underconstrained or other.underconstrained
         if len(shared) == 0:
             underconstrained = True
-            cs1 = make_hcs(Vector([0.0,0.0]), Vector([1.0,0.0]))
-            cs2 = make_hcs(Vector([0.0,0.0]), Vector([1.0,0.0]))
+            cs1 = make_hcs(Vector.origin(), Vector([1.0,0.0]))
+            cs2 = make_hcs(Vector.origin(), Vector([1.0,0.0]))
         elif len(shared) == 1:
             if len(self.vars()) > 1 and len(other.vars()) > 1:
                 underconstrained = True

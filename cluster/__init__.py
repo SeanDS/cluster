@@ -9,14 +9,12 @@ __all__ = [
     "geometric",
     "gmatch",
     "graph",
-    "intersections",
     "map",
     "method",
     "multimethod",
     "notify",
     "randomproblem",
-    "selconstr",
-    "tolerance",
+    "selconstr"
 ]
 
 from .geometric import GeometricProblem

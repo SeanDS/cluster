@@ -1,5 +1,4 @@
 from .constraint import Constraint
-from .tolerance import tol_eq
 
 
 class SelectionConstraint(Constraint):

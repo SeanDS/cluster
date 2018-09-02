@@ -3,9 +3,7 @@
 import random
 from .diagnostic import diag_print
 from .geometric import GeometricProblem, DistanceConstraint, AngleConstraint
-from .intersections import distance_2p, angle_3p
-from .geometry import Vector
-from .tolerance import tol_eq
+from .geometry import Vector, distance_2p, angle_3p, tol_eq
 
 def _constraint_group(problem, group, dependend, angleratio):
     """Add constraints to problem to constrain given group of points.
