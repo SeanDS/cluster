@@ -4,7 +4,7 @@ import random
 from .diagnostic import diag_print
 from .geometric import GeometricProblem, DistanceConstraint, AngleConstraint
 from .intersections import distance_2p, angle_3p
-from .vector import vector
+from .geometry import Vector
 from .tolerance import tol_eq
 
 def _constraint_group(problem, group, dependend, angleratio):
@@ -101,7 +101,7 @@ def random_problem_2D(numpoints, radius=10.0, roundoff=0.0, angleratio=0.5):
     i = 0
     while i < numpoints:
         aname = 'p'+str(i)
-        apoint = vector([
+        apoint = Vector([
             _round(random.uniform(-radius,radius),roundoff),
             _round(random.uniform(-radius,radius),roundoff)
         ])

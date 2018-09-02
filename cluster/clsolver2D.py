@@ -2,6 +2,7 @@
 
 import numpy as np
 
+from .geometry import Vector
 from .clsolver import *
 from .diagnostic import diag_print, diag_select
 from .selconstr import *
@@ -580,8 +581,8 @@ class CheckAR(ClusterMethod):
 
 def solve_ddd(v1,v2,v3,d12,d23,d31):
     diag_print("solve_ddd: %s %s %s %f %f %f"%(v1,v2,v3,d12,d23,d31),"clmethods")
-    p1 = vector.vector([0.0,0.0])
-    p2 = vector.vector([d12,0.0])
+    p1 = Vector([0.0,0.0])
+    p2 = Vector([d12,0.0])
     p3s = cc_int(p1,d31,p2,d23)
     solutions = []
     for p3 in p3s:
@@ -597,9 +598,9 @@ def solve_dad(v1,v2,v3,d12,a123,d23):
         a<xyz>: numeric angle in radians
     """
     diag_print("solve_dad: %s %s %s %f %f %f"%(v1,v2,v3,d12,a123,d23),"clmethods")
-    p2 = vector.vector([0.0, 0.0])
-    p1 = vector.vector([d12, 0.0])
-    p3s = [ vector.vector([d23 * np.cos(a123), d23 * np.sin(a123)]) ]
+    p2 = Vector([0.0, 0.0])
+    p1 = Vector([d12, 0.0])
+    p3s = [ Vector([d23 * np.cos(a123), d23 * np.sin(a123)]) ]
     solutions = []
     for p3 in p3s:
         solution = Configuration({v1:p1, v2:p2, v3:p3})
@@ -614,9 +615,9 @@ def solve_add(a,b,c, a_cab, d_ab, d_bc):
     """
 
     diag_print("solve_dad: %s %s %s %f %f %f"%(a,b,c,a_cab,d_ab,d_bc),"clmethods")
-    p_a = vector.vector([0.0,0.0])
-    p_b = vector.vector([d_ab,0.0])
-    dir = vector.vector([np.cos(-a_cab), np.sin(-a_cab)])
+    p_a = Vector([0.0,0.0])
+    p_b = Vector([d_ab,0.0])
+    dir = Vector([np.cos(-a_cab), np.sin(-a_cab)])
     solutions = cr_int(p_b, d_bc, p_a, dir)
     rval = []
     for p_c in solutions:
@@ -631,14 +632,14 @@ def solve_ada(a, b, c, a_cab, d_ab, a_abc):
         a<xyz>: numeric angle in radians
     """
     diag_print("solve_ada: %s %s %s %f %f %f"%(a,b,c,a_cab,d_ab,a_abc),"clmethods")
-    p_a = vector.vector([0.0,0.0])
-    p_b = vector.vector([d_ab, 0.0])
-    dir_ac = vector.vector([np.cos(-a_cab), np.sin(-a_cab)])
-    dir_bc = vector.vector([np.cos(np.pi + a_abc), np.sin(np.pi + a_abc)])
+    p_a = Vector([0.0,0.0])
+    p_b = Vector([d_ab, 0.0])
+    dir_ac = Vector([np.cos(-a_cab), np.sin(-a_cab)])
+    dir_bc = Vector([np.cos(np.pi + a_abc), np.sin(np.pi + a_abc)])
 
     if tol_eq(np.sin(a_cab), 0.0) and tol_eq(np.sin(a_abc),0.0):
         m = d_ab / 2 + np.cos(-a_cab) * d_ab - np.cos(-a_abc) * d_ab
-        p_c = vector.vector([m,0.0])
+        p_c = Vector([m,0.0])
         # p_c = (p_a + p_b) / 2
         #p_a.append(0.0)
         #p_b.append(0.0)

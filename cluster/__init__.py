@@ -18,7 +18,6 @@ __all__ = [
     "randomproblem",
     "selconstr",
     "tolerance",
-    "vector"
 ]
 
 from .geometric import GeometricProblem

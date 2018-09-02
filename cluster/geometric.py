@@ -3,7 +3,7 @@ problems incrementally."""
 
 import numpy as np
 
-from . import vector
+from .geometry import Vector
 from .clsolver import PrototypeMethod, SelectionMethod
 from .clsolver2D import ClusterSolver2D
 from .cluster import *
@@ -67,7 +67,7 @@ class GeometricProblem (Notifier, Listener):
 
     def add_variable(self, variable, prototype):
         """add a variable with a prototype"""
-        prototypevector = vector.vector(prototype)
+        prototypevector = Vector(prototype)
         # check dimension of prototype
         if isinstance(variable, Point):
             assert len(prototypevector) == 2
@@ -96,7 +96,7 @@ class GeometricProblem (Notifier, Listener):
 
     def set_prototype(self, variable, prototype):
         """set prototype of variable"""
-        prototypevector = vector.vector(prototype)
+        prototypevector = Vector(prototype)
         if variable in self.prototype:
             self.prototype[variable] = prototypevector
             self.send_notify(("set_prototype", (variable,prototypevector)))
@@ -808,9 +808,9 @@ class GeometricSolver (Listener):
             v1 = vars[1]
             v2 = vars[2]
             angle = con.get_parameter()
-            p0 = vector.vector([1.0,0.0])
-            p1 = vector.vector([0.0,0.0])
-            p2 = vector.vector([np.cos(angle), np.sin(angle)])
+            p0 = Vector([1.0,0.0])
+            p1 = Vector([0.0,0.0])
+            p2 = Vector([np.cos(angle), np.sin(angle)])
             conf = Configuration({v0:p0,v1:p1,v2:p2})
             self.dr.set(hog, [conf])
             assert con.satisfied(conf.map)
@@ -821,16 +821,15 @@ class GeometricSolver (Listener):
             v0 = vars[0]
             v1 = vars[1]
             dist = con.get_parameter()
-            #p0 = vector.vector([0.0,0.0])
-            #p1 = vector.vector([dist,0.0])
+            #p0 = Vector([0.0,0.0])
+            #p1 = Vector([dist,0.0])
             # use prototype to orient rigid - minimize difference solution and prototype
             p0 = self.problem.get_prototype(v0)
             v = self.problem.get_prototype(v1) - p0
-            if vector.norm(v) != 0:
-                # HACK because / doesn't work for vector and float
-                v = v * (1/vector.norm(v))
+            if v.length != 0:
+                v = v / v.length
             else:
-                v = vector.vector([0.0, 0.0])
+                v = Vector([0.0, 0.0])
                 v[0] = 1.0
             p1 = p0+v*dist
             conf = Configuration({v0:p0,v1:p1})
@@ -858,9 +857,9 @@ class GeometricSolver (Listener):
                 line_vertex = line_rigid.vertex
                 line_normal = line_rigid.normal
                 angle_hog = self._map[con]
-                pv = vector.vector([1.0,0.0])
-                lv = vector.vector([0.0,0.0])
-                ln = vector.vector([0.0,1.0])
+                pv = Vector([1.0,0.0])
+                lv = Vector([0.0,0.0])
+                ln = Vector([0.0,1.0])
                 conf1 = Configuration({line_vertex:lv, line_normal:ln, point_vertex: 1.0*pv})
                 conf2 = Configuration({line_vertex:lv, line_normal:ln, point_vertex:-1.0*pv})
                 self.dr.set(angle_hog, [conf1,conf2])
@@ -1083,7 +1082,7 @@ class FixConstraint(ParametricConstraint):
         """
         ParametricConstraint.__init__(self)
         self._variables = [var]
-        self.set_parameter(vector.vector(pos))
+        self.set_parameter(Vector(pos))
 
     def satisfied(self, mapping):
         """return True iff mapping from variable names to points satisfies constraint"""
