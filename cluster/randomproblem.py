@@ -1,7 +1,6 @@
 #----------- random problem generation ----------------
 
 import random
-from .diagnostic import diag_print
 from .geometric import GeometricProblem, DistanceConstraint, AngleConstraint
 from .geometry import Vector, distance_2p, angle_3p, tol_eq
 
@@ -10,7 +9,6 @@ def _constraint_group(problem, group, dependend, angleratio):
        Group may be optionally dependend on pair of points.
        Creates angle constraints with a given chance."""
 
-    diag_print("_constraint_group(group="+str(list(group.keys()))+",dep="+str(dependend)+")","geometric._constraint_group")
     if len(group) == 2:
         if dependend == None:
            v1 = list(group.keys())[0]
@@ -19,7 +17,6 @@ def _constraint_group(problem, group, dependend, angleratio):
            p2 = group[v2]
            dist = distance_2p(p1,p2)
            con = DistanceConstraint(v1,v2,dist)
-           diag_print("**Add constraint:"+str(con),"geometric._constraint_group")
            problem.add_constraint(con)
     elif len(group) >= 3:
         # pick three points
@@ -65,7 +62,6 @@ def _constraint_group(problem, group, dependend, angleratio):
         else:
             angle = angle_3p(p1,p2,p3)
             con = AngleConstraint(v1,v2,v3,angle)
-            diag_print("**Add constraint:"+str(con),"geometric._constraint_group")
             problem.add_constraint(con)
             _constraint_group(problem, g[1], [v1, v3], angleratio)
         # group 2: random: angle constraint, two configuratins, or independend group
@@ -74,13 +70,11 @@ def _constraint_group(problem, group, dependend, angleratio):
         elif random.random() < 0.5:
             angle = angle_3p(p2,p1,p3)
             con = AngleConstraint(v2,v1,v3,angle)
-            diag_print("**Add constraint:"+str(con),"geometric._constraint_group")
             problem.add_constraint(con)
             _constraint_group(problem, g[2], [v2, v3], angleratio)
         else:
             angle = angle_3p(p2,p3,p1)
             con = AngleConstraint(v2,v3,v1,angle)
-            diag_print("**Add constraint:"+str(con),"geometric._constraint_group")
             problem.add_constraint(con)
             _constraint_group(problem, g[2], [v2, v3], angleratio)
 
@@ -132,7 +126,6 @@ def add_random_constraint(problem, ratio):
         p3 = problem.get_point(v3)
         angle = angle_3p(p1,p2,p3)
         con = AngleConstraint(v1,v2,v3,angle)
-        diag_print("**Add constraint:"+str(con),"drplan")
         problem.add_constraint(con)
     else:
         # add distance
@@ -144,7 +137,6 @@ def add_random_constraint(problem, ratio):
         p2 = problem.get_point(v2)
         dist = distance_2p(p1,p2)
         con = DistanceConstraint(v1,v2,dist)
-        diag_print("**Add constraint:"+str(con),"drplan")
         problem.add_constraint(con)
     return
 

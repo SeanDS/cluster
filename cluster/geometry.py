@@ -5,8 +5,6 @@ import numpy as np
 import numpy.linalg as la
 import logging
 
-from .diagnostic import diag_print
-
 LOGGER = logging.getLogger(__name__)
 
 
@@ -378,7 +376,8 @@ def ll_int(p1, v1, p2, v2):
     """Intersect line though p1 direction v1 with line through p2 direction v2.
        Returns a list of zero or one solutions
     """
-    diag_print("ll_int "+str(p1)+str(v1)+str(p2)+str(v2),"intersections")
+    LOGGER.debug(f"ll_int {p1} {v1} {p2} {v2}")
+
     if tol_eq((v1[0]*v2[1])-(v1[1]*v2[0]),0):
         return []
     elif not tol_eq(v2[1],0.0):
@@ -395,7 +394,8 @@ def lr_int(p1, v1, p2, v2):
     """Intersect line though p1 direction v1 with ray through p2 direction v2.
        Returns a list of zero or one solutions
     """
-    diag_print("lr_int "+str(p1)+str(v1)+str(p2)+str(v2),"intersections")
+    LOGGER.debug(f"lr_int {p1} {v1} {p2} {v2}")
+
     s = ll_int(p1,v1,p2,v2)
     if len(s) > 0 and tol_ge(np.dot(s[0] - p2, v2), 0):
         return s
@@ -406,7 +406,8 @@ def rr_int(p1, v1, p2, v2):
     """Intersect ray though p1 direction v1 with ray through p2 direction v2.
        Returns a list of zero or one solutions
     """
-    diag_print("rr_int "+str(p1)+str(v1)+str(p2)+str(v2),"intersections")
+    LOGGER.debug(f"rr_int {p1} {v1} {p2} {v2}")
+
     s = ll_int(p1,v1,p2,v2)
     if len(s) > 0 and tol_ge(np.dot(s[0] - p2, v2), 0) and tol_ge(np.dot(s[0] - p1, v1), 0):
         return s
@@ -615,9 +616,7 @@ def test_cc_int():
     if random.random() < 0.33:
         r2 = abs(r1 - p1.distance_to(p2))
     # do interesection
-    diag_print("problem:"+str(p1)+","+str(r1)+","+str(p2)+","+str(r2),"test_cc_int")
     sols = cc_int(p1, r1, p2, r2)
-    diag_print("solutions:"+str(list(map(str, sols))),"test_cc_int")
     # test number of intersections
     if len(sols) == 0:
         if not tol_gt(p2.distance_to(p1),r1 + r2) and not tol_lt(p2.distance_to(p1),abs(r1 - r2)) and not tol_eq(p1.distance_to(p2),0):

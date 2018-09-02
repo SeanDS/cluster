@@ -1,19 +1,19 @@
 """This module implements a simple listen/notify schema"""
 
-# 20090521 
-# - replaced lists by weakKeyDict, do when listener/notifier deleted from all other contexts, its reference is removed 
+# 20090521
+# - replaced lists by weakKeyDict, do when listener/notifier deleted from all other contexts, its reference is removed
 #   This also implies that there is no order of notifications sent, and objects can only register as listener/notifier once!
 
-# Notes: 
-# - member variables "listeners" and "notifiers" are not hidden, but should never be modified directly, so be careful! 
+# Notes:
+# - member variables "listeners" and "notifiers" are not hidden, but should never be modified directly, so be careful!
 # - subclasses of Listener will want to override the receive_notify class.
-# - Notifier/Listener subclasses __init__ method  must call Notifier/Listener.__init__(self) 
+# - Notifier/Listener subclasses __init__ method  must call Notifier/Listener.__init__(self)
 
 import weakref
 
 class Notifier:
     """A notifier keeps a list of Listener instances that are to be informed of certain events.
-    
+
        instance attributes:
         listeners       - a list of Listener instances
     """
@@ -28,8 +28,8 @@ class Notifier:
 
     def rem_listener(self, listener):
         """remove a listener from the list (and self from listers' list)"""
-        del self.listeners[listener] 
-        del listener.notifiers[self] 
+        del self.listeners[listener]
+        del listener.notifiers[self]
 
     def send_notify(self, message):
         """send a message to all listeners"""
@@ -49,7 +49,7 @@ class Notifier:
 
 class Listener:
     """A listener is notified by one or more Notifiers.
-    
+
        instance attributes:
         notifiers           - a list of Notifier objects
     """

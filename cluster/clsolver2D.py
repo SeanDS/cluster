@@ -1,15 +1,17 @@
 """A generic 2D geometric constraint solver."""
 
+import logging
 import numpy as np
 
 from .geometry import (Vector, tol_zero, tol_eq, is_clockwise, is_counterclockwise, is_acute, is_obtuse,
                        distance_2p, angle_3p, cc_int, cr_int, rr_int)
 from .clsolver import *
-from .diagnostic import diag_print, diag_select
 from .selconstr import *
 from .configuration import Configuration
 from .cluster import *
 from . import incremental
+
+LOGGER = logging.getLogger(__name__)
 
 
 class ClusterSolver2D(ClusterSolver):
@@ -50,7 +52,6 @@ class MergeSR(ClusterMethod):
         return s
 
     def multi_execute(self, inmap):
-        diag_print("MergeSR.multi_execute called","clmethods")
         c1 = self._inputs[0]
         c2 = self._inputs[1]
         conf1 = inmap[c1]
@@ -93,7 +94,6 @@ class MergePR(ClusterMethod):
         return s
 
     def multi_execute(self, inmap):
-        diag_print("MergePR.multi_execute called","clmethods")
         #c1 = self._inputs[0]
         #c2 = self._inputs[1]
         conf1 = inmap[self._inputs[0]]
@@ -156,7 +156,6 @@ class MergeRR(ClusterMethod):
         return s
 
     def multi_execute(self, inmap):
-        diag_print("MergeRR.multi_execute called","clmethods")
         c1 = self._inputs[0]
         c2 = self._inputs[1]
         conf1 = inmap[c1]
@@ -226,7 +225,6 @@ class DeriveDDD(ClusterMethod):
         return s
 
     def multi_execute(self, inmap):
-        diag_print("DeriveDDD.multi_execute called","clmethods")
         c12 = inmap[self.d_ab]
         c13 = inmap[self.d_ac]
         c23 = inmap[self.d_bc]
@@ -329,7 +327,6 @@ class DeriveDAD(ClusterMethod):
         return s
 
     def multi_execute(self, inmap):
-        diag_print("DeriveDAD.multi_execute called","clmethods")
         c12 = inmap[self.d_ab]
         c123 = inmap[self.a_abc]
         c23 = inmap[self.d_bc]
@@ -423,7 +420,6 @@ class DeriveADD(ClusterMethod):
         return s
 
     def multi_execute(self, inmap):
-        diag_print("DeriveADD.multi_execute called","clmethods")
         c312 = inmap[self.a_cab]
         c12 = inmap[self.d_ab]
         c23 = inmap[self.d_bc]
@@ -471,14 +467,12 @@ class DeriveHH2S(ClusterMethod):
             return isinstance(method, DeriveHH2S)
 
         def pair_to_hh2s(pair):
-            print("pair_to_hhs2s: start")
+            LOGGER.debug("pair_to_hhs2s: start")
             assert len(pair)==2
             a_cab = list(pair)[0]
             a_abc = list(pair)[1]
             a = a_cab.cvar
             b = a_abc.cvar
-            print("a",a)
-            print("b",b)
             if a == b:
                 return None
             if a not in a_abc.xvars:
@@ -486,12 +480,10 @@ class DeriveHH2S(ClusterMethod):
             if b not in a_cab.xvars:
                 return None
             cs = a_cab.xvars.intersection(a_abc.xvars).difference([a,b])
-            print("#cs",len(cs))
             if len(cs) != 1:
                 return None
             c = list(cs)[0]
-            print("c",c)
-            print("hh2s triangle confirmed")
+            LOGGER.debug("hh2s triangle confirmed")
             return DeriveHH2S( {"$a_cab":a_cab, "$a_abc":a_abc, "$a":a, "$b":b, "$c":c })
         # end def
 
@@ -505,7 +497,6 @@ class DeriveHH2S(ClusterMethod):
 
 
     def multi_execute(self, inmap):
-        diag_print("DeriveHH2S.multi_execute called","clmethods")
         c312 = inmap[self.a_cab]
         c123 = inmap[self.a_abc]
         v1 = self.a
@@ -559,7 +550,6 @@ class CheckAR(ClusterMethod):
         return s
 
     def multi_execute(self, inmap):
-        diag_print("CheckAR.multi_execute called","clmethods")
         # get configurations
         hog = inmap[self.hog]
         rigid = inmap[self.rigid]
@@ -579,7 +569,7 @@ class CheckAR(ClusterMethod):
 # ---------------------------------------------------------
 
 def solve_ddd(v1,v2,v3,d12,d23,d31):
-    diag_print("solve_ddd: %s %s %s %f %f %f"%(v1,v2,v3,d12,d23,d31),"clmethods")
+    LOGGER.debug(f"solve_ddd: {v1} {v2} {v3} {d12} {d23} {d31}")
     p1 = Vector.origin()
     p2 = Vector([d12,0.0])
     p3s = cc_int(p1,d31,p2,d23)
@@ -587,7 +577,7 @@ def solve_ddd(v1,v2,v3,d12,d23,d31):
     for p3 in p3s:
         solution = Configuration({v1:p1, v2:p2, v3:p3})
         solutions.append(solution)
-    diag_print("solve_ddd solutions"+str(solutions),"clmethods")
+    LOGGER.debug(f"solve_ddd solutions: {solutions}")
     return solutions
 
 def solve_dad(v1,v2,v3,d12,a123,d23):
@@ -596,7 +586,7 @@ def solve_dad(v1,v2,v3,d12,a123,d23):
         d<xy>: numeric distance values
         a<xyz>: numeric angle in radians
     """
-    diag_print("solve_dad: %s %s %s %f %f %f"%(v1,v2,v3,d12,a123,d23),"clmethods")
+    LOGGER.debug(f"solve_dad: {v1} {v2} {v3} {d12} {a123} {d23}")
     p2 = Vector.origin()
     p1 = Vector([d12, 0.0])
     p3s = [ Vector([d23 * np.cos(a123), d23 * np.sin(a123)]) ]
@@ -613,7 +603,7 @@ def solve_add(a,b,c, a_cab, d_ab, d_bc):
         a<xyz>: numeric angle in radians
     """
 
-    diag_print("solve_dad: %s %s %s %f %f %f"%(a,b,c,a_cab,d_ab,d_bc),"clmethods")
+    LOGGER.debug(f"solve_dad: {a} {b} {c} {a_cab} {d_ab} {d_bc}")
     p_a = Vector.origin()
     p_b = Vector([d_ab,0.0])
     dir = Vector([np.cos(-a_cab), np.sin(-a_cab)])
@@ -630,7 +620,7 @@ def solve_ada(a, b, c, a_cab, d_ab, a_abc):
         d<xy>: numeric distance values
         a<xyz>: numeric angle in radians
     """
-    diag_print("solve_ada: %s %s %s %f %f %f"%(a,b,c,a_cab,d_ab,a_abc),"clmethods")
+    LOGGER.debug(f"solve_ada: {a} {b} {c} {a_cab} {d_ab} {a_abc}")
     p_a = Vector.origin()
     p_b = Vector([d_ab, 0.0])
     dir_ac = Vector([np.cos(-a_cab), np.sin(-a_cab)])

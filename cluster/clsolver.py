@@ -4,9 +4,10 @@ This module provides basic functionality for
 ClusterSolver2D and ClusterSolver3D.
 """
 
+import logging
+
 from .graph import Graph
 from .method import Method, MethodGraph
-from .diagnostic import diag_print
 from .notify import Notifier
 from .multimethod import MultiVariable, MultiMethod
 from .cluster import *
@@ -14,6 +15,8 @@ from .configuration import Configuration
 from .gmatch import gmatch
 from .method import OrMethod,SetMethod
 from .incremental import IncrementalSet,MutableSet,Union,Filter
+
+LOGGER = logging.getLogger(__name__)
 
 # --------------------------------------------------
 # ---------- ClusterSolver main class --------------
@@ -73,7 +76,7 @@ class ClusterSolver(Notifier):
 
     def add(self, cluster):
         """Add a cluster"""
-        diag_print("add_cluster "+str(cluster), "clsolver")
+        LOGGER.debug(f"adding cluster '{cluster}'")
         self._add_cluster(cluster)
         self._process_new()
 
@@ -81,11 +84,13 @@ class ClusterSolver(Notifier):
         """Remove a cluster.
            All dependend objects are also removed.
         """
+        LOGGER.debug(f"removing cluster '{cluster}'")
         self._remove(cluster)
         self._process_new()
 
     def set(self, cluster, configurations):
         """Associate a list of configurations with a cluster"""
+        LOGGER.debug(f"setting configurations for cluster '{cluster}' to {configurations}")
         self._mg.set(cluster, configurations)
 
     def get(self, cluster):
@@ -94,7 +99,7 @@ class ClusterSolver(Notifier):
 
     def set_root(self, cluster):
         """Set root cluster, used for positionig and orienting the solutions"""
-        diag_print("set root "+str(self._rootcluster), "clsolver")
+        LOGGER.debug(f"set root to '{self._rootcluster}'")
         if self._rootcluster != None:
             oldrootvar = rootname(self._rootcluster)
             self._mg.set(oldrootvar, False)
@@ -224,11 +229,10 @@ class ClusterSolver(Notifier):
 
     def _add_variable(self, var):
         if not self._graph.has_vertex(var):
-            diag_print("_add_variable "+str(var), "clsolver")
+            LOGGER.debug(f"_add_variable '{var}'")
             self._add_to_group("_variables", var)
 
     def _add_cluster(self, newcluster):
-        diag_print("_add_cluster "+str(newcluster),"clsolver")
         # check if not already exists
         if self._graph.has_vertex(newcluster):
             raise Exception("cluster %s already in clsolver"%(str(newcluster)))
@@ -255,7 +259,6 @@ class ClusterSolver(Notifier):
         self.send_notify(("add", newcluster))
 
     def _add_method(self, method):
-        diag_print("new "+str(method),"clsolver")
         self._add_to_group("_methods", method)
         for obj in method.inputs():
             self._add_dependency(obj, method)
@@ -358,13 +361,12 @@ class ClusterSolver(Notifier):
             if len(non_redundant_methods) > 0:
                 method = next(iter(non_redundant_methods))
                 #print "applicable methods:", map(str, self._applicable_methods)
-                diag_print("incremental search found:"+str(method),"clsolver._process_new")
+                LOGGER.debug(f"incremental search found method '{method}'")
                 self._add_method_complete(method)
             else:
                 newobject = self._new.pop()
-                diag_print("search from "+str(newobject), "clsolver")
-                succes = self._search(newobject)
-                if succes and self.is_top_level(newobject):
+                success = self._search(newobject)
+                if success and self.is_top_level(newobject):
                     # maybe more rules applicable.... push back on stack
                     self._new.append(newobject)
                 #endif
@@ -374,7 +376,7 @@ class ClusterSolver(Notifier):
     #end def
 
     def _search(self, newcluster):
-        diag_print("search from:"+str(newcluster),"clsolver3D")
+        LOGGER.debug(f"searching from cluster '{newcluster}'")
         # find all toplevel clusters connected to newcluster
         # via one or more variables
         connected = set()
@@ -382,11 +384,11 @@ class ClusterSolver(Notifier):
             dependend = self.find_dependend(var)
             dependend = [x for x in dependend if self.is_top_level(x)]
             connected.update(dependend)
-        diag_print("search: connected clusters="+str(connected),"clsolver3D")
+        LOGGER.debug(f"connected clusters: {connected}")
 
         # first try handcoded matching
         for methodclass in self._handcoded_methods:
-            diag_print("trying handcoded match for "+str(methodclass), "clsolver3D")
+            LOGGER.debug(f"trying handcoded match for method '{methodclass}'")
             matches = methodclass.handcoded_match(self, newcluster, connected)
             if self._try_matches(methodclass, matches):
                 return True
@@ -403,7 +405,7 @@ class ClusterSolver(Notifier):
         """
         refgraph = reference2graph(nlet)
         for methodclass in self._pattern_methods:
-            diag_print("trying generic pattern matching for "+str(methodclass), "clsolver3D")
+            LOGGER.debug(f"trying generic pattern matching for method '{methodclass}'")
             matches = gmatch(methodclass.patterngraph, refgraph)
             if self._try_matches(methodclass,matches):
                 return True
@@ -414,7 +416,7 @@ class ClusterSolver(Notifier):
     def _try_matches(self, methodclass, matches):
         # print "method="+str(methodclass),"number of matches = "+str(len(matches))
         for s in matches:
-            diag_print("try match: "+str(s),"clsolver3D")
+            LOGGER.debug(f"trying match '{s}'")
             method = methodclass(*[s])
             succes = self._add_method_complete(method)
             if succes:
@@ -440,7 +442,9 @@ class ClusterSolver(Notifier):
             if num_constraints(cluster.intersection(output)) >= num_constraints(output):
                 infinc = False
                 break
-        diag_print("information increasing:"+str(infinc),"clsolver")
+
+        LOGGER.debug(f"information increasing: {infinc}")
+
         return infinc
 
 
@@ -456,7 +460,9 @@ class ClusterSolver(Notifier):
         if hasattr(merge,"noremove") and merge.noremove == True:
             nremove = 0
         reduc = (nremove > 1)
-        diag_print("reduce # clusters:"+str(reduc),"clsolver")
+
+        LOGGER.debug(f"reduce number of clusters: {reduc}")
+
         return reduc
 
     def _is_redundant_method(self, merge):
@@ -464,15 +470,13 @@ class ClusterSolver(Notifier):
         infinc = self._is_information_increasing(merge)
         reduc = self._is_cluster_reducing(merge)
         if not infinc and not reduc:
-            diag_print("method is redundant","clsolver")
+            LOGGER.debug(f"method '{merge}' is redundant")
             return True
         else:
-            diag_print("method is not redundant","clsolver")
+            LOGGER.debug(f"method '{merge}' is not redundant")
             return False
 
     def _add_method_complete(self, merge):
-        diag_print("add_method_complete "+str(merge), "clsolver")
-
         # do not add if method is redundant
         if self._is_redundant_method(merge):
             return False
@@ -511,15 +515,15 @@ class ClusterSolver(Notifier):
             # do not remove rigids from toplevel if method does not consider root
             if isinstance(cluster, Rigid):
                 if hasattr(merge,"noremove") and merge.noremove == True:
-                    diag_print("block top-level", "clsolver")
+                    LOGGER.debug(f"cluster '{cluster}' is blocking the top-level")
                     break
             # remove input clusters when all its constraints are in output cluster
             if num_constraints(cluster.intersection(output)) >= num_constraints(cluster):
-                diag_print("remove from top-level: "+str(cluster),"clsolver")
+                LOGGER.debug(f"removing cluster '{cluster}' from top-level")
                 self._rem_top_level(cluster)
                 merge.restore_toplevel.append(cluster)
             else:
-                diag_print("keep top-level: "+str(cluster),"clsolver")
+                LOGGER.debug(f"keeping cluster '{cluster}' at top-level")
 
         # add method to determine root-variable
         if hasattr(merge,"noremove") and merge.noremove == True:
@@ -567,7 +571,7 @@ class ClusterSolver(Notifier):
                 for cluster in item.restore_toplevel:
                     torestore.add(cluster)
             # delete it from graph
-            diag_print("deleting "+str(item),"clsolver.remove")
+            LOGGER.debug(f"deleting '{item}'")
             self._graph.rem_vertex(item)
             # remove from _new list
             if item in self._new:
@@ -635,18 +639,16 @@ class ClusterSolver(Notifier):
     # ---- consistency
 
     def _is_consistent_pair(self, object1, object2):
-        diag_print("in is_consistent_pair "+str(object1)+" "+str(object2),"clsolver")
         oc = over_constraints(object1, object2)
-        diag_print("over_constraints: "+str(list(map(str,oc))),"clsolver")
+        oc_list = [str(c) for c in oc]
+        LOGGER.debug(f"overconstraints between '{object1}' and '{object2}': {oc_list}")
         consistent = True
         for con in oc:
             consistent = consistent and self._consistent_overconstraint_in_pair(con, object1, object2)
-        diag_print("global consistent? "+str(consistent),"clsolver")
+        LOGGER.debug(f"'{object1}' and '{object2}' globally consistent: {consistent}")
         return consistent
 
     def _consistent_overconstraint_in_pair(self, overconstraint, object1, object2):
-        diag_print("consistent "+str(overconstraint)+" in "+str(object1)+" and "+str(object2)+" ?", "clsolver")
-
         # get sources for constraint in given clusters
         s1 = self._source_constraint_in_cluster(overconstraint, object1)
         s2 = self._source_constraint_in_cluster(overconstraint, object2)
@@ -670,7 +672,7 @@ class ClusterSolver(Notifier):
             #if solve(c2to1) contains overconstraint then consistent
             #raise StandardError, "not yet implemented"
 
-        diag_print("consistent? "+str(consistent), "clsolver")
+        LOGGER.debug(f"'{object1}' and '{object2}' consistent: {consistent}")
         return consistent
 
     def _source_constraint_in_cluster(self, constraint, cluster):
@@ -688,7 +690,7 @@ class ClusterSolver(Notifier):
                 if method.consistent == True:
                     return self._source_constraint_in_cluster(constraint, down[0])
                 else:
-                    diag_print("Warning: source is inconsistent","clsolver")
+                    LOGGER.warning(f"source method '{method}' is inconsistent")
                     return None
             else:
                 return self._source_constraint_in_cluster(constraint, down[0])
@@ -831,15 +833,17 @@ class PrototypeMethod(MultiMethod):
         MultiMethod.__init__(self)
 
     def multi_execute(self, inmap):
-        diag_print("PrototypeMethod.multi_execute called","clmethods")
+        LOGGER.debug("multi execute called")
         incluster = self._inputs[0]
         selclusters = []
         for i in range(1,len(self._inputs)-1):
             selclusters.append(self._inputs[i])
         enabledvar = self._inputs[-1]
-        diag_print("input cluster"+str(incluster), "PrototypeMethod.multi_execute")
-        diag_print("selection clusters"+str(selclusters), "PrototypeMethod.multi_execute")
-        diag_print("enabledvar"+str(enabledvar), "PrototypeMethod.multi_execute")
+
+        LOGGER.debug(f"input cluster: {incluster}")
+        LOGGER.debug(f"selection clusters: {selclusters}")
+        LOGGER.debug(f"enabled variable: {enabledvar}")
+
         # get confs/values
         enabledval = inmap[enabledvar]
         inconf = inmap[incluster]
@@ -853,18 +857,21 @@ class PrototypeMethod(MultiMethod):
             selconf = {}
         else:
             selconf = Configuration(selmap)
-        diag_print("input configuration = "+str(inconf), "PrototypeMethod.multi_execute")
-        diag_print("selection configurations = "+str(selconf), "PrototypeMethod.multi_execute")
-        diag_print("enabled value = "+str(enabledval), "PrototypeMethod.multi_execute")
+
+        LOGGER.debug(f"input configuration: {inconf}")
+        LOGGER.debug(f"selection configurations: {selconf}")
+        LOGGER.debug(f"enabled value: {enabledval}")
+
         # do test
         if enabledval == True:
             sat = True
             for con in self._constraints:
                 satcon = con.satisfied(inconf.map) == con.satisfied(selconf.map)
-                diag_print("constraint = "+str(con), "PrototypeMethod.multi_execute")
-                diag_print("constraint satisfied? "+str(satcon), "PrototypeMethod.multi_execute")
+                LOGGER.debug(f"constraint '{con}' satisifed: {satcon}")
                 sat = sat and satcon
-            diag_print("prototype satisfied? "+str(sat), "PrototypeMethod.multi_execute")
+
+            LOGGER.debug(f"prototype satisfied: {sat}")
+
             if sat:
                 return [inconf]
             else:
@@ -896,17 +903,18 @@ class SelectionMethod(MultiMethod):
         return iter(self._constraints)
 
     def multi_execute(self, inmap):
-        diag_print("SelectionMethod.multi_execute called","SelectionMethod.multi_execute")
         incluster = self._inputs[0]
         inconf = inmap[incluster]
-        diag_print("input configuration = "+str(inconf), "SelectionMethod.multi_execute")
+        LOGGER.debug(f"input configuration: {inconf}")
         sat = True
+
         for con in self._constraints:
-            diag_print("constraint = "+str(con), "SelectionMethod.multi_execute")
+            LOGGER.debug(f"constraint '{con}' satisfied: {satcon}")
             satcon = con.satisfied(inconf.map)
-            diag_print("satisfied = "+str(satcon), "SelectionMethod.multi_execute")
             sat = sat and satcon
-        diag_print("all satisfied = "+str(sat), "SelectionMethod.multi_execute")
+
+        LOGGER.debug(f"all satisfied: {sat}")
+
         if sat:
             return [inconf]
         else:
@@ -944,7 +952,6 @@ def pattern2graph(pattern):
         if pattype == "hedgehog":
             pgraph.add_edge("cvar"+"#"+patname, patvars[0])
             pgraph.add_edge(patname, "cvar"+"#"+patname)
-    #diag_print("pattern graph:"+str(pgraph),"match");
     return pgraph
 
 def reference2graph(nlet):
@@ -970,7 +977,6 @@ def reference2graph(nlet):
             rgraph.add_edge("hedgehog", cluster)
             rgraph.add_edge("cvar"+"#"+str(id(cluster)), cluster.cvar)
             rgraph.add_edge(cluster, "cvar"+"#"+str(id(cluster)))
-    #diag_print("reference graph:"+str(rgraph),"match");
     return rgraph
 
 def rootname(cluster):

@@ -1,6 +1,7 @@
 """Geometric constraint problem and solver. Uses ClusterSolver for solving
 problems incrementally."""
 
+import logging
 import numpy as np
 
 from .geometry import Vector
@@ -9,11 +10,12 @@ from .clsolver2D import ClusterSolver2D
 from .cluster import *
 from .selconstr import SelectionConstraint, fnot
 from .configuration import Configuration
-from .diagnostic import diag_print
 from .constraint import Constraint, ConstraintGraph
 from .notify import Notifier, Listener
 from .geometry import (angle_3p, distance_2p, distance_point_line, is_clockwise,
                        is_counterclockwise, perp_2d, tol_eq)
+
+LOGGER = logging.getLogger(__name__)
 
 # ----------- GeometricProblem -------------
 
@@ -237,10 +239,10 @@ class GeometricProblem (Notifier, Listener):
                         solved = False
                         break
                 if not solved:
-                    diag_print(str(con)+" not solved", "GeometricProblem.verify")
+                    LOGGER.debug(f"constraint '{con}' not solved")
                     sat = False
                 elif not con.satisfied(solution):
-                    diag_print(str(con)+" not satisfied", "GeometricProblem.verify")
+                    LOGGER.debug(f"constraint '{con}' not satisfied")
                     sat = False
         return sat
 
@@ -448,8 +450,9 @@ class GeometricSolver (Listener):
     def _map_cluster_solutions(self, drcluster):
         # map dr-cluster configurations to solutions, i.e. a map from problem variables to values
         configurations = self.dr.get(drcluster)
+        n_configurations = len(configurations)
         solutions = []
-        diag_print("mapping cluster "+str(drcluster)+" #configurations="+str(len(configurations)),"GeometricSolver")
+        LOGGER.debug(f"mapping cluster '{drcluster}' with {n_configurations} configurations")
         for configuration in configurations:
             solution = {}
             for var in self.problem.cg.variables():
@@ -569,10 +572,8 @@ class GeometricSolver (Listener):
             self._update_variable(var)
 
     def _add_line(self, var):
-        diag_print("add line "+str(var),"GeometricSolver")
         # find coincident points
         points = list(self.problem.get_coincident_points(var))
-        diag_print("on "+str(points),"GeometricSolver")
 
         if len(points) == 0:
             self._map_line_distance(var)
@@ -600,7 +601,6 @@ class GeometricSolver (Listener):
         self._map[line] = dist
         self._map[dist] = line
         self.dr.add(dist)
-        diag_print("mapped "+str(line)+" to "+str(dist),"GeometricSolver")
         # update configurations
         self._update_variable(line)
 
@@ -622,7 +622,6 @@ class GeometricSolver (Listener):
         self._map[line] = dist
         self._map[dist] = line
         self.dr.add(dist)
-        diag_print("mapped "+str(line)+" to "+str(dist),"GeometricSolver")
         self._update_variable(line)
 
     def _map_line_3d_distance(self,line):
@@ -651,7 +650,6 @@ class GeometricSolver (Listener):
         self._map[line] = dist
         self._map[dist] = line
         self.dr.add(dist)
-        diag_print("mapped "+str(line)+" to "+str(dist),"GeometricSolver")
         # update configurations
         self._update_variable(line)
 
@@ -678,11 +676,9 @@ class GeometricSolver (Listener):
         self._map[line] = dist
         self._map[dist] = line
         self.dr.add(dist)
-        diag_print("mapped "+str(line)+" to "+str(dist),"GeometricSolver")
         self._update_variable(line)
 
     def _rem_variable(self, var):
-        diag_print("GeometricSolver._rem_variable","GeometricSolver")
         if var in self._map:
             self.dr.remove(self._map[var])
             # Note: CLSolver automatically removes variables with no dependent clusters
@@ -749,14 +745,13 @@ class GeometricSolver (Listener):
                     self._map[con] = angle_hog
                     self._map[angle_hog] = con
                     self.dr.add(angle_hog)
-                    diag_print("mapped "+str(con)+" to "+str(angle_hog),"GeometricSolver")
+                    LOGGER.debug(f"mapped constraint '{con}' to cluster '{angle_hog}'")
                     self._update_constraint(con)
         else:
             raise Exception("unknown constraint type")
             pass
 
     def _rem_constraint(self, con):
-        diag_print("GeometricSolver._rem_constraint","GeometricSolver")
         if isinstance(con,FixConstraint):
             if self.fixcluster != None:
                 self.dr.remove(self.fixcluster)
@@ -832,7 +827,7 @@ class GeometricSolver (Listener):
                 line_rigid = self._map[line]
                 point_rigid = self._map[point]
                 point_vertex = next(iter(point_rigid.vars))
-                print("point_vertex", point_vertex)
+                LOGGER.debug(f"point_vertex: {point_vertex}")
                 line_vertex = line_rigid.vertex
                 line_normal = line_rigid.normal
                 angle_hog = self._map[con]
@@ -842,8 +837,6 @@ class GeometricSolver (Listener):
                 conf1 = Configuration({line_vertex:lv, line_normal:ln, point_vertex: 1.0*pv})
                 conf2 = Configuration({line_vertex:lv, line_normal:ln, point_vertex:-1.0*pv})
                 self.dr.set(angle_hog, [conf1,conf2])
-                diag_print("set "+str(angle_hog)+" to "+str(conf1),"GeometricSolver")
-                diag_print("set "+str(angle_hog)+" to "+str(conf2),"GeometricSolver")
         else:
             raise Exception("unknown constraint type")
 
@@ -877,16 +870,13 @@ class GeometricSolver (Listener):
             vertex_rigid = self._map[line_vertex]
             conf = Configuration({line_vertex: v})
             self.dr.set(vertex_rigid, [conf])
-            diag_print("set "+str(vertex_rigid)+" to "+str(conf),"GeometricSolver")
         if line_normal in self._map:
             normal_rigid = self._map[line_normal]
             conf = Configuration({line_normal: n})
             self.dr.set(normal_rigid, [conf])
-            diag_print("set "+str(normal_rigid)+" to "+str(conf),"GeometricSolver")
         # update line configuration
         conf = Configuration({line_vertex:v, line_normal:n})
         self.dr.set(cluster, [conf])
-        diag_print("set "+str(cluster)+" to "+str(conf),"GeometricSolver")
 
     def _update_fix(self):
         if self.fixcluster:
@@ -897,7 +887,7 @@ class GeometricSolver (Listener):
             conf = Configuration(map)
             self.dr.set(self.fixcluster, [conf])
         else:
-            diag_print("no fixcluster to update","geometric")
+            LOGGER.debug("no fixcluster to update")
             pass
 
 #class GeometricSolver
@@ -1053,9 +1043,9 @@ class FixConstraint(ParametricConstraint):
         """return True iff mapping from variable names to points satisfies constraint"""
         point = mapping[self._variables[0]]
         if len(point) != len(self._value):
-            diag_print("warning: FixConstraint.satisfied: vectors of unequal length", "geometric.FixConstraint.satisfied")
-            return False
-        result = True;
+            raise ValueError("fix constraint vectors of unequal length")
+
+        result = True
         for i in range(len(self._value)):
             result &= tol_eq(point[i], self._value[i])
         return result
@@ -1125,8 +1115,9 @@ class AngleConstraint(ParametricConstraint):
             else:
                 cmp = self._value
             result = tol_eq(ang, cmp)
+
         if result == False:
-            diag_print("measured angle = "+str(ang)+", parameter value = "+str(cmp), "satisfied")
+            LOGGER.debug("measured angle: {ang}, parameter value: {cmp}")
         return result
 
     def __str__(self):
@@ -1236,8 +1227,7 @@ class CoincidenceConstraint(Constraint):
                 raise Exception("line has invalid number of values")
             d =  distance_point_line(p, p1, p2)
             if not tol_eq(d,0):
-                diag_print("not satisfied "+ str(self)+" distance="+str(d),"CoincidenceConstraint")
-                print("distance="+str(d),"CoincidenceConstraint")
+                LOGGER.debug(f"coincidence constraint '{self}' not satisfied, distance: {d}")
             return tol_eq(d,0)
         else:
             raise Exception("unknown geometry type""")
