@@ -204,7 +204,7 @@ class RigidConstraint(ParametricConstraint):
             c    - a point variable name
             ang  - the angle parameter value
         """
-        super().__init__(variables=[configuration.vars()], value=configuration.copy())
+        super().__init__(variables=configuration.vars(), value=configuration.copy())
 
     @property
     def configuration(self):
