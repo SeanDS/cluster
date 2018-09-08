@@ -442,7 +442,7 @@ def test():
     mg.add_method(AddMethod('a','b','c'))
     print("c = "+str(mg.get('c')))
     print("set a = 10")
-    mg.set('a', 10)
+    mg.set_node_value('a', 10)
     print("c = "+str(mg.get('c')))
     mg.add_method(AddMethod('a','c','d'))
     print("d := a + c")

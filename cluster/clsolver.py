@@ -7,7 +7,8 @@ ClusterSolver2D and ClusterSolver3D.
 import logging
 
 from .oldgraph import Graph
-from .method import Method, MethodGraph
+from .method import Method
+from .methodgraph import MethodGraph
 from .notify import Notifier
 from .multimethod import MultiVariable, MultiMethod
 from .cluster import *
@@ -60,7 +61,7 @@ class ClusterSolver(Notifier):
         # add prototype_selection boolean var to method graph
         self._prototype_selection_var = "_prototype_selection_enabled"
         self._mg.add_variable(self._prototype_selection_var)
-        self._mg.set(self._prototype_selection_var, True)
+        self._mg.set_node_value(self._prototype_selection_var, True)
         # store map of selection_constraints to SelectionMethod (or None)
         self._selection_method = {}
         # store root cluster (will be assigned when first cluster added)
@@ -91,20 +92,20 @@ class ClusterSolver(Notifier):
     def set(self, cluster, configurations):
         """Associate a list of configurations with a cluster"""
         LOGGER.debug(f"setting configurations for cluster '{cluster}' to {configurations}")
-        self._mg.set(cluster, configurations)
+        self._mg.set_node_value(cluster, configurations)
 
     def get(self, cluster):
         """Return a set of configurations associated with a cluster"""
-        return self._mg.get(cluster)
+        return self._mg.get_node_value(cluster)
 
     def set_root(self, cluster):
         """Set root cluster, used for positionig and orienting the solutions"""
         LOGGER.debug(f"set root to '{self._rootcluster}'")
         if self._rootcluster != None:
             oldrootvar = rootname(self._rootcluster)
-            self._mg.set(oldrootvar, False)
+            self._mg.set_node_value(oldrootvar, False)
         newrootvar = rootname(cluster)
-        self._mg.set(newrootvar, True)
+        self._mg.set_node_value(newrootvar, True)
         self._rootcluster = cluster
 
     def get_root(self):
@@ -113,7 +114,7 @@ class ClusterSolver(Notifier):
 
     def set_prototype_selection(self, enabled):
         """Enable or disable prototype-based solution selection"""
-        self._mg.set(self._prototype_selection_var, enabled)
+        self._mg.set_node_value(self._prototype_selection_var, enabled)
 
     def add_selection_constraint(self, con):
         """Add a SelectionConstraint to filter solutions"""
@@ -247,9 +248,9 @@ class ClusterSolver(Notifier):
         self._mg.add_variable(newcluster)
         # add root-variable if needed with default value False
         root = rootname(newcluster)
-        if not self._mg.contains(root):
+        if not self._mg.has_node(root):
             self._mg.add_variable(root, False)
-            self._mg.set(root, False)
+            self._mg.set_node_value(root, False)
             # add root-variable to dependency graph
             self._add_dependency(newcluster, root)
         # if there is no root cluster, this one will be it
