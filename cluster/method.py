@@ -13,7 +13,6 @@ Changes:
 """
 
 import abc
-from .oldgraph import Graph
 
 # ----------- misc stuff -----------
 
