@@ -14,23 +14,6 @@ Changes:
 
 import abc
 
-# ----------- misc stuff -----------
-
-def _strseq(seq):
-    """print string rep of items in a sequence, seperated by commas.
-
-       It realy sucks that str(list/dict) uses the __repr__ method of items
-       in the list/dict. Ergo, this function.
-    """
-    s = ""
-    for el in seq:
-        s += str(el)
-        s += ','
-    if len(s) > 0:
-        s = s[:-1]
-    return s
-
-
 # ----------- Exceptions -----------
 
 class ValidityError(Exception):

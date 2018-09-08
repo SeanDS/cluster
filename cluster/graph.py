@@ -28,3 +28,7 @@ class Graph(nx.DiGraph):
             return False
 
         return True
+
+    def adjacent_edges(self, node):
+        yield from self.in_edges(node)
+        yield from self.out_edges(node)

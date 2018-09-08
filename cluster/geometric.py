@@ -258,7 +258,7 @@ class GeometricSolver(Listener):
             (type, data) = message
             if type == "add_constraint":
                 self._add_constraint(data)
-            elif type == "rem_constraint":
+            elif type == "remove_constraint":
                 self._rem_constraint(data)
             elif type == "add_variable":
                 self._add_variable(data)
@@ -267,7 +267,7 @@ class GeometricSolver(Listener):
             elif type == "set_prototype_selection":
                 self.set_prototype_selection(data)
             else:
-                raise Exception("unknown message type"+str(type))
+                raise Exception(f"unknown message type '{type}'")
         elif object == self.problem:
             (type, data) = message
             if type == "set_point":

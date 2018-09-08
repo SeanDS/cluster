@@ -394,7 +394,7 @@ class ClusterSolver(Notifier):
 
         # first try handcoded matching
         for methodclass in self._handcoded_methods:
-            LOGGER.debug(f"trying handcoded match for method '{methodclass}'")
+            LOGGER.debug(f"trying handcoded match for method '{methodclass.NAME}'")
             matches = methodclass.handcoded_match(self, newcluster, connected)
             if self._try_matches(methodclass, matches):
                 return True
@@ -411,7 +411,7 @@ class ClusterSolver(Notifier):
         """
         refgraph = reference2graph(nlet)
         for methodclass in self._pattern_methods:
-            LOGGER.debug(f"trying generic pattern matching for method '{methodclass}'")
+            LOGGER.debug(f"trying generic pattern matching for method '{methodclass.NAME}'")
             matches = gmatch(methodclass.patterngraph, refgraph)
             if self._try_matches(methodclass,matches):
                 return True
