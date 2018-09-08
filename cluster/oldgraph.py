@@ -1,30 +1,30 @@
 """
-Graph data structures and algorithms. 
+Graph data structures and algorithms.
 After Guido van Rossums essay on graphs in python
 (http://www.python.org/doc/essays/graphs.html).
-and Julien Burdy's sourceforge python graph project.  
+and Julien Burdy's sourceforge python graph project.
 (http://sourceforge.net/projects/pygraphlib/)
 
 A graph is typically represented as G=(V,E) where
-V are vertices and E are edges. 
-All vertices in a graph are uniquely, i.e. have unique id's. 
-Edges are directed edges and are identified by an ordered 
-pair of vertices (v1,v2). All edges are unique, i.e. are unique ordered pairs. 
+V are vertices and E are edges.
+All vertices in a graph are uniquely, i.e. have unique id's.
+Edges are directed edges and are identified by an ordered
+pair of vertices (v1,v2). All edges are unique, i.e. are unique ordered pairs.
 Associated with each edge is a value.
 
-A graph is implemented as a dictionary of which the keys are vertices.  
-Associated with each vertex is (again) a dictionairy of which the keys are 
-the vertices to which there is an edge. Associated with each edge is a value. 
-(A graph is implemented as a dictionairy of dictionairies). 
+A graph is implemented as a dictionary of which the keys are vertices.
+Associated with each vertex is (again) a dictionairy of which the keys are
+the vertices to which there is an edge. Associated with each edge is a value.
+(A graph is implemented as a dictionairy of dictionairies).
 
 The add_* and rem_* methods ensure that the graph contains no edges
-to vertices that are not in main dictionary (anymore). 
+to vertices that are not in main dictionary (anymore).
 
 The reverse of the graph is also sored and kept up to date, for fast
 determination of incoming edges and other algorithms.
 
 Also dictionaries are kept mapping vertices to fan-in and fanout numbers, and
-mapping numbers to vertices with that fan-in/out number. This allows us to 
+mapping numbers to vertices with that fan-in/out number. This allows us to
 quickly find sources, sinks, etc.
 
 Copyright Rick van der Meiden - 2003, 2004, 2005
@@ -57,7 +57,7 @@ class Graph (Notifier):
             self._dict[v] = {}
             self._reverse[v] = {}
             self.send_notify(("add_vertex",v))
-                    
+
     def add_edge(self, v1, v2, value=1):
         "Add edge from v1 to v2 with optional value."
         # add vertices of not in graph
@@ -79,7 +79,7 @@ class Graph (Notifier):
         self.add_edge(v2,v1, value)
 
     def add_graph(self, graph):
-        "Add all vertices and edges of given graph, and set edge values from given graph too."  
+        "Add all vertices and edges of given graph, and set edge values from given graph too."
         for v in graph.vertices():
             self.add_vertex(v)
         for e in graph.edges():
@@ -98,13 +98,13 @@ class Graph (Notifier):
                 self.rem_edge(v,w)
             # remove vertex (and edges going from vertex)
             del self._dict[v]
-            # and in the reverse 
+            # and in the reverse
             del self._reverse[v]
             # notify
             self.send_notify(("rem_vertex",v))
         else:
             raise Exception("vertex not in graph")
-            
+
     def rem_edge(self, v1, v2):
         "Remove edge."
         if self.has_edge(v1,v2):
@@ -120,22 +120,22 @@ class Graph (Notifier):
         "Remove edges bi-directionally."
         self.rem_edge(v1, v2)
         self.rem_edge(v2, v1)
-    
+
     def has_vertex(self, v):
         "True if v a vertex of this graph."
         return v in self._dict
-        
+
     def has_edge(self, v1, v2):
         "True if there is a directed edge (v1,v2) in this graph."
         if v1 in self._dict:
             return v2 in self._dict[v1]
         else:
             return False
-        
+
     def has_bi(self, v1, v2):
         "True if both edges (v1,v2) and (v2,v1) are in this graph."
         return self.has_edge(v1,v2) and self.has_edge(v2,v1)
-    
+
     def has_one(self, v1, v2):
         "True if either edge (v1,v2) or (v2,v1) is in this graph."
         return self.has_edge(v1,v2) or self.has_edge(v2,v1)
@@ -143,7 +143,7 @@ class Graph (Notifier):
     def get(self, v1, v2):
         "Get value of edge (v1,v2)."
         return self._dict[v1][v2]
-    
+
     def set(self, v1, v2, value):
         "Set value of edge (v1,v2) and add edge if it doesn't exist"
         if not self.has_edge(v1,v2):
@@ -152,7 +152,7 @@ class Graph (Notifier):
             self._dict[v1][v2] = value
             self._reverse[v2][v1] = value
             self.send_notify(("set",(v1,v2,value)))
-    
+
     def set_bi(self, v1, v2, value):
         "Set value of edges (v1,v2) and (v2,v1)."
         self.set(v1,v2,value)
@@ -161,7 +161,7 @@ class Graph (Notifier):
     def vertices(self):
         "List vertices"
         return list(self._dict.keys())
-    
+
     def edges(self):
         "List edges"
         l = []
@@ -186,12 +186,12 @@ class Graph (Notifier):
 
     def copy(self):
         return self.subgraph(self.vertices())
-        
+
     def ingoing_vertices(self,vertex):
         """return list of vertices from which edge goes to given vertex"""
         # this is where keeping reverse graph pays off (also used in remove)
         return list(self._reverse[vertex].keys())
-        
+
     def outgoing_vertices(self, vertex):
         """return list of vertices to which edge goes from given vertex"""
         return list(self._dict[vertex].keys())
@@ -202,7 +202,7 @@ class Graph (Notifier):
         oset = set(self.outgoing_vertices(v))
         vset = iset.union(oset)
         return list(vset)
- 
+
     def ingoing_edges(self, vertex):
         """return list of incoming edges"""
         k = self.ingoing_vertices(vertex)
@@ -210,7 +210,7 @@ class Graph (Notifier):
         for v in k:
             l.append((v,vertex))
         return l
-      
+
     def outgoing_edges(self, vertex):
         """return list of outgoing edges"""
         k = self.outgoing_vertices(vertex)
@@ -232,8 +232,8 @@ class Graph (Notifier):
         return g
 
     def path(self, start, end):
-        """return an arbitrary path (list of vertices) from start to end. 
-        If start equal to end, then return a cycle. 
+        """return an arbitrary path (list of vertices) from start to end.
+        If start equal to end, then return a cycle.
         If no path, then return empty list.
         """
         # map from vertices to shortest path to that key vertex
@@ -245,7 +245,7 @@ class Graph (Notifier):
             key = consider.pop()
             pth = trails[key]
             for v in self.outgoing_vertices(key):
-                if v == end:    
+                if v == end:
                     return pth + [v]
                 elif v not in trails:
                     trails[v] = pth + [v]
@@ -272,7 +272,7 @@ class Graph (Notifier):
         return list(result)
 
     def connected_outgoing(self, v):
-        """return vertices X connected from v by following only outgoing edges from v or X 
+        """return vertices X connected from v by following only outgoing edges from v or X
         (v is not in the result)"""
         front = [v]
         result = {}
@@ -283,7 +283,7 @@ class Graph (Notifier):
                 front += self.outgoing_vertices(x)
         del result[v]
         return list(result)
-    
+
     def connected_ingoing(self, v):
             """return vertices X connected to v by following only ingoing edges to v or X (v is not in the result)"""
             front = [v]
@@ -295,7 +295,7 @@ class Graph (Notifier):
                     front += self.ingoing_vertices(x)
             del result[v]
             return list(result)
-        
+
     def connected_subsets(self):
             """returns a set of (undirectionally) connected subsets of vertices"""
             todo = set(self.vertices())
@@ -310,12 +310,12 @@ class Graph (Notifier):
             return subsets
 
     def mincut(self):
-            """Returns a minimum cut of the graph. 
-               Implements the Stoer/Wagner algorithm. The graph is interpreted 
-               as a undirected graph, by adding the weights of co-edges. 
-               Returns (value, edges, g1, g2) 
-               where value is the weight of the cut, 
-               edges is the set of cut edges, 
+            """Returns a minimum cut of the graph.
+               Implements the Stoer/Wagner algorithm. The graph is interpreted
+               as a undirected graph, by adding the weights of co-edges.
+               Returns (value, edges, g1, g2)
+               where value is the weight of the cut,
+               edges is the set of cut edges,
                g1 and g2 are disjoint sets of vertices.
             """
             # create graph of one-clusters
@@ -325,14 +325,14 @@ class Graph (Notifier):
                 g1 = frozenset([v1])
                 g2 = frozenset([v2])
                 graph.add_edge(g1,g2)
-            
+
             # Stoer/Wagner algorithm
             mincutvalue = None
             mincut = frozenset()
             while len(graph.vertices()) > 1:
                 (phasecut,phasecutvalue) = self._mincutphase(graph)
                 if mincutvalue == None or phasecutvalue < mincutvalue:
-                    mincutvalue = phasecutvalue 
+                    mincutvalue = phasecutvalue
                     mincut = phasecut
 
             # rewrite output
@@ -355,7 +355,7 @@ class Graph (Notifier):
                            edges.add((k,v))
 
             return (mincutvalue, frozenset(edges), g1, g2)
-        
+
     def _mincutphase(self, graph):
             # returns the last vertex (group) added and the cut value
             #print "start cut phase"
@@ -364,7 +364,7 @@ class Graph (Notifier):
             done = [pick]
             #print "start:",pick
             # map vertices to cost of merge with done
-            todo = {}                   
+            todo = {}
             for v in graph.vertices():
                 todo[v] = 0
             del todo[pick]
@@ -389,7 +389,7 @@ class Graph (Notifier):
                 # store cut of the phase
                 if len(todo) == 1:
                     cut = pick
-                    cutvalue = todo[pick] 
+                    cutvalue = todo[pick]
                 # del from todo, add to done
                 del todo[pick]
                 done.append(pick)
@@ -419,12 +419,12 @@ class Graph (Notifier):
                 graph.add_edge(mergetex,v)
             graph.rem_vertex(last)
             graph.rem_vertex(butlast)
-            # klaar 
+            # klaar
             #print "cut, cutvalue:", cut, cutvalue
             return (cut,cutvalue)
         # fed
-        
-                
+
+
     # special methods
 
     def __str__(self):
@@ -445,12 +445,12 @@ class Graph (Notifier):
             if len(self._dict) > 0: s = s[:-1]
             s += "}"
             return s
-            
+
 # end class Graph
 
 
 
-    
+
 class FanGraph(Graph):
     """A graph with updated fan-in and fan-out numbers"""
 
@@ -462,20 +462,20 @@ class FanGraph(Graph):
         """the reverse graph is stored here"""
 
         self._fanin = {}
-        """map from vertices to fan-in number"""  
+        """map from vertices to fan-in number"""
         self._fanout = {}
-        """map from vertices to fan-out number"""  
+        """map from vertices to fan-out number"""
         self._infan = {}
-        """map from fan-in numbers to vertices with that fan-in"""  
+        """map from fan-in numbers to vertices with that fan-in"""
         self._outfan = {}
-        """map from fan-out numbers to vertices with that fan-out"""  
+        """map from fan-out numbers to vertices with that fan-out"""
         # copy input graph
         if graph:
-            for v in graph.vertices():
+            for v in graph.nodes:
                 self.add_vertex(v)
-            for e in graph.edges():
+            for e in graph.edges:
                 (v,w) = e
-                self.set(v,w,graph.get(v,w))
+                self.set(v,w,graph.get_edge_value(v,w))
     #end __init__
 
     def add_vertex(self, v):
@@ -486,7 +486,7 @@ class FanGraph(Graph):
             self._set_fanin(v, 0)
             self._set_fanout(v, 0)
             self.send_notify(("add_vertex",v))
-            
+
     def add_edge(self, v1, v2, value=1):
         "Add edge from v1 to v2 with optional value."
         # add vertices of not in graph
@@ -521,13 +521,13 @@ class FanGraph(Graph):
             self._set_fanout(v, None)
             # remove vertex (and edges going from vertex)
             del self._dict[v]
-            # and in the reverse 
+            # and in the reverse
             del self._reverse[v]
             # notify
             self.send_notify(("rem_vertex",v))
         else:
             raise Exception("vertex not in graph")
-        
+
     def rem_edge(self, v1, v2):
         "Remove edge."
         if self.has_edge(v1,v2):
@@ -566,13 +566,13 @@ class FanGraph(Graph):
             return []
 
     def fanin_numbers(self):
-        """the set of fan-in numbers, 
+        """the set of fan-in numbers,
            i.e. the union of the fan-in numbers of all veretices
         """
         return list(self._infan.keys())
 
     def fanout_numbers(self):
-        """the set of fan-out numbers, 
+        """the set of fan-out numbers,
         i.e. the union of the fan-out numbers of all veretices
         """
         return list(self._outfan.keys())
@@ -624,7 +624,7 @@ class FanGraph(Graph):
         else:
             # store new fanin
             self._fanin[vertex] = number
-            # store in infan 
+            # store in infan
             if number not in self._infan:
                 self._infan[number] = []
             self._infan[number].append(vertex)
@@ -641,12 +641,12 @@ class FanGraph(Graph):
         else:
             # store new fanin
             self._fanout[vertex] = number
-            # store in infan 
+            # store in infan
             if number not in self._outfan:
                 self._outfan[number] = []
             self._outfan[number].append(vertex)
 
-       
+
 # end class FanGraph
 
 
@@ -686,7 +686,7 @@ def _test():
     print(g)
     print("reverse:")
     print(g.reverse())
-    
+
     print("get subgraph (bi-directional k-3 graph)")
     g = g.subgraph(['a', 'b', 'c'])
     print(g)
@@ -751,7 +751,7 @@ def _test():
         tfo += i * len(g.outfan(i))
     print("total fan-in:", tfi)
     print("total fan-out:", tfo)
-    
+
 
 if __name__ == '__main__':
     _test()

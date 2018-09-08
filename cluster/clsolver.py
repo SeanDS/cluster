@@ -7,7 +7,7 @@ ClusterSolver2D and ClusterSolver3D.
 import abc
 import logging
 
-from .oldgraph import Graph
+from .graph import Graph
 from .method import Method
 from .methodgraph import MethodGraph
 from .notify import Notifier
@@ -54,9 +54,9 @@ class ClusterSolver(Notifier):
         self._incremental_methods = [m for m in self._methodclasses if hasattr(m,"incremental_matcher")]
         # init instance vars
         self._graph = Graph()
-        self._graph.add_vertex("_variables")
-        self._graph.add_vertex("_clusters")
-        self._graph.add_vertex("_methods")
+        self._graph.add_node("_variables")
+        self._graph.add_node("_clusters")
+        self._graph.add_node("_methods")
         self._new = []
         self._mg = MethodGraph()
         # add prototype_selection boolean var to method graph
@@ -141,20 +141,20 @@ class ClusterSolver(Notifier):
 
     def variables(self):
         """get list of variables"""
-        return self._graph.outgoing_vertices("_variables")
+        return self._graph.successors("_variables")
 
     def clusters(self):
         """get list of clusters"""
-        return self._graph.outgoing_vertices("_clusters")
+        return self._graph.successors("_clusters")
 
     def methods(self):
         """get list of methods"""
-        return self._graph.outgoing_vertices("_methods")
+        return self._graph.successors("_methods")
 
     def top_level(self):
         """return IncrementalSet of top-level clusters"""
         return self._toplevel
-        # return self._graph.outgoing_vertices("_toplevel")
+        # return self._graph.successors("_toplevel")
 
     def is_top_level(self, object):
         """Returns True iff given cluster is a top-level cluster"""
@@ -163,16 +163,16 @@ class ClusterSolver(Notifier):
 
     def find_dependend(self, object):
         """Return a list of objects that depend on given object directly."""
-        l = self._graph.outgoing_vertices(object)
-        return [x for x in l if self._graph.get(object,x) == "dependency"]
+        l = self._graph.successors(object)
+        return [x for x in l if self._graph.get_edge_value(object,x) == "dependency"]
 
     def find_depends(self, object):
         """Return a list of objects that the given object depends on directly"""
-        l = self._graph.ingoing_vertices(object)
-        return [x for x in l if self._graph.get(x,object) == "dependency"]
+        l = self._graph.predecessors(object)
+        return [x for x in l if self._graph.get_edge_value(x,object) == "dependency"]
 
     def contains(self, obj):
-        return self._graph.has_vertex(obj)
+        return self._graph.has_node(obj)
 
     # ------------ INTERNALLY USED METHODS --------
 
@@ -183,25 +183,25 @@ class ClusterSolver(Notifier):
 
         Used to delete dependent nodes when another node is deleted.
         """
-        self._graph.add_edge(on, dependend, "dependency")
+        self._graph.add_edge(on, dependend, value="dependency")
 
     def _add_to_group(self, group, object):
         """Add object to group"""
-        self._graph.add_edge(group, object, "contains")
+        self._graph.add_edge(group, object, value="contains")
 
     def _add_needed_by(self, needed, by):
         """Add relation 'needed' object is needed 'by'"""
-        self._graph.add_edge(needed, by, "needed_by")
+        self._graph.add_edge(needed, by, value="needed_by")
 
     def _objects_that_need(self, needed):
         """Return objects needed by given object"""
-        l = self._graph.outgoing_vertices(needed)
-        return [x for x in l if self._graph.get(needed,x) == "needed_by"]
+        l = self._graph.successors(needed)
+        return [x for x in l if self._graph.get_edge_value(needed,x) == "needed_by"]
 
     def _objects_needed_by(self, needer):
         """Return objects needed by given object"""
-        l = self._graph.ingoing_vertices(needer)
-        return [x for x in l if self._graph.get(x,needer) == "needed_by"]
+        l = self._graph.predecessors(needer)
+        return [x for x in l if self._graph.get_edge_value(x,needer) == "needed_by"]
 
     def _add_top_level(self, cluster):
         # self._graph.add_edge("_toplevel",cluster)
@@ -209,7 +209,7 @@ class ClusterSolver(Notifier):
         self._toplevel.add(cluster)
 
     def _rem_top_level(self, object):
-        # self._graph.rem_edge("_toplevel",object)
+        # self._graph.remove_edge("_toplevel",object)
         if object in self._new:
             self._new.remove(object)
         self._toplevel.remove(object)
@@ -230,13 +230,13 @@ class ClusterSolver(Notifier):
     # -- add object types
 
     def _add_variable(self, var):
-        if not self._graph.has_vertex(var):
+        if not self._graph.has_node(var):
             LOGGER.debug(f"_add_variable '{var}'")
             self._add_to_group("_variables", var)
 
     def _add_cluster(self, newcluster):
         # check if not already exists
-        if self._graph.has_vertex(newcluster):
+        if self._graph.has_node(newcluster):
             raise Exception("cluster %s already in clsolver"%(str(newcluster)))
         # update graph
         self._add_to_group("_clusters", newcluster)
@@ -280,12 +280,16 @@ class ClusterSolver(Notifier):
             vars.update(con.variables)
         selclusters = []
         for var in vars:
-            clusters = self._graph.outgoing_vertices(var)
+            clusters = self._graph.successors(var)
             clusters = [c for c in clusters if isinstance(c, Rigid)]
             clusters = [c for c in clusters if len(c.vars) == 1]
             if len(clusters) < 1:
                 raise Exception("no prototype cluster for variable "+str(var))
             elif len(clusters) > 1:
+                print("Method:", merge)
+                print("Clusters:", list(clusters))
+                #import networkx as nx
+                #nx.drawing.nx_pydot.write_dot(self._graph, "test_bug.dot")
                 raise Exception("more than one candidate prototype cluster for variable "+str(var))
             selclusters.append(clusters[0])
         outcluster = incluster.copy()
@@ -574,7 +578,7 @@ class ClusterSolver(Notifier):
                     torestore.add(cluster)
             # delete it from graph
             LOGGER.debug(f"deleting '{item}'")
-            self._graph.rem_vertex(item)
+            self._graph.remove_node(item)
             # remove from _new list
             if item in self._new:
                 self._new.remove(item)
@@ -584,7 +588,7 @@ class ClusterSolver(Notifier):
             if isinstance(item, Method):
                 # note: method may have been removed because variable removed
                 try:
-                    self._mg.rem_method(item)
+                    self._mg.remove_method(item)
                 except:
                     pass
                 # restore SelectionConstraints
@@ -592,51 +596,18 @@ class ClusterSolver(Notifier):
                     for con in item.iter_constraints():
                         self._selection_method[con] = None
             if isinstance(item, MultiVariable):
-                self._mg.rem_variable(item)
+                self._mg.remove_variable(item)
             # remove variables with no dependent clusters
             if isinstance(item, Cluster):
                 for var in item.vars:
                     if len(self.find_dependend(var)) == 0:
-                        self._graph.rem_vertex(var)
+                        self._graph.remove_node(var)
             # notify listeners
             self.send_notify(("remove", item))
         # restore toplevel (also added to _new)
         for cluster in torestore:
-            if self._graph.has_vertex(cluster):
+            if self._graph.has_node(cluster):
                 self._add_top_level(cluster)
-
-
-    ##def _contains_root(self, input_cluster):
-    ##   """returns True iff input_cluster is root cluster or was determined by
-    ##    merging with the root cluster."""
-    ##
-    ##    # start from root cluster. Follow merges upwards until:
-    ##    #  - input cluster found -> True
-    ##    #  - no more merges -> False
-    ##
-    ##    if len(self._graph.outgoing_vertices("_root")) > 1:
-    ##        raise StandardError, "more than one root cluster"
-    ##    if len(self._graph.outgoing_vertices("_root")) == 1:
-    ##        cluster = self._graph.outgoing_vertices("_root")[0]
-    ##    else:
-    ##        cluster = None
-    ##    while (cluster != None):
-    ##        if cluster is input_cluster:
-    ##            return True
-    ##        fr = self._graph.outgoing_vertices(cluster)
-    ##        me = filter(lambda x: isinstance(x, Merge), fr)
-    ##        me = filter(lambda x: cluster in x.outputs(), me)
-    ##        if len(me) > 1:
-    ##            raise StandardError, "root cluster merged more than once"
-    ##        elif len(me) == 0:
-    ##            cluster = None
-    ##        elif len(me[0].outputs()) != 1:
-    ##            raise StandardError, "a merge with number of outputs != 1"
-    ##        else:
-    ##            cluster = me[0].outputs()[0]
-    ##    #while
-    ##    return False
-    #def
 
     # ---- consistency
 
@@ -942,11 +913,11 @@ def pattern2graph(pattern):
        If pattype is hedgehog, then the first variable in patvars is the center variable.
     """
     pgraph = Graph()
-    pgraph.add_vertex("point")
-    pgraph.add_vertex("distance")
-    pgraph.add_vertex("rigid")
-    pgraph.add_vertex("balloon")
-    pgraph.add_vertex("hedgehog")
+    pgraph.add_node("point")
+    pgraph.add_node("distance")
+    pgraph.add_node("rigid")
+    pgraph.add_node("balloon")
+    pgraph.add_node("hedgehog")
     for clpattern in pattern:
         (pattype, patname, patvars) = clpattern
         pgraph.add_edge(pattype, patname)
@@ -960,11 +931,11 @@ def pattern2graph(pattern):
 def reference2graph(nlet):
     """Convert a set of (supposedly connected) clusters to a reference graph, used before graph-based matching."""
     rgraph = Graph()
-    rgraph.add_vertex("point")
-    rgraph.add_vertex("distance")
-    rgraph.add_vertex("rigid")
-    rgraph.add_vertex("balloon")
-    rgraph.add_vertex("hedgehog")
+    rgraph.add_node("point")
+    rgraph.add_node("distance")
+    rgraph.add_node("rigid")
+    rgraph.add_node("balloon")
+    rgraph.add_node("hedgehog")
     for cluster in nlet:
         for var in cluster.vars:
             rgraph.add_edge(cluster, var)
