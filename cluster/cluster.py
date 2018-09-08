@@ -1,6 +1,7 @@
 """Clusters are generalised constraints on sets of points in R^n. Cluster
 types are Rigids, Hedgehogs and Balloons. """
 
+import abc
 from .multimethod import MultiVariable
 
 class Distance:
@@ -61,7 +62,7 @@ class Angle:
             +str(self.vars[2])+")"
 
 
-class Cluster(MultiVariable):
+class Cluster(MultiVariable, metaclass=abc.ABCMeta):
     """A cluster represents a set of Configurations on the same set point variables.
        Subtypes of Cluster (e.g. Rigid, Balloon and Hedgehog)
        define a specific combination of distance and angle constraints on those points.
@@ -73,9 +74,12 @@ class Cluster(MultiVariable):
         Cluster.overconstrained is a boolean
     """
 
+    NAME = "Cluster"
+
     staticcounter = 0
 
     def __init__(self, variables):
+        super().__init__()
         Cluster.staticcounter += 1
         self.creationtime = Cluster.staticcounter
         self.vars = frozenset(variables)
@@ -132,24 +136,27 @@ class Cluster(MultiVariable):
         # if all fails
         raise Exception("intersection of unknown Cluster types")
 
+    def _variable_str(self):
+        return ", ".join(self.vars)
+
+    def __str__(self):
+        # create character string to represent whether the cluster is
+        # overconstrained
+        if self.overconstrained:
+            overconstrained = "!"
+        else:
+            overconstrained = ""
+
+        # get parent string
+        parent_str = super().__str__()
+
+        return f"{overconstrained}{parent_str}({self._variable_str()})"
 
 class Rigid(Cluster):
     """A Rigid (or RigidCluster) represent a cluster of point variables
        that forms a rigid body."""
 
-    def __init__(self, vars):
-        """Create a new cluster
-
-           keyword args:
-            vars - list of variables
-        """
-        Cluster.__init__(self, vars)
-
-    def __str__(self):
-        s = "rigid#"+str(id(self))+"("+str(list(map(str, self.vars)))+")"
-        if self.overconstrained:
-            s = "!" + s
-        return s
+    NAME = "Rigid"
 
     def copy(self):
         new = Rigid(self.vars)
@@ -166,6 +173,9 @@ class Hedgehog(Cluster):
         cvar - center point variable
         xvars - list of other point variables
     """
+
+    NAME = "Hedgehog"
+
     def __init__(self, cvar, xvars):
         """Create a new hedgehog
 
@@ -175,15 +185,9 @@ class Hedgehog(Cluster):
         """
         self.cvar = cvar
         self.xvars = frozenset(xvars)
-        Cluster.__init__(self, self.xvars.union([self.cvar]))
+        super().__init__(self.xvars.union([self.cvar]))
         if len(self.vars) < 3:
             raise Exception("hedgehog must have at least three variables")
-
-    def __str__(self):
-        s = "hedgehog#"+str(id(self))+"("+str(self.cvar)+","+str(list(map(str, self.xvars)))+")"
-        if self.overconstrained:
-            s = "!" + s
-        return s
 
     def copy(self):
         new = Hedgehog(self.cvar, self.xvars)
@@ -195,6 +199,9 @@ class Balloon(Cluster):
     """A Balloon (or ScalableCluster) is set of points that is
        invariant to rotation, translation and scaling.
     """
+
+    NAME = "Balloon"
+
     def __init__(self, variables):
         """Create a new balloon
 
@@ -203,13 +210,7 @@ class Balloon(Cluster):
         """
         if len(variables) < 3:
             raise Exception("balloon must have at least three variables")
-        Cluster.__init__(self,variables)
-
-    def __str__(self):
-        s = "balloon#"+str(id(self))+"("+str(list(map(str, self.vars)))+")"
-        if self.overconstrained:
-            s = "!" + s
-        return s
+        super().__init__(variables)
 
     def copy(self):
         new = Balloon(self.vars)

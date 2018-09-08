@@ -1,21 +1,37 @@
 """Base classes for multi-valued assignments in methodgraphs"""
 
+import abc
 from .method import Method
 
-class MultiVariable:
-    """For representing multi-valued variables
-    """
-    def __init__(self, name=None):
-        self.name = name
+class MultiVariable(metaclass=abc.ABCMeta):
+    """For representing multi-valued variables"""
+
+    NAME = "Variable"
+
+    # last unique variable id
+    _last_id = 0
+
+    # unique number
+    _number = None
+
+    def __new__(cls, *args, **kwargs):
+        # create object
+        obj = super().__new__(cls)
+
+        # assign unique variable ID
+        obj._number = cls._last_id
+
+        # increment last id
+        cls._last_id += 1
+
+        return obj
+
+    def __str__(self):
+        return f"{self.NAME}#{self._number}"
 
     def __repr__(self):
         return str(self)
 
-    def __str__(self):
-        if self.name == None:
-            return "MultiVariable#"+str(id(self))
-        else:
-            return "MultiVariable("+self.name+")"
 
 class MultiMethod(Method):
     """A Method that is executed for multiple alternative inputs, resulting
