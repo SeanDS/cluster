@@ -6,7 +6,7 @@ ClusterSolver2D and ClusterSolver3D.
 
 import logging
 
-from .graph import Graph
+from .oldgraph import Graph
 from .method import Method, MethodGraph
 from .notify import Notifier
 from .multimethod import MultiVariable, MultiMethod

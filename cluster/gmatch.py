@@ -1,15 +1,15 @@
 # graph matching algorithm(s)
 
-from .graph import *
+from .oldgraph import *
 
 def gmatch(pattern, reference):
-    """Match pattern graph to reference graph. 
+    """Match pattern graph to reference graph.
 
        Pattern matches are subgraphs of reference (subgraph isomorphisms).
        (a subgraph is a subset of variables and subset of edges)
        Any vertices in the pattern that are equal to some vertex in reference, they are matched exactly.
        Otherwise, vertices in pattern are considered variables.
-       Returns a list of solutions. 
+       Returns a list of solutions.
        Each solution is a Map from pattern vertices to reference vertices (and vice versa).
     """
 
@@ -66,8 +66,8 @@ def gmatch(pattern, reference):
                         (pv1,pv2) = pe
                         if pv1 not in news or pv2 not in news:
                             continue
-                        rv1 = news[pv1] 
-                        rv2 = news[pv2] 
+                        rv1 = news[pv1]
+                        rv2 = news[pv2]
                         if not reference.has_edge(rv1,rv2):
                             consistent = False
                             break
@@ -83,7 +83,7 @@ def gmatch(pattern, reference):
 
 
 def test():
-    print("matching a triangle") 
+    print("matching a triangle")
     pattern = Graph()
     pattern.add_edge('x','a')
     pattern.add_edge('x','b')

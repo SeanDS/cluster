@@ -1,26 +1,26 @@
 """
-Module for method graphs 
+Module for method graphs
 Copyright Rick van der Meiden, 2003, 2004
 Created: 1 Nov 2003.
 
 A method graph contains variables and methods. Methods are objects that
 specify input and output variables and an 'execute' method. Whenever the
 value of a variable is changed, one or more methods are executed to update
-the value of 'upstream' variables. 
+the value of 'upstream' variables.
 
 Changes:
 23 Nov 2004 - added Error classes, updated naming and doc conventions (PEP 8, 257)
 """
 
-from .graph import Graph
+from .oldgraph import Graph
 
 # ----------- misc stuff -----------
 
 def _strseq(seq):
-    """print string rep of items in a sequence, seperated by commas. 
-    
+    """print string rep of items in a sequence, seperated by commas.
+
        It realy sucks that str(list/dict) uses the __repr__ method of items
-       in the list/dict. Ergo, this function. 
+       in the list/dict. Ergo, this function.
     """
     s = ""
     for el in seq:
@@ -38,12 +38,12 @@ class ValidityError(Exception):
 
     def __init__(self, message):
         """Constructor for ValidityError
-        
+
            arguments:
                message - message to be displayed
         """
         self._message = message
-    
+
     def __str__(self):
         return "ValidityError: " + self._message
 
@@ -51,42 +51,42 @@ class ValidityError(Exception):
 
 class Method:
     """Abstract method
-    
+
        A Method is an object that defines input variables, output variables
        and an execute method. This class should be considered abstract.
        Instances (of subclasses of) Method must be non-mutable, hashable objects.
     """
- 
+
     def inputs(self):
         """return a list of input variables
-        
+
            If an attribute '_inputs' has been defined, a new list
-           with the contents of that attribute will be returned. 
-           Subclasses may choose to initialise this variable or to 
-           override this function. 
+           with the contents of that attribute will be returned.
+           Subclasses may choose to initialise this variable or to
+           override this function.
         """
         if hasattr(self, "_inputs"):
             return list(self._inputs)
         else:
             raise NotImplementedError
-    
+
     def outputs(self):
         """return a list of output variables
-        
+
            If an attribute '_outputs' has been defined, a new list
-           with the contents of that attribute will be returned. 
-           Subclasses may choose to initialise this variable or to 
-           override this function. 
+           with the contents of that attribute will be returned.
+           Subclasses may choose to initialise this variable or to
+           override this function.
         """
         if hasattr(self, "_outputs"):
             return list(self._outputs)
         else:
             raise NotImplementedError
-   
+
     def execute(self, inmap):
         """Execute method.
 
-        Returns a mapping (dictionary) of output variables to values, 
+        Returns a mapping (dictionary) of output variables to values,
         given an input map, mapping input variables to values (dictionary)
         The previous value of the output variable should also be in inmap.
         If the method cannot be executed, it should return an empty map.
@@ -98,16 +98,16 @@ class Method:
 class MethodGraph:
     """Implementation of a method graph
 
-    A method graph is represented by 
-    a directed bi-partite graph: nodes are either varables or methods. 
+    A method graph is represented by
+    a directed bi-partite graph: nodes are either varables or methods.
     Edges run from input variables to methods and from methods to ouput
-    variables. 
-    
-    A method graph may not contain cycles. Every variable must be 
+    variables.
+
+    A method graph may not contain cycles. Every variable must be
     determined by at most one constraint.
 
     Methods must be instances of (subclasses of) class Method.
-    Variables are basically just names, and may be any 
+    Variables are basically just names, and may be any
     non-mutable, hashable object, e.g. strings.
     Values associated with variables may be of any type.
 
@@ -140,7 +140,7 @@ class MethodGraph:
         if not varname in self._map:
             self._map[varname] = value
             self._graph.add_vertex(varname)
-    
+
     def rem_variable(self, varname):
         """Remove a variable and all methods on that variable"""
         if varname in self._map:
@@ -164,9 +164,9 @@ class MethodGraph:
 
     def set(self, varname, value, prop = True):
         """Set the value of a variable.
-        
+
            Iff prop is true then this change and any pending
-           changes will be propagated. 
+           changes will be propagated.
         """
         self._map[varname] = value
         self._changed[varname] = 1
@@ -175,36 +175,36 @@ class MethodGraph:
 
     def add_method(self, met, prop = True):
         """Add a method.
-        
+
            Iff prop is true then this change and any pending
-           changes will be propagated. 
+           changes will be propagated.
         """
 
         if met in self._methods:
-            return 
+            return
         self._methods[met] = 1
-        # update graph    
+        # update graph
         for var in met.inputs():
             self.add_variable(var)
             self._graph.add_edge(var, met)
         for var in met.outputs():
             self.add_variable(var)
             self._graph.add_edge(met, var)
-        
+
         # check validity of graph
         for var in met.outputs():
-            if len(self._graph.ingoing_vertices(var)) > 1: 
+            if len(self._graph.ingoing_vertices(var)) > 1:
                 self.rem_method(met)
                 raise ValidityError("variable "+str(var)+" determined by multiple methods")
             elif len(self._graph.path(var, var)) != 0:
                 self.rem_method(met)
                 raise ValidityError("cylce in graph not allowed (variable "+str(var)+")")
-        # end for    
-        
+        # end for
+
         if prop:
             self._execute(met)
             self.propagate()
-        
+
     def rem_method(self, met):
         """Remove a method"""
         if met in self._methods:
@@ -215,12 +215,12 @@ class MethodGraph:
 
     def propagate(self):
         """Propagate any pending changes.
-        
+
         Changes are propagated until no changes are left or until
         no more changes can be propagated. This method is called
         from set() and add_method() by default. However, if the
         user so chooses, the methods will not call propagate, and
-        the user should call this fucntion at a convenient time. 
+        the user should call this fucntion at a convenient time.
         """
         while len(self._changed) != 0:
             pick = list(self._changed.keys())[0]
@@ -232,15 +232,15 @@ class MethodGraph:
                 del self._changed[pick]
         #end while
     #end def propagate
-    
+
     def clear(self):
         """clear methodgraph by removing all variables"""
-        while (len(self._map) > 0):    
+        while (len(self._map) > 0):
             var = list(self._map.keys())[0]
             self.rem_variable(var)
         #wend
     #def
-    
+
     def execute(self, met):
         """Execute a method and proagate changes. Method must be in Methodgraph"""
         if met in self._methods:
@@ -250,9 +250,9 @@ class MethodGraph:
             raise Exception("method not in graph")
 
     def _execute(self, met):
-        """Execute a method. 
+        """Execute a method.
         Method is executed only if all inputvariable values are not None
-        Updates mapping and change flags.  
+        Updates mapping and change flags.
         """
         # create input map and check for None-values
         inmap = {}
@@ -279,9 +279,9 @@ class MethodGraph:
                 if self._map[var] != None:
                     self._changed[var] = 1
                     self._map[var] = None
-                
+
         #end for
-        # clear change flag on input variables 
+        # clear change flag on input variables
         for var in met.inputs():
             if var in self._changed:
                 del self._changed[var]
@@ -322,7 +322,7 @@ class OrMethod(Method):
         s += str(self._inputs[1])
         s += ','
         s += str(self._outputs[0])
-        s += ')' 
+        s += ')'
         return s
 
 class AddMethod(Method):
@@ -349,7 +349,7 @@ class AddMethod(Method):
         s += str(self._inputs[1])
         s += ','
         s += str(self._outputs[0])
-        s += ')' 
+        s += ')'
         return s
 
 class SubMethod(Method):
@@ -357,7 +357,7 @@ class SubMethod(Method):
         """new method c := a - b"""
         self._inputs = [a,b]
         self._outputs = [c]
- 
+
     def execute(self, inmap):
         outmap = {}
         a = self._inputs[0]
@@ -368,7 +368,7 @@ class SubMethod(Method):
             outmap[c] = inmap[a] - inmap[b]
         #fi
         return outmap
- 
+
     def __str__(self):
         s = "SubMethod("
         s += str(self._inputs[0])
@@ -376,56 +376,56 @@ class SubMethod(Method):
         s += str(self._inputs[1])
         s += ','
         s += str(self._outputs[0])
-        s += ')' 
+        s += ')'
         return s
 
 class SetMethod(Method):
     def __init__(self, var, value):
         """new method var := value
-       
+
            keyword arguments:
                var - variable name
                value - any object to be associated with var
-               
+
         """
         self._inputs = []
         self._outputs = [var]
         self._value = value
- 
+
     def execute(self, inmap):
         return {self._outputs[0]:self._value}
- 
+
     def __str__(self):
         s = "SetMethod("
         s += str(self._outputs[0])
         s += ','
         s += str(self._value)
-        s += ')' 
+        s += ')'
         return s
 
 class AssignMethod(Method):
     def __init__(self, a, b):
         """new method a := b
-       
+
            keyword arguments:
                a - variable name
                b - variable name
         """
         self._inputs = [b]
         self._outputs = [a]
- 
+
     def execute(self, inmap):
         if self._inputs[0] in inmap:
            return {self._outputs[0]:inmap(self._inputs[0])}
-        else: 
+        else:
            return {}
- 
+
     def __str__(self):
         s = "SetMethod("
         s += str(self._inputs[0])
         s += ','
         s += str(self._value)
-        s += ')' 
+        s += ')'
         return s
 
 
@@ -456,15 +456,15 @@ def test():
         mg.add_method(AddMethod('d','e','a'))
         print("success: should not be possible")
     except Exception as e:
-        print(e) 
+        print(e)
     print("e := a + b")
     try:
         mg.add_method(AddMethod('a','b','e'))
         print("success: should not be possible")
     except Exception as e:
-        print(e) 
+        print(e)
 
-if __name__ == "__main__": 
+if __name__ == "__main__":
     test()
 
 

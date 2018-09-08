@@ -23,7 +23,7 @@ Changes:
 24 Nov 2004 - added semi-abstract implementation for Constraint.variables
 """
 
-from ..graph import Graph
+from ..oldgraph import Graph
 from ..notify import Notifier
 
 def _strseq(seq):
