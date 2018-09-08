@@ -59,11 +59,11 @@ class GeometricSolver(Listener):
         self.fixcluster = None
 
         # add variables
-        for var in self.cg.variables():
+        for var in self.cg.variables:
             self._add_variable(var)
 
         # add constraints
-        toadd = set(self.cg.constraints())
+        toadd = set(self.cg.constraints)
 
         # add coincidences first. Prevents re-mapping of primitves and re-solving of problem
         for con in list(toadd):
@@ -149,7 +149,7 @@ class GeometricSolver(Listener):
         rigids = [c for c in top if isinstance(c, Rigid)]
         if len(top) > 1:
             # structurally underconstrained cluster
-            result = GeometricDecomposition(self.problem.cg.variables())
+            result = GeometricDecomposition(self.problem.cg.variables)
             result.flag = GeometricDecomposition.UNDERCONSTRAINED
             for cluster in rigids:
                 result.subs.append(map[cluster])
@@ -159,7 +159,7 @@ class GeometricSolver(Listener):
                 result = map[rigids[0]]
             else:
                 # no variables in problem?
-                result = GeometricDecomposition(self.problem.cg.variables())
+                result = GeometricDecomposition(self.problem.cg.variables)
                 result.variables = []
                 result.subs = []
                 result.solutions = []
@@ -190,7 +190,7 @@ class GeometricSolver(Listener):
         LOGGER.debug(f"mapping cluster '{drcluster}' with {n_configurations} configurations")
         for configuration in configurations:
             solution = {}
-            for var in self.problem.cg.variables():
+            for var in self.problem.cg.variables:
                 if isinstance(var, Point):
                     assert len(self._map[var].vars) == 1
                     point = next(iter(self._map[var].vars))

@@ -19,6 +19,7 @@ class Notifier:
     """
 
     def __init__(self):
+        super().__init__()
         self.listeners = weakref.WeakKeyDictionary()
 
     def add_listener(self, listener):

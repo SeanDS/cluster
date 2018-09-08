@@ -117,7 +117,7 @@ def add_random_constraint(problem, ratio):
     """add a random constraint to a problem, with a given ratio angles/distances"""
     if random.random() < ratio:
         # add angle
-        pointvars = list(problem.cg.variables())
+        pointvars = list(problem.cg.variables)
         random.shuffle(pointvars)
         v1 = pointvars[0]
         v2 = pointvars[1]
@@ -130,7 +130,7 @@ def add_random_constraint(problem, ratio):
         problem.add_constraint(con)
     else:
         # add distance
-        pointvars = list(problem.cg.variables())
+        pointvars = list(problem.cg.variables)
         random.shuffle(pointvars)
         v1 = pointvars[0]
         v2 = pointvars[1]
@@ -152,7 +152,7 @@ def randomize_hedgehogs(problem):
     """combine adjacent angles to hedgehogs and replace with different angles.
        modifies problem
     """
-    angles = [c for c in problem.cg.constraints() if isinstance(c, AngleConstraint)]
+    angles = [c for c in problem.cg.constraints if isinstance(c, AngleConstraint)]
     hogs = set()
     # make hogs from angles
     for angle in angles:
@@ -207,7 +207,7 @@ def randomize_balloons(problem):
     """combine adjacent angles to balloons and replace with different angles.
        modifies problem
     """
-    angles = [c for c in problem.cg.constraints() if isinstance(c, AngleConstraint)]
+    angles = [c for c in problem.cg.constraints if isinstance(c, AngleConstraint)]
     balloons = set()
     toremove = set()
     # make hogs from angles

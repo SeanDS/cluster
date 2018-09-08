@@ -89,7 +89,7 @@ class GeometricProblem(Notifier, Listener):
         """remove a variable (and all constraints incident imposed on it)"""
         if variable in self.prototype:
             del self.prototype[variable]
-            self.cg.rem_variable(variable)
+            self.cg.remove_variable(variable)
 
     def set_variable(self, variable, prototype):
         """set prototype of variable"""
@@ -142,8 +142,8 @@ class GeometricProblem(Notifier, Listener):
 
     def get_distance(self, a, b):
         """return the distance constraint on given points, or None"""
-        on_a = self.cg.get_constraints_on(a)
-        on_b = self.cg.get_constraints_on(b)
+        on_a = self.cg.constraints_on(a)
+        on_b = self.cg.constraints_on(b)
         on_ab = [c for c in on_a if c in on_a and c in on_b]
         distances = [c for c in on_ab if isinstance(c, DistanceConstraint)]
         if len(distances) > 1:
@@ -155,9 +155,9 @@ class GeometricProblem(Notifier, Listener):
 
     def get_angle(self, a, b, c):
         """return the angle constraint on given points, or None"""
-        on_a = self.cg.get_constraints_on(a)
-        on_b = self.cg.get_constraints_on(b)
-        on_c = self.cg.get_constraints_on(c)
+        on_a = self.cg.constraints_on(a)
+        on_b = self.cg.constraints_on(b)
+        on_c = self.cg.constraints_on(c)
         on_abc = [x for x in on_a if x in on_a and x in on_b and x in on_c]
         angles = [x for x in on_abc if isinstance(x, AngleConstraint)]
         candidates = [x for x in angles if x.variables[1] == b]
@@ -170,7 +170,7 @@ class GeometricProblem(Notifier, Listener):
 
     def get_fix(self, p):
         """return the fix constraint on given point, or None"""
-        on_p = self.cg.get_constraints_on(p)
+        on_p = self.cg.constraints_on(p)
         fixes = [x for x in on_p if isinstance(x, FixConstraint)]
         if len(fixes) > 1:
             raise Exception("multiple constraints found")
@@ -183,9 +183,9 @@ class GeometricProblem(Notifier, Listener):
         candidates = None
         for var in variables:
             if candidates == None:
-                candidates = set([c for c in self.cg.get_constraints_on(var) if isinstance(c,constrainttype)])
+                candidates = set([c for c in self.cg.constraints_on(var) if isinstance(c,constrainttype)])
             else:
-                candidates.intersection_update([c for c in self.cg.get_constraints_on(var) if isinstance(c,constrainttype)])
+                candidates.intersection_update([c for c in self.cg.constraints_on(var) if isinstance(c,constrainttype)])
         return candidates
 
     def get_unique_constraint(self, constrainttype, variables):
@@ -217,7 +217,7 @@ class GeometricProblem(Notifier, Listener):
             sat = False
         else:
             sat = True
-            for con in self.cg.constraints():
+            for con in self.cg.constraints:
                 solved = True
                 for v in con.variables:
                     if v not in solution:
@@ -234,10 +234,10 @@ class GeometricProblem(Notifier, Listener):
     def remove_constraint(self, con):
         """remove a constraint from the constraint system"""
         LOGGER.debug(f"removing constraint '{con}'")
-        if con in self.cg.constraints():
+        if con in self.cg.constraints:
             if isinstance(con, SelectionConstraint):
                 self.send_notify(("rem_selection_constraint", con))
-            self.cg.rem_constraint(con)
+            self.cg.remove_constraint(con)
         else:
             raise Exception("no constraint "+str(con)+" in problem.")
 
@@ -256,7 +256,7 @@ class GeometricProblem(Notifier, Listener):
         s = ""
         for v in self.prototype:
             s += str(v) + " = " + str(self.prototype[v]) + "\n"
-        for con in self.cg.constraints():
+        for con in self.cg.constraints:
             s += str(con) + "\n"
         s+= "prototype-based selection = " + str(self.use_prototype)
         return s

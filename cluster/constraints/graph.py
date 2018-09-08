@@ -1,143 +1,152 @@
-"""
-Module for constraint graphs
-Copyright Rick van der Meiden 2003, 2004
-Started 1 Nov 2003.
+import logging
 
-A constraint graph represents a constraint problem. A constraint defines a
-number of variables, and a relation between those variables that must be
-satisfied.
-
-Note that no values are associated with variables in the constraint graph, i.e.
-satisfying constraints is not considered in this module.
-
-The constraint graph is (internally) represented by a directed bi-partite
-graph; nodes are variables or constraints and edges run from variables to
-constraints.
-
-Variables are just names; any non-mutable hashable object, e.g. a string,
-qualifies for a variable. Constraints must be instances of (suclasses of) class
-Constraint, and must also be non-mutable, hashable objects.
-
-Changes:
-23 Nov 2004 - added Error classes, updated naming and doc conventions (PEP 8, 257)
-24 Nov 2004 - added semi-abstract implementation for Constraint.variables
-"""
-
-from ..oldgraph import Graph
+from ..graph import Graph
 from ..notify import Notifier
 
-def _strseq(seq):
-    """print string rep of items in a sequence, seperated by commas.
+LOGGER = logging.getLogger(__name__)
 
-       It realy sucks that str(list/dict) uses the __repr__ method of items
-       in the list/dict. Ergo, this function.
-    """
-    s = ""
-    for el in seq:
-        s += str(el)
-        s += ','
-    if len(s) > 0:
-        s = s[:-1]
-    return s
-
-
-class ConstraintGraph(Notifier):
-    """A constraint graph.
-
-       For more information see module documentation.
-    """
-
-    def __init__(self):
-        """Create a new, empty ConstraintGraph"""
-        Notifier.__init__(self)
-        self._variables = {}
-        """A set of variables"""
-        self._constraints = {}
-        """A set of constraints"""
-        self._graph = Graph()
-        """A graph for fast navigation. The graph contains an
-           edge from a var to a constraint if the constraint is imposed
-           on that variable"""
-
+# Note: since NetworkX doesn't call super(), it must be second here
+# in order to achieve the correct MRO.
+class ConstraintGraph(Notifier, Graph):
+    """A constraint graph"""
+    @property
     def variables(self):
-        """return a list of variables"""
-        return list(self._variables.keys())
+        return [node for node, data in self.nodes(data=True)
+                if data.get("node_type") == "variable"]
 
+    @property
     def constraints(self):
-        """return a list of variables"""
-        return list(self._constraints.keys())
+        return [node for node, data in self.nodes(data=True)
+                if data.get("node_type") == "constraint"]
 
-    def add_variable(self, varname):
-        """add a variable"""
-        if not varname in self._variables:
-            self._variables[varname] = None
-            self._graph.add_vertex(varname)
-            self.send_notify(("add_variable", varname))
+    def add_variable(self, variable):
+        """Adds the specified variable to the graph
+        :param var_name: name of the variable to add
+        """
+        # only add if it doesn't already exist
+        if variable in self.variables:
+            raise ValueError(f"variable '{variable}' already in graph")
 
-    def rem_variable(self, varname):
-        """remove a variable"""
-        if varname in self._variables:
-            # remove constraints on variabe
-            for con in self.get_constraints_on(varname):
-                self.rem_constraint(con)
-            # remove variable itself
-            del self._variables[varname]
-            self._graph.rem_vertex(varname)
-            self.send_notify(("rem_variable", varname))
+        # create a vertex in the graph for the variable
+        self.add_node(variable, node_type="variable")
 
-    def add_constraint(self, con):
-        """add a constraint"""
-        if con not in self._constraints:
-            self._constraints[con] = None
-            for var in con.variables:
-                self.add_variable(var)
-                self._graph.add_edge(var, con)
-            self.send_notify(("add_constraint", con))
+        # notify observers that a new variable has been added
+        self.send_notify(("add_variable", variable))
 
-    def rem_constraint(self, con):
-        """remove a variable"""
-        if con in self._constraints:
-            del self._constraints[con]
-            self._graph.rem_vertex(con)
-            self.send_notify(("rem_constraint", con))
+    def remove_variable(self, variable):
+        """Removes the specified variable from the graph
+        :param var_name: name of the variable to remove
+        """
+        # only remove if it already exists
+        if variable not in self.variables:
+            raise ValueError(f"variable '{variable}' not in graph")
 
-    def get_constraints_on(self, var):
-        """get a list of all constraints on var"""
-        if self._graph.has_vertex(var):
-            return self._graph.outgoing_vertices(var)
-        else:
-            return []
+        # remove variable's constraints
+        for constraint in self.constraints_on(variable):
+            self.remove_constraint(constraint)
 
-    def get_constraints_on_all(self, varlist):
-        """get a list of all constraints on all vars in list"""
-        if len(varlist) == 0: return []
-        l0 = self.get_constraints_on(varlist[0])
-        l = []
-        for con in l0:
-            ok = True;
-            for var in varlist[1:]:
-                ok &= (var in con.variables)
-            #for
-            if ok: l.append(con)
-        #for
-        return l;
+        # remove graph vertex associated with the variable
+        self.remove_node(variable)
 
-    def get_constraints_on_any(self, varlist):
-        """get a list of all constraints on any of the vars in list"""
-        if len(varlist) == 0: return []
-        l = []
-        for var in varlist:
-            l0 = self.get_constraints_on(var)
-            for con in l0:
-                if con not in l: l.append(con)
-            #for
-        #for
-        return l;
+        # notify observers that a variable has been removed
+        self.send_notify(("remove_variable", variable))
+
+    def add_constraint(self, constraint):
+        """Adds the specified constraint to the graph
+        :param constraint: constraint to add
+        """
+
+        # only add constraint if it isn't already in the graph
+        if constraint in self.constraints:
+            return
+
+        self.add_node(constraint, node_type="constraint")
+
+        # process the constraint's variables
+        for variable in constraint.variables:
+            if variable not in self.variables:
+                # add the variable to the graph
+                self.add_variable(variable)
+
+            # create edge in the graph for the variable
+            self.add_edge(variable, constraint)
+
+        # notify observers that a constraint has been added
+        self.send_notify(("add_constraint", constraint))
+
+    def remove_constraint(self, constraint):
+        """Removes the specified constraint from the graph
+        :param constraint: constraint to remove
+        """
+        if constraint not in self.constraints:
+            raise ValueError(f"constraint '{constraint}' not in graph")
+
+        # remove graph vertex associated with the constraint
+        self.remove_node(constraint)
+
+        # notify observers that a constraint was removed
+        self.send_notify(("remove_constraint", constraint))
+
+    def constraints_on(self, variable):
+        """Returns a list of all constraints on the specified variable
+        :param variable: variable to get constraints for
+        """
+
+        # check if variable is in the graph
+        if not self.has_node(variable):
+            raise ValueError(f"variable '{variable}' not in graph")
+
+        # return the variable's outgoing vertices
+        return self.successors(variable)
+
+    def constraints_on_all(self, variables):
+        """Gets a list of the constraints shared by all of the variables \
+        specified in the sequence
+        :param variables: variables to find constraints for"""
+        if len(variables) == 0:
+            raise ValueError("no variables specified")
+
+        # empty list of shared constraints
+        shared_constraints = []
+
+        # loop over the constraints of the first variable in the list
+        for constraint in self.constraints_on(variables[0]):
+            # default flag
+            shared_constraint = True
+
+            # loop over the variables in the rest of the list
+            for var in variables[1:]:
+                # is this variable constrained by this constraint?
+                if var not in constraint.variables:
+                    # this variable doesn't share the constraint
+                    shared_constraint = False
+
+                    # no point checking the others
+                    break
+
+            if shared_constraint:
+                # add constraint to list of shared constraints
+                shared_constraints.append(constraint)
+
+        return shared_constraints
+
+    def constraints_on_any(self, variables):
+        """Gets a list of the constraints on any of the specified variables
+        :param variables: variables to get constraints for"""
+        if len(variables) == 0:
+            raise ValueError("no variables specified")
+
+        # empty set of constraints
+        constraints = set([])
+
+        for variable in variables:
+            constraint = set(self.constraints_on(variable))
+            constraints.update(constraint)
+
+        # return constraints set as a list
+        return list(constraints)
 
     def __str__(self):
-        s = "ConstraintGraph(variables=["
-        s += _strseq(list(self._variables.keys()))
-        s += "], constraints=["
-        s += _strseq(list(self._constraints.keys()))
-        s += "])"
-        return s;
+        variables = ", ".join([str(variable) for variable in self.variables])
+        constraints = ", ".join([str(constraint) for constraint in self.constraints])
+        return f"ConstraintGraph(variables=[{variables}], constraints=[{constraints}])"
