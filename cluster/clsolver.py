@@ -4,6 +4,7 @@ This module provides basic functionality for
 ClusterSolver2D and ClusterSolver3D.
 """
 
+import abc
 import logging
 
 from .oldgraph import Graph
@@ -769,7 +770,7 @@ class ClusterSolver(Notifier):
 #  ----------Method classes used by ClusterSolver -------------
 #  -----------------------------------------------------------
 
-class ClusterMethod(MultiMethod):
+class ClusterMethod(MultiMethod, metaclass=abc.ABCMeta):
     """A method that determines a single output cluster from a set of input clusters.
 
        Subclasses should provide a static class variable 'patterngraph', which is a graph,
@@ -788,10 +789,13 @@ class ClusterMethod(MultiMethod):
         (these variables are automatically set by the solver for debugging purposes )
     """
 
+    NAME = "ClusterMethod"
+
     def __init__(self):
+        super().__init__()
+
         self.overconstrained = None
         self.consistent = None
-        MultiMethod.__init__(self)
 
     def prototype_constraints(self):
         """Return a list of SelectionConstraint"""
@@ -827,11 +831,13 @@ class PrototypeMethod(MultiMethod):
        the protoype and the solution satisfy the same constraints.
     """
 
+    NAME = "PrototypeMethod"
+
     def __init__(self, incluster, selclusters, outcluster, constraints, enabled):
         self._inputs = [incluster]+selclusters+[enabled]
         self._outputs = [outcluster]
         self._constraints = constraints
-        MultiMethod.__init__(self)
+        super().__init__()
 
     def multi_execute(self, inmap):
         LOGGER.debug("multi execute called")
@@ -880,19 +886,19 @@ class PrototypeMethod(MultiMethod):
         else:
             return [inconf]
 
-    def __str__(self):
-        return "PrototypeMethod#%d(%s->%s)"%(id(self),str(self._inputs[0]), str(self._outputs[0]))
 
 class SelectionMethod(MultiMethod):
     """A SelectionMethod selects those solutions of a cluster for which
        all selectionconstraints are satisfied.
     """
 
+    NAME = "SelectionMethod"
+
     def __init__(self, incluster, outcluster):
         self._inputs = [incluster]
         self._outputs = [outcluster]
         self._constraints = []
-        MultiMethod.__init__(self)
+        super().__init__()
 
     def add_constraint(self, con):
         self._constraints.append(con)
@@ -920,10 +926,6 @@ class SelectionMethod(MultiMethod):
             return [inconf]
         else:
             return []
-
-
-    def __str__(self):
-        return "SelectionMethod#%d(%s & %s ->%s)"%(id(self),str(self._inputs[0]), str(self._constraints), str(self._outputs[0]))
 
 # --------------------------------------
 # helper functions for pattern matching
@@ -982,5 +984,5 @@ def reference2graph(nlet):
 
 def rootname(cluster):
     """returns the name of the root variable associated with the name of a cluster variable"""
-    return "root#"+str(id(cluster))
+    return f"Root({cluster})"
 

@@ -30,6 +30,9 @@ class ClusterSolver2D(ClusterSolver):
 
 class MergeSR(ClusterMethod):
     """Merge a Scalabe and a Rigid sharing two points"""
+
+    NAME = "MergeSR"
+
     def __init__(self, map):
         # check inputs
         in1 = map["$r"]
@@ -39,18 +42,13 @@ class MergeSR(ClusterMethod):
         # set method parameters
         self._inputs = [in1, in2]
         self._outputs = [out]
-        ClusterMethod.__init__(self)
+        super().__init__()
 
     def _pattern():
         pattern = [["rigid","$r",["$a","$b"]], ["balloon", "$s", ["$a", "$b"]]]
         return pattern2graph(pattern)
     pattern = staticmethod(_pattern)
     patterngraph = _pattern()
-
-    def __str__(self):
-        s =  "MergeSR("+str(self._inputs[0])+"+"+str(self._inputs[1])+"->"+str(self._outputs[0])+")"
-        s += "[" + self.status_str()+"]"
-        return s
 
     def multi_execute(self, inmap):
         c1 = self._inputs[0]
@@ -65,6 +63,9 @@ class MergeSR(ClusterMethod):
 
 class MergePR(ClusterMethod):
     """Represents a merging of a one-point cluster with any other rigid."""
+
+    NAME = "MergePR"
+
     def __init__(self, map):
         # check inputs
         in1 = map["$p"]
@@ -77,7 +78,7 @@ class MergePR(ClusterMethod):
         in2root = rootname(in2)
         self._inputs = [in1, in2, in1root, in2root]
         self._outputs = [out]
-        ClusterMethod.__init__(self)
+        super().__init__()
 
     def _incremental_matcher(solver):
         toplevel = solver.top_level()
@@ -88,11 +89,6 @@ class MergePR(ClusterMethod):
         return matcher
 
     incremental_matcher = staticmethod(_incremental_matcher)
-
-    def __str__(self):
-        s =  "MergePR("+str(self._inputs[0])+"+"+str(self._inputs[1])+"->"+str(self._outputs[0])+")"
-        s += "[" + self.status_str()+"]"
-        return s
 
     def multi_execute(self, inmap):
         #c1 = self._inputs[0]
@@ -111,6 +107,9 @@ class MergePR(ClusterMethod):
 
 class MergeRR(ClusterMethod):
     """Represents a merging of two rigids sharing two points."""
+
+    NAME = "MergeRR"
+
     def __init__(self, map):
         # check inputs
         in1 = map["$r1"]
@@ -122,7 +121,7 @@ class MergeRR(ClusterMethod):
         in2root = rootname(in2)
         self._inputs = [in1, in2, in1root, in2root]
         self._outputs = [out]
-        ClusterMethod.__init__(self)
+        super().__init__()
 
     #def _pattern():
     #    pattern = [["rigid","$r1",["$a","$b"]], ["rigid", "$r2", ["$a", "$b"]]]
@@ -149,12 +148,6 @@ class MergeRR(ClusterMethod):
         return matcher
 
     incremental_matcher = staticmethod(_incremental_matcher)
-
-
-    def __str__(self):
-        s =  "MergeRR("+str(self._inputs[0])+"+"+str(self._inputs[1])+"->"+str(self._outputs[0])+")"
-        s += "[" + self.status_str()+"]"
-        return s
 
     def multi_execute(self, inmap):
         c1 = self._inputs[0]
@@ -184,6 +177,9 @@ def triplet2ddd(triplet):
 
 class DeriveDDD(ClusterMethod):
     """Represents a merging of three distances"""
+
+    NAME = "DeriveDDD"
+
     def __init__(self, map):
         # check inputs
         self.d_ab = map["$d_ab"]
@@ -201,7 +197,7 @@ class DeriveDDD(ClusterMethod):
         # set method parameters
         self._inputs = [self.d_ab, self.d_ac, self.d_bc, self.root_ab, self.root_ac, self.root_bc]
         self._outputs = [out]
-        ClusterMethod.__init__(self)
+        super().__init__()
         # do not remove input clusters (because root not considered here)
         # self.noremove = True
 
@@ -219,11 +215,6 @@ class DeriveDDD(ClusterMethod):
         return matcher
 
     incremental_matcher = staticmethod(_incremental_matcher)
-
-    def __str__(self):
-        s =  "DeriveDDD("+str(self._inputs[0])+"+"+str(self._inputs[1])+"+"+str(self._inputs[2])+"->"+str(self._outputs[0])+")"
-        s += "[" + self.status_str()+"]"
-        return s
 
     def multi_execute(self, inmap):
         c12 = inmap[self.d_ab]
@@ -259,6 +250,9 @@ class DeriveDDD(ClusterMethod):
 
 class DeriveDAD(ClusterMethod):
     """Represents a merging of two distances and an angle"""
+
+    NAME = "DeriveDAD"
+
     def __init__(self, map):
         # check inputs
         self.d_ab = map["$d_ab"]
@@ -272,7 +266,7 @@ class DeriveDAD(ClusterMethod):
         # set method parameters
         self._inputs = [self.d_ab, self.a_abc, self.d_bc]
         self._outputs = [out]
-        ClusterMethod.__init__(self)
+        super().__init__()
         # do not remove input clusters (because root not considered here)
         self.noremove = True
 
@@ -321,12 +315,6 @@ class DeriveDAD(ClusterMethod):
 
     incremental_matcher = staticmethod(_incremental_matcher)
 
-
-    def __str__(self):
-        s =  "DeriveDAD("+str(self._inputs[0])+"+"+str(self._inputs[1])+"+"+str(self._inputs[2])+"->"+str(self._outputs[0])+")"
-        s += "[" + self.status_str()+"]"
-        return s
-
     def multi_execute(self, inmap):
         c12 = inmap[self.d_ab]
         c123 = inmap[self.a_abc]
@@ -345,6 +333,9 @@ class DeriveDAD(ClusterMethod):
 
 class DeriveADD(ClusterMethod):
     """Represents a merging of two distances and an angle"""
+
+    NAME = "DeriveADD"
+
     def __init__(self, map):
         # check inputs
         self.a_cab = map["$a_cab"]
@@ -358,7 +349,7 @@ class DeriveADD(ClusterMethod):
         # set method parameters
         self._inputs = [self.a_cab, self.d_ab, self.d_bc]
         self._outputs = [out]
-        ClusterMethod.__init__(self)
+        super().__init__()
         # do not remove input clusters (because root not considered here)
         self.noremove = True
 
@@ -414,12 +405,6 @@ class DeriveADD(ClusterMethod):
 
     incremental_matcher = staticmethod(_incremental_matcher)
 
-
-    def __str__(self):
-        s =  "DeriveADD("+str(self._inputs[0])+"+"+str(self._inputs[1])+"+"+str(self._inputs[2])+"->"+str(self._outputs[0])+")"
-        s += "[" + self.status_str()+"]"
-        return s
-
     def multi_execute(self, inmap):
         c312 = inmap[self.a_cab]
         c12 = inmap[self.d_ab]
@@ -441,6 +426,9 @@ class DeriveADD(ClusterMethod):
 
 class DeriveHH2S(ClusterMethod):
     """Derive a scalable from two angles"""
+
+    NAME = "DeriveHH2S"
+
     def __init__(self, map):
         # check inputs
         self.a_cab = map["$a_cab"]
@@ -453,14 +441,9 @@ class DeriveHH2S(ClusterMethod):
         # set method parameters
         self._inputs = [self.a_cab, self.a_abc]
         self._outputs = [out]
-        ClusterMethod.__init__(self)
+        super().__init__()
         # do not remove input clusters (because root not considered here)
         self.noremove = True
-
-    def __str__(self):
-        s =  "DeriveHH2S("+str(self._inputs[0])+"+"+str(self._inputs[1])+"->"+str(self._outputs[0])+")"
-        s += "[" + self.status_str()+"]"
-        return s
 
     def _incremental_matcher(solver):
         def pair_is_hh2s(pair):
@@ -512,6 +495,9 @@ class DeriveHH2S(ClusterMethod):
 
 class CheckAR(ClusterMethod):
     """Represents the overconstrained merging a hedgehog and a rigid that completely overlaps it."""
+
+    NAME = "CheckAR"
+
     def __init__(self, map):
         # get input clusters
         self.hog = map["$h"]
@@ -523,7 +509,7 @@ class CheckAR(ClusterMethod):
         # set method properties
         self._inputs = [self.hog, self.rigid]
         self._outputs = [out]
-        ClusterMethod.__init__(self)
+        super().__init__()
 
     def _handcoded_match(problem, newcluster, connected):
         matches = [];
@@ -544,11 +530,6 @@ class CheckAR(ClusterMethod):
                 matches.append(m)
         return matches;
     handcoded_match = staticmethod(_handcoded_match)
-
-    def __str__(self):
-        s =  "CheckAR("+str(self._inputs[0])+"+"+str(self._inputs[1])+"->"+str(self._outputs[0])+")"
-        s += "[" + self.status_str()+"]"
-        return s
 
     def multi_execute(self, inmap):
         # get configurations

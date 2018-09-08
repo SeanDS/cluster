@@ -96,6 +96,8 @@ class MultiMethod(Method):
 class SumProdMethod(MultiMethod):
     """A MultiMethod that assigns the sum and product of its input to it's ouput MultiVariable"""
 
+    NAME = "SumProdMethod"
+
     def __init__(self, a,b,c):
         self._inputs = [a,b]
         self._outputs = [c]

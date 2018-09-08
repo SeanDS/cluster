@@ -12,6 +12,7 @@ Changes:
 23 Nov 2004 - added Error classes, updated naming and doc conventions (PEP 8, 257)
 """
 
+import abc
 from .oldgraph import Graph
 
 # ----------- misc stuff -----------
@@ -49,13 +50,15 @@ class ValidityError(Exception):
 
 # ----------- class Method -----------
 
-class Method:
+class Method(metaclass=abc.ABCMeta):
     """Abstract method
 
        A Method is an object that defines input variables, output variables
        and an execute method. This class should be considered abstract.
        Instances (of subclasses of) Method must be non-mutable, hashable objects.
     """
+
+    NAME = "Method"
 
     def inputs(self):
         """return a list of input variables
@@ -92,6 +95,16 @@ class Method:
         If the method cannot be executed, it should return an empty map.
         """
         raise NotImplementedError
+
+    def __str__(self):
+        # comma separated list of inputs
+        input_str = " + ".join([str(_input) for _input in self.inputs()])
+
+        # comma separated list of outputs
+        output_str = " + ".join([str(output) for output in self.outputs()])
+
+        # combined string
+        return f"{self.NAME}({input_str} -> {output_str})"
 
 # ----------- class MethodGraph -------
 
@@ -302,6 +315,8 @@ class MethodGraph:
 # ----------- various Methods ---------
 
 class OrMethod(Method):
+    NAME = "OrMethod"
+
     def __init__(self, inputs, output):
         """new method output := input[0] | input[1] | ... """
         self._inputs = list(inputs)
@@ -315,17 +330,9 @@ class OrMethod(Method):
         outmap[self._outputs[0]] = result
         return outmap
 
-    def __str__(self):
-        s = "OrMethod("
-        s += str(self._inputs[0])
-        s += ','
-        s += str(self._inputs[1])
-        s += ','
-        s += str(self._outputs[0])
-        s += ')'
-        return s
-
 class AddMethod(Method):
+    NAME = "AddMethod"
+
     def __init__(self, a, b, c):
         """new method c := a + b"""
         self._inputs = [a,b]
@@ -342,17 +349,9 @@ class AddMethod(Method):
         #fi
         return outmap
 
-    def __str__(self):
-        s = "AddMethod("
-        s += str(self._inputs[0])
-        s += ','
-        s += str(self._inputs[1])
-        s += ','
-        s += str(self._outputs[0])
-        s += ')'
-        return s
-
 class SubMethod(Method):
+    NAME = "SubMethod"
+
     def __init__(self, a, b, c):
         """new method c := a - b"""
         self._inputs = [a,b]
@@ -369,17 +368,9 @@ class SubMethod(Method):
         #fi
         return outmap
 
-    def __str__(self):
-        s = "SubMethod("
-        s += str(self._inputs[0])
-        s += ','
-        s += str(self._inputs[1])
-        s += ','
-        s += str(self._outputs[0])
-        s += ')'
-        return s
-
 class SetMethod(Method):
+    NAME = "SetMethod"
+
     def __init__(self, var, value):
         """new method var := value
 
@@ -395,15 +386,9 @@ class SetMethod(Method):
     def execute(self, inmap):
         return {self._outputs[0]:self._value}
 
-    def __str__(self):
-        s = "SetMethod("
-        s += str(self._outputs[0])
-        s += ','
-        s += str(self._value)
-        s += ')'
-        return s
-
 class AssignMethod(Method):
+    NAME = "AssignMethod"
+
     def __init__(self, a, b):
         """new method a := b
 
@@ -419,14 +404,6 @@ class AssignMethod(Method):
            return {self._outputs[0]:inmap(self._inputs[0])}
         else:
            return {}
-
-    def __str__(self):
-        s = "SetMethod("
-        s += str(self._inputs[0])
-        s += ','
-        s += str(self._value)
-        s += ')'
-        return s
 
 
 # ---------- test ----------
